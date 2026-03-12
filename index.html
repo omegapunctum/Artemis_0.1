@@ -478,8 +478,11 @@
 
   // ── ПРОВЕРКА ВИДИМОСТИ ПО ВРЕМЕНИ ────────────────────────
   function visibleInTime(feature) {
-    const start = parseInt(feature.date_start);
-    const end   = feature.date_end ? parseInt(feature.date_end) : start + 100;
+    const start    = parseInt(feature.date_start);
+    // Если date_end не задан — объект существует по сей день (конца нет)
+    const hasEnd   = feature.date_end != null && feature.date_end !== '';
+    const end      = hasEnd ? parseInt(feature.date_end) : Infinity;
+
     return state.rangeMode
       ? start <= state.rangeTo && end >= state.rangeFrom
       : state.currentYear >= start && state.currentYear <= end;
@@ -526,7 +529,7 @@
 
       const dateStr = feature.date_end
         ? `${feature.date_start} — ${feature.date_end}`
-        : feature.date_start;
+        : `${feature.date_start} — по наст. время`;
 
       const popup = new maplibregl.Popup({ offset: 14, closeButton: true, maxWidth: '300px' })
         .setHTML(`
