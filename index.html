@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -6,6 +7,7 @@
   <title>ARTEMIS — Интерактивная карта истории</title>
 
   <!-- MapLibre GL JS v4.7.1 -->
+
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 
@@ -33,7 +35,7 @@
     /* ── Карта ── */
     #map { flex: 1; }
 
-    /* ── Боковая панель (слои + шкала времени) ── */
+    /* ── Боковая панель ── */
     #sidebar {
       width: 260px;
       background: #12121a;
@@ -45,7 +47,6 @@
       overflow-y: auto;
     }
 
-    /* ── Секции боковой панели ── */
     .section-title {
       font-size: 11px;
       text-transform: uppercase;
@@ -61,13 +62,8 @@
       gap: 10px;
       padding: 8px 0;
       border-bottom: 1px solid #1e1e2e;
-      cursor: pointer;
     }
-    .layer-dot {
-      width: 12px; height: 12px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
+    .layer-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
     .layer-label { font-size: 13px; }
     .layer-toggle {
       margin-left: auto;
@@ -100,11 +96,7 @@
       margin-bottom: 8px;
       font-variant-numeric: tabular-nums;
     }
-    #timeline-slider {
-      width: 100%;
-      accent-color: #4a6aff;
-      cursor: pointer;
-    }
+    #timeline-slider { width: 100%; accent-color: #4a6aff; cursor: pointer; }
     #timeline-labels {
       display: flex;
       justify-content: space-between;
@@ -128,7 +120,58 @@
     .popup-img   { width: 100%; border-radius: 4px; margin-bottom: 8px; max-height: 120px; object-fit: cover; }
     .popup-link  { display: inline-block; margin-top: 8px; font-size: 11px; color: #4a6aff; text-decoration: none; }
 
-    /* ── Статус загрузки ── */
+    /* ── Оверлей под панелью токена ── */
+    #token-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 998;
+    }
+
+    /* ── Панель ввода токена ── */
+    #token-panel {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 999;
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 10px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 340px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+    }
+    #token-panel h2 { font-size: 13px; color: #a0b4ff; letter-spacing: 1.5px; text-transform: uppercase; }
+    #token-panel p  { font-size: 11px; color: #666; line-height: 1.6; }
+    #token-input {
+      width: 100%;
+      padding: 9px 10px;
+      background: #0a0a0f;
+      border: 1px solid #2a2a4a;
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 12px;
+      font-family: monospace;
+      outline: none;
+    }
+    #token-input:focus { border-color: #4a6aff; }
+    #token-submit {
+      padding: 9px;
+      background: #4a6aff;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+    #token-submit:hover:not(:disabled) { background: #3a5aef; }
+    #token-submit:disabled { opacity: 0.6; cursor: default; }
+    #token-error { font-size: 11px; color: #e84a3a; display: none; }
+
+    /* ── Статус ── */
     #status-bar {
       padding: 6px 16px;
       background: #0d0d1a;
@@ -137,406 +180,282 @@
       border-top: 1px solid #1a1a2a;
     }
   </style>
+
 </head>
 <body>
 
   <!-- Шапка -->
+
   <div id="header">
     <h1>ARTEMIS</h1>
     <span>интерактивная карта истории</span>
   </div>
 
   <!-- Основной блок -->
-  <div id="main">
 
-    <!-- Карта -->
+  <div id="main">
     <div id="map"></div>
 
-    <!-- Боковая панель -->
-    <div id="sidebar">
+```
+<div id="sidebar">
+  <div id="layers-section">
+    <div class="section-title">Слои</div>
+    <div id="layers-list"></div>
+  </div>
 
-      <!-- Слои -->
-      <div id="layers-section">
-        <div class="section-title">Слои</div>
-        <div id="layers-list">
-          <!-- Генерируется из JS -->
-        </div>
-      </div>
-
-      <!-- Шкала времени -->
-      <div id="timeline-section">
-        <div class="section-title">Шкала времени</div>
-        <div id="year-display">1200</div>
-        <input
-          type="range"
-          id="timeline-slider"
-          min="-500"
-          max="2024"
-          value="1200"
-          step="1"
-        />
-        <div id="timeline-labels">
-          <span>500 до н.э.</span>
-          <span>2024</span>
-        </div>
-      </div>
-
+  <div id="timeline-section">
+    <div class="section-title">Шкала времени</div>
+    <div id="year-display">1200</div>
+    <input type="range" id="timeline-slider" min="-500" max="2024" value="1200" step="1" />
+    <div id="timeline-labels">
+      <span>500 до н.э.</span>
+      <span>2024</span>
     </div>
+  </div>
+</div>
+```
+
   </div>
 
   <!-- Статус -->
-  <div id="status-bar" id="status-bar">Загрузка данных…</div>
 
-<!-- Панель ввода токена — только для локальной разработки -->
-<div id="token-panel" style="position:fixed;top:10px;right:10px;z-index:999;background:#222;padding:8px;border-radius:6px">
-  <input id="token-input" type="password" placeholder="Airtable Token" style="width:220px;padding:4px">
-  <button onclick="startWithToken()">Загрузить</button>
-</div>
+  <div id="status-bar">Введите токен для загрузки данных…</div>
+
+  <!-- Оверлей -->
+
+  <div id="token-overlay"></div>
+
+  <!-- Панель ввода токена -->
+
+  <div id="token-panel">
+    <h2>ARTEMIS — Доступ к данным</h2>
+    <p>Введите Airtable Personal Access Token.<br>Токен не сохраняется и не передаётся никуда, кроме Airtable API.</p>
+    <input id="token-input" type="password" placeholder="patXXXXXXXXXXXXXXXX..." autocomplete="off" />
+    <div id="token-error"></div>
+    <button id="token-submit">Загрузить карту</button>
+  </div>
 
 <script>
-function startWithToken() {
-  const token = document.getElementById('token-input').value.trim();
-  document.getElementById('token-panel').style.display = 'none';
-  initAirtableLayer(map, token); // передаём токен в функцию
-}
-</script>
+  // ── КОНФИГУРАЦИЯ ──────────────────────────────────────────
+  const BASE_ID  = 'appHmf8ubeUF9nfkO';
+  const TABLE_ID = 'tblNGMtwZuLlhrZNe';
+  const API_URL  = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`;
 
-  
-<script>
-// --- КОНФИГУРАЦИЯ ---
-const AIRTABLE_TOKEN = 'ARTEMIS_TOKEN'; // новый токен, не коммитить в git
-const BASE_ID = 'appHmf8ubeUF9nfkO';
-const TABLE_ID = 'tblNGMtwZuLlhrZNe';
-const API_URL = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_ID}`;
+  // ── КОНФИГУРАЦИЯ СЛОЁВ ────────────────────────────────────
+  const LAYERS_CONFIG = [
+    { layer_id: 'romanesque', name_ru: 'Романская архитектура', color_hex: '#e8a838', is_enabled: true },
+    { layer_id: 'napoleon',   name_ru: 'Наполеоновские походы', color_hex: '#3a8fe8', is_enabled: true },
+    { layer_id: 'amur_tiger', name_ru: 'Амурский тигр',         color_hex: '#e84a3a', is_enabled: true }
+  ];
 
-// --- ЗАГРУЗКА ЗАПИСЕЙ ИЗ AIRTABLE ---
-async function loadFeatures() {
-  let allRecords = [];
-  let offset = null;
+  // ── СОСТОЯНИЕ ─────────────────────────────────────────────
+  const state = {
+    currentYear:    1200,
+    activeLayerIds: new Set(LAYERS_CONFIG.filter(l => l.is_enabled).map(l => l.layer_id)),
+    features:       [],
+    markers:        []
+  };
 
-  // Airtable отдаёт максимум 100 записей за раз — листаем страницы
-  do {
-    const url = offset ? `${API_URL}?offset=${offset}` : API_URL;
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${AIRTABLE_TOKEN}` }
+  // ── ИНИЦИАЛИЗАЦИЯ КАРТЫ ───────────────────────────────────
+  const map = new maplibregl.Map({
+    container: 'map',
+    style:     'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    center:    [20, 45],
+    zoom:      3
+  });
+  map.addControl(new maplibregl.NavigationControl(), 'top-left');
+  map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
+
+  // ── ЗАГРУЗКА ЗАПИСЕЙ ИЗ AIRTABLE (постраничная) ──────────
+  async function loadFeatures(token) {
+    let allRecords = [];
+    let offset     = null;
+
+    do {
+      const url      = offset ? `${API_URL}?offset=${offset}` : API_URL;
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!response.ok) {
+        throw new Error(response.status === 401 || response.status === 403 ? 'auth' : `HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      allRecords  = allRecords.concat(data.records);
+      offset      = data.offset;
+
+    } while (offset);
+
+    return allRecords;
+  }
+
+  // ── КОНВЕРТАЦИЯ ЗАПИСЕЙ В ФОРМАТ ПРИЛОЖЕНИЯ ───────────────
+  function parseRecords(records) {
+    return records
+      .filter(r => r.fields.is_active)
+      .map(r => ({
+        id:          r.id,
+        layer_id:    r.fields.layer_id    || '',
+        name_ru:     r.fields.name_ru     || '',
+        date_start:  r.fields.date_start  || null,
+        date_end:    r.fields.date_end    || null,
+        longitude:   r.fields.longitude   != null ? parseFloat(r.fields.longitude) : null,
+        latitude:    r.fields.latitude    != null ? parseFloat(r.fields.latitude)  : null,
+        title_short: r.fields.title_short || '',
+        image_url:   r.fields.image_url   || null,
+        source_url:  r.fields.source_url  || ''
+      }));
+  }
+
+  // ── ОБРАБОТКА КНОПКИ «ЗАГРУЗИТЬ» ─────────────────────────
+  async function handleTokenSubmit() {
+    const token   = document.getElementById('token-input').value.trim();
+    const errEl   = document.getElementById('token-error');
+    const btn     = document.getElementById('token-submit');
+    errEl.style.display = 'none';
+
+    if (!token) return;
+
+    btn.textContent = 'Загружаю…';
+    btn.disabled    = true;
+    setStatus('Загрузка данных из Airtable…');
+
+    try {
+      const records  = await loadFeatures(token);
+      state.features = parseRecords(records);
+
+      // Скрыть панель
+      document.getElementById('token-panel').style.display  = 'none';
+      document.getElementById('token-overlay').style.display = 'none';
+
+      console.log(`Загружено: ${records.length} записей, активных: ${state.features.length}`);
+      renderLayersList();
+      renderMarkers();
+
+    } catch (e) {
+      errEl.style.display = 'block';
+      errEl.textContent   = e.message === 'auth'
+        ? 'Ошибка авторизации — проверьте токен.'
+        : `Ошибка: ${e.message}`;
+      setStatus('Ошибка загрузки данных.');
+      btn.textContent = 'Загрузить карту';
+      btn.disabled    = false;
+    }
+  }
+
+  // Enter в поле токена
+  document.getElementById('token-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleTokenSubmit();
+  });
+  document.getElementById('token-submit').addEventListener('click', handleTokenSubmit);
+
+  // ── ОТРИСОВКА СПИСКА СЛОЁВ ───────────────────────────────
+  function renderLayersList() {
+    const container = document.getElementById('layers-list');
+    container.innerHTML = '';
+    LAYERS_CONFIG.forEach(layer => {
+      const isActive = state.activeLayerIds.has(layer.layer_id);
+      const item     = document.createElement('div');
+      item.className = 'layer-item';
+      item.innerHTML = `
+        <div class="layer-dot" style="background:${layer.color_hex}"></div>
+        <span class="layer-label">${layer.name_ru}</span>
+        <button class="layer-toggle ${isActive ? 'active' : ''}" data-id="${layer.layer_id}"></button>
+      `;
+      item.querySelector('button').addEventListener('click', () => toggleLayer(layer.layer_id));
+      container.appendChild(item);
+    });
+  }
+
+  // ── ПЕРЕКЛЮЧЕНИЕ СЛОЯ ─────────────────────────────────────
+  function toggleLayer(layerId) {
+    state.activeLayerIds.has(layerId)
+      ? state.activeLayerIds.delete(layerId)
+      : state.activeLayerIds.add(layerId);
+    renderLayersList();
+    renderMarkers();
+  }
+
+  // ── ВИДИМОСТЬ ОБЪЕКТА В ЗАДАННОМ ГОДУ ────────────────────
+  function visibleInYear(feature, year) {
+    const start = parseInt(feature.date_start);
+    const end   = feature.date_end ? parseInt(feature.date_end) : start + 100;
+    return year >= start && year <= end;
+  }
+
+  // ── ОТРИСОВКА МАРКЕРОВ ────────────────────────────────────
+  function renderMarkers() {
+    state.markers.forEach(m => m.remove());
+    state.markers = [];
+
+    const year = state.currentYear;
+
+    state.features.forEach(feature => {
+      if (!state.activeLayerIds.has(feature.layer_id))          return;
+      if (!visibleInYear(feature, year))                        return;
+      if (feature.longitude == null || feature.latitude == null) return;
+
+      const layerCfg = LAYERS_CONFIG.find(l => l.layer_id === feature.layer_id);
+      const color    = layerCfg ? layerCfg.color_hex : '#ffffff';
+
+      const el = document.createElement('div');
+      el.style.cssText = `
+        width:14px; height:14px; border-radius:50%;
+        background:${color}; border:2px solid rgba(255,255,255,0.6);
+        cursor:pointer; box-shadow:0 0 6px ${color};
+      `;
+
+      const dateStr = feature.date_end
+        ? `${feature.date_start} — ${feature.date_end}`
+        : feature.date_start;
+
+      const popup = new maplibregl.Popup({ offset: 14, closeButton: true, maxWidth: '300px' })
+        .setHTML(`
+          ${feature.image_url ? `<img class="popup-img" src="${feature.image_url}" alt="${feature.name_ru}">` : ''}
+          <div class="popup-title">${feature.name_ru}</div>
+          <div class="popup-date">${dateStr}</div>
+          <div class="popup-desc">${feature.title_short}</div>
+          <a class="popup-link" href="${feature.source_url}" target="_blank">→ источник</a>
+        `);
+
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([feature.longitude, feature.latitude])
+        .setPopup(popup)
+        .addTo(map);
+
+      state.markers.push(marker);
     });
 
-    if (!response.ok) {
-      console.error('Ошибка Airtable:', response.status, response.statusText);
-      break;
-    }
+    setStatus(`Показано: ${state.markers.length} объектов | Год: ${formatYear(year)}`);
+  }
 
-    const data = await response.json();
-    allRecords = allRecords.concat(data.records);
-    offset = data.offset; // undefined если страниц больше нет
+  // ── ФОРМАТИРОВАНИЕ ГОДА ───────────────────────────────────
+  function formatYear(y) {
+    return y < 0 ? `${Math.abs(y)} до н.э.` : String(y);
+  }
 
-  } while (offset);
+  // ── ШКАЛА ВРЕМЕНИ ─────────────────────────────────────────
+  const slider      = document.getElementById('timeline-slider');
+  const yearDisplay = document.getElementById('year-display');
 
-  return allRecords;
-}
-
-// --- КОНВЕРТАЦИЯ В GEOJSON ДЛЯ MAPLIBRE ---
-function recordsToGeoJSON(records) {
-  const features = records
-    .filter(r => r.fields.longitude && r.fields.latitude && r.fields.is_active)
-    .map(r => ({
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [
-          parseFloat(r.fields.longitude),
-          parseFloat(r.fields.latitude)
-        ]
-      },
-      properties: {
-        id:          r.id,
-        name_ru:     r.fields.name_ru || '',
-        name_en:     r.fields.name_en || '',
-        layer_id:    r.fields.layer_id || '',
-        layer_type:  r.fields.layer_type || '',
-        date_start:  r.fields.date_start || null,
-        date_end:    r.fields.date_end || null,
-        title_short: r.fields.title_short || '',
-        description: r.fields.description || '',
-        image_url:   r.fields.image_url || null,
-        source_url:  r.fields.source_url || ''
-      }
-    }));
-
-  return { type: 'FeatureCollection', features };
-}
-
-// --- ДОБАВЛЕНИЕ СЛОЯ НА КАРТУ ---
-async function initAirtableLayer(map) {
-  const records = await loadFeatures();
-  const geojson = recordsToGeoJSON(records);
-
-  console.log(`Загружено записей: ${records.length}, на карту: ${geojson.features.length}`);
-
-  // Источник данных
-  map.addSource('features', {
-    type: 'geojson',
-    data: geojson
+  slider.addEventListener('input', () => {
+    state.currentYear       = parseInt(slider.value);
+    yearDisplay.textContent = formatYear(state.currentYear);
+    renderMarkers();
   });
 
-  // Слой маркеров
-  map.addLayer({
-    id: 'features-points',
-    type: 'circle',
-    source: 'features',
-    paint: {
-      'circle-radius': 7,
-      'circle-color': '#E8A838',
-      'circle-stroke-width': 1.5,
-      'circle-stroke-color': '#fff'
-    }
+  // ── СТАТУСНАЯ СТРОКА ──────────────────────────────────────
+  function setStatus(msg) {
+    document.getElementById('status-bar').textContent = msg;
+  }
+
+  // ── ЗАПУСК ────────────────────────────────────────────────
+  map.on('load', () => {
+    renderLayersList();
+    setStatus('Введите токен для загрузки данных…');
   });
-
-  // Попап при клике
-  map.on('click', 'features-points', (e) => {
-    const p = e.features[0].properties;
-    new maplibregl.Popup()
-      .setLngLat(e.features[0].geometry.coordinates)
-      .setHTML(`
-        <strong>${p.name_ru}</strong><br>
-        ${p.date_start || ''}${p.date_end ? ' — ' + p.date_end : ''}<br>
-        <p>${p.title_short}</p>
-        ${p.image_url ? `<img src="${p.image_url}" style="width:100%;max-width:200px">` : ''}
-        <a href="${p.source_url}" target="_blank">Источник</a>
-      `)
-      .addTo(map);
-  });
-
-  // Курсор при наведении
-  map.on('mouseenter', 'features-points', () => map.getCanvas().style.cursor = 'pointer');
-  map.on('mouseleave', 'features-points', () => map.getCanvas().style.cursor = '');
-}
-
-// --- ЗАПУСК ПОСЛЕ ЗАГРУЗКИ КАРТЫ ---
-// Вызвать так: map.on('load', () => initAirtableLayer(map));
-map.on('load', () => initAirtableLayer(map));
 </script>
 
-<script>
-// ── КОНФИГУРАЦИЯ ──────────────────────────────────────────
-const CONFIG = {
-  // [УТОЧНИТЬ: заменить на реальные значения после подключения Airtable]
-  AIRTABLE_TOKEN: 'YOUR_AIRTABLE_TOKEN',
-  AIRTABLE_BASE_ID: 'YOUR_BASE_ID',
-  AIRTABLE_TABLE: 'Features',
-  MAP_STYLE: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-  MAP_CENTER: [20, 45],   // начальный центр карты
-  MAP_ZOOM: 3
-};
-
-// ── ТЕСТОВЫЕ ДАННЫЕ (хардкод для Фазы 0) ──────────────────
-// Заменятся на загрузку из Airtable в Фазе 1
-const TEST_FEATURES = [
-  {
-    id: 'test-001',
-    layer_id: 'romanesque',
-    layer_type: 'architecture',
-    name_ru: 'Собор Успения в Клюни',
-    name_en: 'Cluny Abbey',
-    date_start: '1088',
-    date_end: '1130',
-    longitude: 4.6578,
-    latitude: 46.4332,
-    title_short: 'Клюнийское аббатство — крупнейший романский храм Европы',
-    description: 'Бенедиктинский монастырь в Бургундии, центр клюнийской реформы XI–XII вв.',
-    image_url: null,
-    source_url: 'https://en.wikipedia.org/wiki/Cluny_Abbey',
-    tags: 'романский,монастырь,франция'
-  },
-  {
-    id: 'test-002',
-    layer_id: 'romanesque',
-    layer_type: 'architecture',
-    name_ru: 'Собор Сантьяго-де-Компостела',
-    name_en: 'Santiago de Compostela Cathedral',
-    date_start: '1075',
-    date_end: '1211',
-    longitude: -8.5442,
-    latitude: 42.8805,
-    title_short: 'Главная цель паломников Камино де Сантьяго',
-    description: 'Романско-барочный собор в Галисии, место паломничества с IX века.',
-    image_url: null,
-    source_url: 'https://en.wikipedia.org/wiki/Santiago_de_Compostela_Cathedral',
-    tags: 'романский,собор,испания,паломничество'
-  },
-  {
-    id: 'test-003',
-    layer_id: 'napoleon',
-    layer_type: 'route_point',
-    name_ru: 'Аустерлицкое сражение',
-    name_en: 'Battle of Austerlitz',
-    date_start: '1805-12-02',
-    date_end: null,
-    longitude: 16.7700,
-    latitude: 49.1333,
-    title_short: 'Величайшая победа Наполеона',
-    description: 'Сражение трёх императоров 2 декабря 1805 года. Разгром австро-российской армии.',
-    image_url: null,
-    source_url: 'https://en.wikipedia.org/wiki/Battle_of_Austerlitz',
-    tags: 'наполеон,сражение,чехия'
-  }
-];
-
-// ── ОПРЕДЕЛЕНИЕ СЛОЁВ ──────────────────────────────────────
-const LAYERS_CONFIG = [
-  { layer_id: 'romanesque', name_ru: 'Романская архитектура', color_hex: '#e8a838', icon: '🏛', is_enabled: true },
-  { layer_id: 'napoleon',   name_ru: 'Наполеоновские походы', color_hex: '#3a8fe8', icon: '⚔', is_enabled: true },
-  { layer_id: 'amur_tiger', name_ru: 'Амурский тигр',        color_hex: '#e84a3a', icon: '🐯', is_enabled: true }
-];
-
-// ── СОСТОЯНИЕ ПРИЛОЖЕНИЯ ───────────────────────────────────
-let state = {
-  currentYear: 1200,
-  activeLayerIds: new Set(LAYERS_CONFIG.filter(l => l.is_enabled).map(l => l.layer_id)),
-  features: TEST_FEATURES,
-  markers: []
-};
-
-// ── ИНИЦИАЛИЗАЦИЯ КАРТЫ ────────────────────────────────────
-const map = new maplibregl.Map({
-  container: 'map',
-  style: CONFIG.MAP_STYLE,
-  center: CONFIG.MAP_CENTER,
-  zoom: CONFIG.MAP_ZOOM
-});
-
-map.addControl(new maplibregl.NavigationControl(), 'top-left');
-map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
-
-// ── ОТРИСОВКА СЛОЁВ В САЙДБАРЕ ────────────────────────────
-function renderLayersList() {
-  const container = document.getElementById('layers-list');
-  container.innerHTML = '';
-  LAYERS_CONFIG.forEach(layer => {
-    const isActive = state.activeLayerIds.has(layer.layer_id);
-    const item = document.createElement('div');
-    item.className = 'layer-item';
-    item.innerHTML = `
-      <div class="layer-dot" style="background:${layer.color_hex}"></div>
-      <span class="layer-label">${layer.name_ru}</span>
-      <button class="layer-toggle ${isActive ? 'active' : ''}" data-id="${layer.layer_id}"></button>
-    `;
-    item.querySelector('button').addEventListener('click', () => toggleLayer(layer.layer_id));
-    container.appendChild(item);
-  });
-}
-
-// ── ПЕРЕКЛЮЧЕНИЕ СЛОЯ ──────────────────────────────────────
-function toggleLayer(layerId) {
-  if (state.activeLayerIds.has(layerId)) {
-    state.activeLayerIds.delete(layerId);
-  } else {
-    state.activeLayerIds.add(layerId);
-  }
-  renderLayersList();
-  renderMarkers();
-}
-
-// ── ФИЛЬТРАЦИЯ ПО ГОДУ ─────────────────────────────────────
-function featureVisibleInYear(feature, year) {
-  const start = parseInt(feature.date_start);
-  const end   = feature.date_end ? parseInt(feature.date_end) : start + 100;
-  return year >= start && year <= end;
-}
-
-// ── ОТРИСОВКА МАРКЕРОВ ─────────────────────────────────────
-function renderMarkers() {
-  // Удаляем старые маркеры
-  state.markers.forEach(m => m.remove());
-  state.markers = [];
-
-  const year = state.currentYear;
-
-  state.features.forEach(feature => {
-    // Пропускаем если слой выключен
-    if (!state.activeLayerIds.has(feature.layer_id)) return;
-    // Пропускаем если не попадает в год
-    if (!featureVisibleInYear(feature, year)) return;
-    // Пропускаем если нет координат
-    if (feature.longitude == null || feature.latitude == null) return;
-
-    const layerConfig = LAYERS_CONFIG.find(l => l.layer_id === feature.layer_id);
-    const color = layerConfig ? layerConfig.color_hex : '#ffffff';
-
-    // Создаём DOM-элемент маркера
-    const el = document.createElement('div');
-    el.style.cssText = `
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      background: ${color};
-      border: 2px solid rgba(255,255,255,0.6);
-      cursor: pointer;
-      box-shadow: 0 0 6px ${color};
-    `;
-
-    // Попап
-    const dateStr = feature.date_end
-      ? `${feature.date_start} — ${feature.date_end}`
-      : feature.date_start;
-    const imgHtml = feature.image_url
-      ? `<img class="popup-img" src="${feature.image_url}" alt="${feature.name_ru}" />`
-      : '';
-
-    const popup = new maplibregl.Popup({ offset: 14, closeButton: true, maxWidth: '300px' })
-      .setHTML(`
-        ${imgHtml}
-        <div class="popup-title">${feature.name_ru}</div>
-        <div class="popup-date">${dateStr}</div>
-        <div class="popup-desc">${feature.title_short}</div>
-        <a class="popup-link" href="${feature.source_url}" target="_blank">→ источник</a>
-      `);
-
-    const marker = new maplibregl.Marker({ element: el })
-      .setLngLat([feature.longitude, feature.latitude])
-      .setPopup(popup)
-      .addTo(map);
-
-    state.markers.push(marker);
-  });
-
-  setStatus(`Показано: ${state.markers.length} объектов | Год: ${formatYear(year)}`);
-}
-
-// ── ФОРМАТИРОВАНИЕ ГОДА ────────────────────────────────────
-function formatYear(y) {
-  return y < 0 ? `${Math.abs(y)} до н.э.` : String(y);
-}
-
-// ── ШКАЛА ВРЕМЕНИ ──────────────────────────────────────────
-const slider = document.getElementById('timeline-slider');
-const yearDisplay = document.getElementById('year-display');
-
-slider.addEventListener('input', () => {
-  state.currentYear = parseInt(slider.value);
-  yearDisplay.textContent = formatYear(state.currentYear);
-  renderMarkers();
-});
-
-// ── СТАТУСНАЯ СТРОКА ───────────────────────────────────────
-function setStatus(msg) {
-  document.getElementById('status-bar').textContent = msg;
-}
-
-// ── ЗАПУСК ПОСЛЕ ЗАГРУЗКИ КАРТЫ ───────────────────────────
-map.on('load', () => {
-  renderLayersList();
-  renderMarkers();
-  setStatus(`Фаза 0 — тестовые данные | ${TEST_FEATURES.length} записей`);
-});
-
-// ── [TODO: Фаза 1] Загрузка из Airtable ───────────────────
-// async function loadFromAirtable() {
-//   const url = `https://api.airtable.com/v0/${CONFIG.AIRTABLE_BASE_ID}/${CONFIG.AIRTABLE_TABLE}`;
-//   const res = await fetch(url, { headers: { Authorization: `Bearer ${CONFIG.AIRTABLE_TOKEN}` } });
-//   const json = await res.json();
-//   state.features = json.records.map(r => r.fields);
-//   renderMarkers();
-// }
-</script>
 </body>
 </html>
