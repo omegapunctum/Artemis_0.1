@@ -1,9 +1,11 @@
 name: Export Airtable Data
 
+permissions:
+  contents: write
+
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: "0 */6 * * *"
   workflow_dispatch:
 
 jobs:
@@ -11,27 +13,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install dependencies
         run: npm install axios
 
-      - name: Run export script
+      - name: Export Airtable
         env:
           AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
           AIRTABLE_BASE: ${{ secrets.AIRTABLE_BASE }}
         run: node scripts/export-airtable.js
 
-      - name: Commit updated data
+      - name: Commit data
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
-          git add data/*.json
+          git add data/*.json data/*.geojson
           git commit -m "Update Airtable export" || echo "No changes"
           git push
