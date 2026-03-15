@@ -403,8 +403,35 @@
     #token-error { font-size: 11px; color: #e84a3a; display: none; }
 
     /* Позиции встроенных контролов карты */
-    .maplibregl-ctrl-top-left  { top: 16px; left: 288px; }
-    .maplibregl-ctrl-bottom-left { bottom: 110px; left: 16px; }
+    .maplibregl-ctrl-top-right  { top: 16px; right: 16px; }
+    .maplibregl-ctrl-bottom-right { bottom: 16px; right: 16px; }
+
+    /* Полупрозрачная навигация */
+    .maplibregl-ctrl-group {
+      background: rgba(8, 8, 20, 0.55) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      border: 1px solid rgba(255,255,255,0.08) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+    }
+    .maplibregl-ctrl-group button {
+      background: transparent !important;
+    }
+    .maplibregl-ctrl-group button + button {
+      border-top: 1px solid rgba(255,255,255,0.06) !important;
+    }
+    .maplibregl-ctrl-icon { filter: invert(0.7); }
+    .maplibregl-ctrl-scale {
+      background: rgba(8, 8, 20, 0.55) !important;
+      backdrop-filter: blur(10px) !important;
+      -webkit-backdrop-filter: blur(10px) !important;
+      border: 1px solid rgba(255,255,255,0.1) !important;
+      border-radius: 6px !important;
+      color: rgba(200,210,255,0.7) !important;
+      font-size: 10px !important;
+      padding: 2px 6px !important;
+    }
   </style>
 </head>
 <body>
@@ -528,8 +555,8 @@
     center:    [12, 48],
     zoom:      4,
   });
-  map.addControl(new maplibregl.NavigationControl(), 'top-left');
-  map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-left');
+  map.addControl(new maplibregl.NavigationControl(), 'top-right');
+  map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
 
   // ── СМЕНА СТИЛЯ КАРТЫ ─────────────────────────────────────
   document.querySelectorAll('.style-btn').forEach(btn => {
@@ -615,10 +642,15 @@
   // Если date_end отсутствует — здание стоит до сих пор (всегда visible после постройки).
   function visible(f) {
     const s = parseInt(f.date_start);
-    const e = f.date_end ? parseInt(f.date_end) : null;
+    if (isNaN(s)) return false;
+    // date_end: null, пустая строка или отсутствие = объект существует до сих пор
+    const rawEnd = (f.date_end !== null && f.date_end !== '' && f.date_end !== undefined)
+      ? parseInt(f.date_end) : null;
+    const e = (rawEnd !== null && !isNaN(rawEnd)) ? rawEnd : null;
+
     if (state.range) {
-      if (s > state.to)                  return false; // ещё не построено
-      if (e !== null && e < state.from)  return false; // уже разрушено
+      if (s > state.to)                  return false; // ещё не построено до конца диапазона
+      if (e !== null && e < state.from)  return false; // уже разрушено до начала диапазона
       return true;
     } else {
       if (s > state.year)                return false; // ещё не построено
@@ -649,14 +681,18 @@
         width:11px;height:11px;border-radius:50%;
         background:${color};border:2px solid rgba(255,255,255,0.45);
         cursor:pointer;box-shadow:0 0 8px ${color}99;
-        transition:transform 0.15s, box-shadow 0.15s;
+        transition:width 0.12s, height 0.12s, box-shadow 0.12s, margin 0.12s;
       `;
       el.addEventListener('mouseenter', () => {
-        el.style.transform  = 'scale(1.6)';
-        el.style.boxShadow  = `0 0 14px ${color}cc`;
+        el.style.width      = '17px';
+        el.style.height     = '17px';
+        el.style.margin     = '-3px 0 0 -3px';
+        el.style.boxShadow  = `0 0 16px ${color}cc`;
       });
       el.addEventListener('mouseleave', () => {
-        el.style.transform  = 'scale(1)';
+        el.style.width      = '11px';
+        el.style.height     = '11px';
+        el.style.margin     = '0';
         el.style.boxShadow  = `0 0 8px ${color}99`;
       });
 
