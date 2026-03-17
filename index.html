@@ -12,6 +12,21 @@
     <button id="sidebar-toggle" type="button" aria-label="Свернуть или развернуть панель">☰</button>
     <h1>ARTEMIS</h1>
 
+    <div id="auth-buttons" class="top-controls">
+      <button id="login-btn" type="button">Login</button>
+      <button id="register-btn" type="button">Register</button>
+    </div>
+
+    <section id="profile-panel" hidden>
+      <h2>Профиль</h2>
+      <div class="profile-actions">
+        <button id="open-draft-editor-btn" type="button">Создать черновик</button>
+        <button id="refresh-drafts-btn" type="button">Мои черновики</button>
+        <button id="logout-btn" type="button">Logout</button>
+      </div>
+      <ul id="drafts-list"></ul>
+    </section>
+
     <label for="search-input">Поиск по названию</label>
     <input id="search-input" type="search" placeholder="Введите название" />
 
@@ -40,20 +55,72 @@
   <main id="map"></main>
   <div id="status">Загрузка данных...</div>
 
+  <div id="login-modal" class="modal" hidden>
+    <div class="modal-content">
+      <button type="button" data-close-modal>×</button>
+      <h3>Вход / Регистрация</h3>
+      <form id="login-form" data-mode="login">
+        <label>Email <input type="email" name="email" required /></label>
+        <label>Пароль <input type="password" name="password" minlength="8" required /></label>
+        <button type="submit">Продолжить</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="draft-modal" class="modal" hidden>
+    <div class="modal-content draft-modal-content">
+      <button type="button" data-close-modal>×</button>
+      <h3>Редактор черновика</h3>
+      <form id="draft-form">
+        <label>name_ru <input name="name_ru" required /></label>
+        <label>name_en <input name="name_en" /></label>
+        <label>layer_id
+          <select name="layer_id" required>
+            <option value="">Выберите слой</option>
+          </select>
+        </label>
+        <label>date_start <input name="date_start" inputmode="numeric" /></label>
+        <label>date_construction_end <input name="date_construction_end" inputmode="numeric" /></label>
+        <label>date_end <input name="date_end" inputmode="numeric" /></label>
+        <label>longitude <input name="longitude" required /></label>
+        <label>latitude <input name="latitude" required /></label>
+        <label>influence_radius_km <input name="influence_radius_km" /></label>
+        <label>title_short <input name="title_short" /></label>
+        <label>description <textarea name="description"></textarea></label>
+        <label>tags (comma separated) <input name="tags" /></label>
+        <label>image upload <input name="image_file" type="file" accept=".jpg,.jpeg,.png,.webp,image/*" /></label>
+        <label>source_media_url <input name="source_media_url" /></label>
+        <label>source_license <input name="source_license" /></label>
+        <div id="draft-errors"></div>
+        <button type="submit">Сохранить черновик</button>
+      </form>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script type="module">
     import { loadFeatures } from './js/data.js';
     import { initMap } from './js/map.js';
     import { initUI } from './js/ui.js';
+    import { refreshToken } from './js/auth.js';
+    import { initUGCUI } from './js/ui.ugc.js';
 
     const status = document.getElementById('status');
 
     try {
+      try {
+        await refreshToken();
+      } catch (error) {
+        console.info('Сессия не восстановлена:', error.message);
+      }
+
       const features = await loadFeatures();
       const map = initMap('map', features);
       initUI(map, features);
+      await initUGCUI();
       status.textContent = `Загружено объектов: ${features.features?.length ?? 0}`;
     } catch (error) {
+      console.error('Ошибка инициализации:', error);
       status.textContent = 'Ошибка загрузки данных. Проверьте консоль.';
     }
   </script>
