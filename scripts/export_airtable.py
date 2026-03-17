@@ -16,10 +16,11 @@
   - data/features.geojson     : GeoJSON FeatureCollection
   - data/layers.json          : агрегированные метаданные слоёв
   - data/export_errors.log    : ошибки в формате JSON Lines
+  - data/export_meta.json     : метаданные экспорта (timestamp, counts, source)
 
 Если нет обязательных переменных/параметров для API, скрипт автоматически переходит
 в dry-run режим: читает tests/sample_airtable_response.json (если существует) и пишет
-выход в data/_test_*.json.
+выход в data/_test_*.
 """
 
 from __future__ import annotations
@@ -60,6 +61,11 @@ def parse_args() -> argparse.Namespace:
         "--exclude-without-geometry",
         action="store_true",
         help="Исключить из GeoJSON записи без координат (по умолчанию такие записи остаются)",
+    )
+    parser.add_argument(
+        "--include-inactive",
+        action="store_true",
+        help="Включать записи с is_active=False (по умолчанию такие записи пропускаются)",
     )
     parser.add_argument("--commit", action="store_true", help="После экспорта выполнить git add/commit")
     parser.add_argument("--self-test", action="store_true", help="Запустить минимальную самопроверку и выйти")
@@ -500,19 +506,10 @@ def main() -> int:
     skipped_inactive = 0
     for record in records:
         mapped = map_record(record, errors)
-        if mapped.get("is_active") is False:
+        if mapped.get("is_active") is False and not args.include_inactive:
             skipped_inactive += 1
             continue
         mapped_records.append(mapped)
-
-    errors.append(
-        {
-            "record_id": "__summary__",
-            "field": "is_active",
-            "error": "skipped records with is_active=False",
-            "value": skipped_inactive,
-        }
-    )
 
     mapped_records = sort_mapped_records(mapped_records)
     if args.exclude_without_geometry:
@@ -524,9 +521,10 @@ def main() -> int:
     export_meta = {
         "timestamp": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "source": "dry-run" if dry_run else "airtable",
-        "records_requested": len(records),
+        "records_total_source": len(records),
         "records_exported": len(mapped_records),
         "errors": len(errors),
+        "skipped_inactive": skipped_inactive,
         "duration_seconds": round(time.time() - started_at, 3),
     }
 
@@ -547,7 +545,8 @@ def main() -> int:
         print(f"Критическая ошибка сериализации/записи: {exc}", file=sys.stderr)
         return 1
 
-    print(f"Успешно: {len(mapped_records)} | Ошибок: {len(errors)} | Пропущено по is_active: {skipped_inactive}")
+    # Финальный вывод — в формате, согласованном с мастер-промптом
+    print(f"Успешно: {len(mapped_records)} | Ошибок: {len(errors)} | Source total: {len(records)}")
 
     if args.commit:
         maybe_commit([raw_path, geojson_path, layers_path, export_meta_path, error_log_path], len(mapped_records))
@@ -566,7 +565,18 @@ if __name__ == "__main__":
 # 1) Созданы data/features.json, data/features.geojson, data/layers.json, data/export_meta.json (или data/_test_* в dry-run).
 # 2) В data/*export_errors.log есть JSON Lines с ключами record_id/field/error/value.
 # 3) features.geojson имеет influence_radius_km и has_geometry в properties.
-# 4) В выводе есть строка: Успешно: N | Ошибок: M | Пропущено по is_active: K.
+# 4) В выводе есть строка: Успешно: N | Ошибок: M | Source total: T.
 #
-# Пример строки вывода:
-# Успешно: N | Ошибок: M
+# --- Как тестировать ---
+# 1) Dry-run:
+#    python scripts/export_airtable.py --dry-run --out-dir data --max-records 5
+#    Проверить: data/_test_features.geojson, data/_test_export_meta.json, data/_test_export_errors.log
+# 2) С реальным Airtable (если есть env):
+#    AIRTABLE_TOKEN=... AIRTABLE_BASE=... python scripts/export_airtable.py --out-dir data --max-records 50
+#    Проверить: data/features.geojson, data/export_meta.json и вывод "Успешно: ..."
+# 3) Проверить, что features.geojson.features[*].properties содержит поля:
+#    - influence_radius_km
+#    - has_geometry
+# 4) Проверить флаг --include-inactive:
+#    а) по умолчанию: записи с is_active=False пропускаются
+#    б) с --include-inactive: экспортируются все записи
