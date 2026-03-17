@@ -1,0 +1,58 @@
+name: Export Airtable Data
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Ensure data directory exists
+        run: mkdir -p data
+
+      - name: Run Airtable export
+        env:
+          AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
+          AIRTABLE_BASE: ${{ secrets.AIRTABLE_BASE }}
+          AIRTABLE_TABLE: Features
+        run: |
+          set -euo pipefail
+          python scripts/export_airtable.py
+          success_count=$(find data -maxdepth 1 -type f \( -name '*.json' -o -name '*.geojson' \) | wc -l)
+          error_count=0
+          echo "Успешно: ${success_count} | Ошибок: ${error_count}"
+
+      - name: Debug data files
+        run: ls -lh data/
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add data/*.json data/*.geojson || true
+          git commit -m "Export Airtable data [auto]" || echo "No changes"
+          git push
+
+# CHECK:
+# - Добавить secrets в GitHub:
+#   AIRTABLE_TOKEN
+#   AIRTABLE_BASE
+# - Проверить ручной запуск workflow
+# - Проверить появление data/features.geojson
