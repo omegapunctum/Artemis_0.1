@@ -5,104 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ARTEMIS</title>
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
-  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
+  <aside id="sidebar">
+    <button id="sidebar-toggle" type="button" aria-label="Свернуть или развернуть панель">☰</button>
+    <h1>ARTEMIS</h1>
 
-  <!-- КАРТА -->
-  <div id="map"></div>
+    <label for="search-input">Поиск по названию</label>
+    <input id="search-input" type="search" placeholder="Введите название" />
 
-  <!-- ЛЕВАЯ ПАНЕЛЬ -->
-  <div id="sidebar" class="glass">
-    <div id="sidebar-header">
-      <h1>ARTEMIS</h1>
-      <div class="subtitle">интерактивная карта истории</div>
-    </div>
-    <div id="sidebar-body">
+    <label for="layer-filter">Фильтр по слою</label>
+    <select id="layer-filter">
+      <option value="">Все слои</option>
+    </select>
 
-      <!-- Поиск -->
+    <div class="date-filters">
       <div>
-        <div class="section-label">Поиск</div>
-        <div id="search-wrap">
-          <input id="search-input" type="text" placeholder="Название или тег…" autocomplete="off" />
-          <button id="search-clear" title="Очистить">×</button>
-        </div>
-        <div id="search-results"></div>
+        <label for="date-from">Дата от</label>
+        <input id="date-from" type="number" placeholder="Напр. 1800" />
       </div>
-
-      <!-- Категории -->
-      <div id="categories-section">
-        <div class="section-label">Категория</div>
-        <div id="categories-list">
-          <!-- Пока одна категория — Архитектура; при добавлении новых layer_type они появятся здесь -->
-          <div class="cat-row active" data-cat="architecture">
-            <span class="cat-icon">🏛</span>
-            <span class="cat-label">Архитектура</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Слои -->
-      <div id="layers-section">
-        <div class="section-label">Слои</div>
-        <div id="layers-list"></div>
-      </div>
-
-      <!-- Зоны влияния -->
       <div>
-        <div class="section-label">Визуализация</div>
-        <div class="viz-row">
-          <span class="viz-label">Зоны влияния</span>
-          <button class="layer-toggle active" id="zones-toggle"></button>
-        </div>
-      </div>
-
-      <!-- Стиль карты -->
-      <div>
-        <div class="section-label">Стиль карты</div>
-        <div id="style-buttons">
-          <button class="style-btn active" data-style="dark">Тёмная</button>
-          <button class="style-btn" data-style="light">Светлая</button>
-          <button class="style-btn" data-style="voyager">Классика</button>
-        </div>
-      </div>
-
-      <!-- Статус -->
-      <div id="status-line">Загрузка данных…</div>
-
-    </div>
-  </div>
-
-  <!-- ШКАЛА ВРЕМЕНИ -->
-  <div id="timeline-wrap">
-    <div id="timeline-bar">
-      <div id="tl-main">
-        <div id="year-display">1200</div>
-        <input type="range" id="timeline-slider" min="-500" max="2024" value="1200" step="1" />
-        <div id="tl-range-toggle">
-          <input type="checkbox" id="range-checkbox" />
-          <label for="range-checkbox">Диапазон</label>
-        </div>
-      </div>
-      <div id="range-sliders">
-        <div class="rrow">
-          <span class="rlabel">От</span>
-          <input type="range" id="range-from" min="-500" max="2024" value="1000" step="1" />
-          <span class="rval" id="rfrom-val">1000</span>
-        </div>
-        <div class="rrow">
-          <span class="rlabel">До</span>
-          <input type="range" id="range-to" min="-500" max="2024" value="1400" step="1" />
-          <span class="rval" id="rto-val">1400</span>
-        </div>
+        <label for="date-to">Дата до</label>
+        <input id="date-to" type="number" placeholder="Напр. 1950" />
       </div>
     </div>
-  </div>
 
-  <script src="js/state.js"></script>
-  <script src="js/map.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/data.js"></script>
+    <section>
+      <h2>Объекты</h2>
+      <ul id="object-list"></ul>
+    </section>
+  </aside>
+
+  <main id="map"></main>
+  <div id="status">Загрузка данных...</div>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script type="module">
+    import { loadFeatures } from './js/data.js';
+    import { initMap } from './js/map.js';
+    import { initUI } from './js/ui.js';
+
+    const status = document.getElementById('status');
+
+    try {
+      const features = await loadFeatures();
+      const map = initMap('map', features);
+      initUI(map, features);
+      status.textContent = `Загружено объектов: ${features.features?.length ?? 0}`;
+    } catch (error) {
+      status.textContent = 'Ошибка загрузки данных. Проверьте консоль.';
+    }
+  </script>
 </body>
 </html>
