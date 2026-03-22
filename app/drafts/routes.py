@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.service import User, get_current_user, get_db
 from app.drafts.schemas import DraftCreate, DraftResponse, DraftUpdate
+from app.security.rate_limit import rate_limit
 from app.drafts.service import (
     create_draft,
     delete_draft,
@@ -25,6 +26,7 @@ def get_drafts(
 @router.post("", response_model=DraftResponse, status_code=status.HTTP_201_CREATED)
 def create_draft_endpoint(
     payload: DraftCreate,
+    _: None = Depends(rate_limit(10, 60, prefix="draft-create", include_path=True)),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -35,6 +37,7 @@ def create_draft_endpoint(
 def update_draft_endpoint(
     draft_id: int,
     payload: DraftUpdate,
+    _: None = Depends(rate_limit(20, 60, prefix="draft-update", include_path=True)),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
