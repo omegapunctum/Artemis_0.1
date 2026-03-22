@@ -1,6 +1,7 @@
 import { login, register, logout, getCurrentUser, fetchWithAuth } from './auth.js';
 import { submitForModeration, validateDraftPayload } from './ugc.js';
 import { loadLayers } from './data.js';
+import { showError, clearError, showLoading, hideLoading } from './ux.js';
 
 let ugcInitialized = false;
 
@@ -25,13 +26,22 @@ export async function uploadImage(file, draftId) {
   formData.append('file', file);
   formData.append('draft_id', String(draftId));
 
-  const response = await fetchWithAuth('/uploads/image', {
-    method: 'POST',
-    body: formData
-  });
+  showLoading();
+  try {
+    const response = await fetchWithAuth('/uploads/image', {
+      method: 'POST',
+      body: formData
+    });
 
-  const data = await parseDraftResponse(response, 'Не удалось загрузить изображение.');
-  return String(data?.url || '').trim();
+    const data = await parseDraftResponse(response, 'Не удалось загрузить изображение.');
+    clearError();
+    return String(data?.url || '').trim();
+  } catch (error) {
+    showError(error.message || 'Не удалось загрузить изображение.');
+    throw error;
+  } finally {
+    hideLoading();
+  }
 }
 
 function cloneDrafts() {
@@ -66,10 +76,19 @@ async function parseDraftResponse(response, fallbackMessage) {
 }
 
 export async function loadDrafts() {
-  const response = await fetchWithAuth('/drafts', { method: 'GET' });
-  const data = await parseDraftResponse(response, 'Не удалось загрузить черновики.');
-  draftState.drafts = Array.isArray(data) ? data.map(normalizeDraft).filter(Boolean) : [];
-  return cloneDrafts();
+  showLoading();
+  try {
+    const response = await fetchWithAuth('/drafts', { method: 'GET' });
+    const data = await parseDraftResponse(response, 'Не удалось загрузить черновики.');
+    draftState.drafts = Array.isArray(data) ? data.map(normalizeDraft).filter(Boolean) : [];
+    clearError();
+    return cloneDrafts();
+  } catch (error) {
+    showError(error.message || 'Не удалось загрузить черновики.');
+    throw error;
+  } finally {
+    hideLoading();
+  }
 }
 
 export async function createDraft(data) {
@@ -81,14 +100,23 @@ export async function createDraft(data) {
     throw error;
   }
 
-  const response = await fetchWithAuth('/drafts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(check.data)
-  });
-  const createdDraft = normalizeDraft(await parseDraftResponse(response, 'Не удалось создать черновик.'));
-  if (createdDraft) draftState.drafts = [createdDraft, ...draftState.drafts.filter((draft) => draft.id !== createdDraft.id)];
-  return createdDraft;
+  showLoading();
+  try {
+    const response = await fetchWithAuth('/drafts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(check.data)
+    });
+    const createdDraft = normalizeDraft(await parseDraftResponse(response, 'Не удалось создать черновик.'));
+    if (createdDraft) draftState.drafts = [createdDraft, ...draftState.drafts.filter((draft) => draft.id !== createdDraft.id)];
+    clearError();
+    return createdDraft;
+  } catch (error) {
+    showError(error.message || 'Не удалось создать черновик.');
+    throw error;
+  } finally {
+    hideLoading();
+  }
 }
 
 export async function updateDraft(id, data) {
@@ -100,26 +128,44 @@ export async function updateDraft(id, data) {
     throw error;
   }
 
-  const response = await fetchWithAuth(`/drafts/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(check.data)
-  });
-  const updatedDraft = normalizeDraft(await parseDraftResponse(response, 'Не удалось обновить черновик.'));
-  if (updatedDraft) {
-    const hasDraft = draftState.drafts.some((draft) => draft.id === updatedDraft.id);
-    draftState.drafts = hasDraft
-      ? draftState.drafts.map((draft) => (draft.id === updatedDraft.id ? updatedDraft : draft))
-      : [updatedDraft, ...draftState.drafts];
+  showLoading();
+  try {
+    const response = await fetchWithAuth(`/drafts/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(check.data)
+    });
+    const updatedDraft = normalizeDraft(await parseDraftResponse(response, 'Не удалось обновить черновик.'));
+    if (updatedDraft) {
+      const hasDraft = draftState.drafts.some((draft) => draft.id === updatedDraft.id);
+      draftState.drafts = hasDraft
+        ? draftState.drafts.map((draft) => (draft.id === updatedDraft.id ? updatedDraft : draft))
+        : [updatedDraft, ...draftState.drafts];
+    }
+    clearError();
+    return updatedDraft;
+  } catch (error) {
+    showError(error.message || 'Не удалось обновить черновик.');
+    throw error;
+  } finally {
+    hideLoading();
   }
-  return updatedDraft;
 }
 
 export async function deleteDraft(id) {
-  const response = await fetchWithAuth(`/drafts/${id}`, { method: 'DELETE' });
-  await parseDraftResponse(response, 'Не удалось удалить черновик.');
-  draftState.drafts = draftState.drafts.filter((draft) => String(draft.id) !== String(id));
-  return cloneDrafts();
+  showLoading();
+  try {
+    const response = await fetchWithAuth(`/drafts/${id}`, { method: 'DELETE' });
+    await parseDraftResponse(response, 'Не удалось удалить черновик.');
+    draftState.drafts = draftState.drafts.filter((draft) => String(draft.id) !== String(id));
+    clearError();
+    return cloneDrafts();
+  } catch (error) {
+    showError(error.message || 'Не удалось удалить черновик.');
+    throw error;
+  } finally {
+    hideLoading();
+  }
 }
 
 export async function initUGCUI() {
@@ -320,19 +366,45 @@ async function refreshDraftsList(els, state) {
     drafts.forEach((draft) => {
       const item = document.createElement('li');
       item.className = 'draft-item';
-      item.innerHTML = `
-        <strong>${escapeHtml(draft.name_ru || 'Без названия')}</strong>
-        <span class="status-label">${humanStatus(draft.status)}</span>
-        ${draft.image_url ? `<a class="draft-image-link" href="${escapeHtml(draft.image_url)}" target="_blank" rel="noreferrer">Image attached</a>` : ''}
-        <div class="draft-actions">
-          <button type="button" data-action="edit">Edit</button>
-          <button type="button" data-action="delete">Delete</button>
-          <button type="button" data-action="submit">Submit for moderation</button>
-        </div>
-      `;
 
-      item.querySelector('[data-action="edit"]').addEventListener('click', () => openDraftEditor(els, state, draft));
-      item.querySelector('[data-action="delete"]').addEventListener('click', async () => {
+      const title = document.createElement('strong');
+      title.textContent = String(draft?.name_ru || 'Без названия');
+      item.appendChild(title);
+
+      const status = document.createElement('span');
+      status.className = 'status-label';
+      status.textContent = humanStatus(draft?.status);
+      item.appendChild(status);
+
+      if (draft?.image_url) {
+        const link = document.createElement('a');
+        link.className = 'draft-image-link';
+        link.href = String(draft.image_url);
+        link.target = '_blank';
+        link.rel = 'noreferrer';
+        link.textContent = 'Image attached';
+        item.appendChild(link);
+      }
+
+      const actions = document.createElement('div');
+      actions.className = 'draft-actions';
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.dataset.action = 'edit';
+      editBtn.textContent = 'Edit';
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.dataset.action = 'delete';
+      deleteBtn.textContent = 'Delete';
+      const submitBtn = document.createElement('button');
+      submitBtn.type = 'button';
+      submitBtn.dataset.action = 'submit';
+      submitBtn.textContent = 'Submit for moderation';
+      actions.append(editBtn, deleteBtn, submitBtn);
+      item.appendChild(actions);
+
+      editBtn.addEventListener('click', () => openDraftEditor(els, state, draft));
+      deleteBtn.addEventListener('click', async () => {
         try {
           await deleteDraft(draft.id);
           showToast('Черновик удалён.');
@@ -343,7 +415,7 @@ async function refreshDraftsList(els, state) {
           showToast(error.message || 'Не удалось удалить черновик.');
         }
       });
-      item.querySelector('[data-action="submit"]').addEventListener('click', async () => {
+      submitBtn.addEventListener('click', async () => {
         try {
           await submitForModeration(draft.id);
           showToast('Черновик отправлен на модерацию.');

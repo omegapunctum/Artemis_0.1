@@ -1,5 +1,6 @@
 import { loadLayers } from './data.js';
 import { updateMapData, setLayerLookup, focusFeatureOnMap, getMapFeatureCount } from './map.js';
+import { debounce } from './ux.js';
 
 // Инициализирует фильтры, единое состояние и синхронизацию списка с картой.
 export async function initUI(map, features) {
@@ -58,8 +59,11 @@ export async function initUI(map, features) {
     applyState();
   };
 
+  const debouncedSearchInput = debounce(syncStateFromInputs, 300);
+
   [elements.searchInput, elements.layerFilter, elements.dateFrom, elements.dateTo].forEach((node) => {
-    node.addEventListener('input', syncStateFromInputs);
+    const handler = node === elements.searchInput ? debouncedSearchInput : syncStateFromInputs;
+    node.addEventListener('input', handler);
     node.addEventListener('change', syncStateFromInputs);
   });
 

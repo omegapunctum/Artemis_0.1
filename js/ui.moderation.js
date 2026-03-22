@@ -1,4 +1,5 @@
 import { fetchWithAuth, getCurrentUser } from './auth.js';
+import { showError, clearError, showLoading, hideLoading } from './ux.js';
 
 let moderationInitialized = false;
 
@@ -15,6 +16,7 @@ export async function loadModerationQueue() {
   if (!panel || !list) return [];
 
   moderationState.isLoading = true;
+  showLoading();
 
   try {
     const response = await fetchWithAuth('/moderation/queue', { method: 'GET' });
@@ -29,48 +31,69 @@ export async function loadModerationQueue() {
     const data = await parseModerationResponse(response, 'Не удалось загрузить очередь модерации.');
     moderationState.isAdmin = true;
     moderationState.queue = Array.isArray(data) ? data : [];
+    clearError();
     renderModerationList();
     return cloneQueue();
   } catch (error) {
     if (error?.status >= 500 || error?.responseStatus >= 500) {
       console.error('Ошибка загрузки очереди модерации:', error);
     }
+    showError(error?.message || 'Не удалось загрузить очередь модерации.');
     throw error;
   } finally {
     moderationState.isLoading = false;
+    hideLoading();
   }
 }
 
 export async function approveDraft(id) {
-  const response = await fetchWithAuth(`/moderation/${id}/approve`, { method: 'POST' });
+  showLoading();
+  try {
+    const response = await fetchWithAuth(`/moderation/${id}/approve`, { method: 'POST' });
 
-  if (response.status === 403) {
-    moderationState.isAdmin = false;
-    moderationState.queue = [];
+    if (response.status === 403) {
+      moderationState.isAdmin = false;
+      moderationState.queue = [];
+      renderModerationList();
+      return cloneQueue();
+    }
+
+    await parseModerationResponse(response, 'Не удалось одобрить черновик.');
+    moderationState.queue = moderationState.queue.filter((draft) => String(draft?.id) !== String(id));
+    clearError();
     renderModerationList();
     return cloneQueue();
+  } catch (error) {
+    showError(error?.message || 'Не удалось одобрить черновик.');
+    throw error;
+  } finally {
+    hideLoading();
   }
-
-  await parseModerationResponse(response, 'Не удалось одобрить черновик.');
-  moderationState.queue = moderationState.queue.filter((draft) => String(draft?.id) !== String(id));
-  renderModerationList();
-  return cloneQueue();
 }
 
 export async function rejectDraft(id) {
-  const response = await fetchWithAuth(`/moderation/${id}/reject`, { method: 'POST' });
+  showLoading();
+  try {
+    const response = await fetchWithAuth(`/moderation/${id}/reject`, { method: 'POST' });
 
-  if (response.status === 403) {
-    moderationState.isAdmin = false;
-    moderationState.queue = [];
+    if (response.status === 403) {
+      moderationState.isAdmin = false;
+      moderationState.queue = [];
+      renderModerationList();
+      return cloneQueue();
+    }
+
+    await parseModerationResponse(response, 'Не удалось отклонить черновик.');
+    moderationState.queue = moderationState.queue.filter((draft) => String(draft?.id) !== String(id));
+    clearError();
     renderModerationList();
     return cloneQueue();
+  } catch (error) {
+    showError(error?.message || 'Не удалось отклонить черновик.');
+    throw error;
+  } finally {
+    hideLoading();
   }
-
-  await parseModerationResponse(response, 'Не удалось отклонить черновик.');
-  moderationState.queue = moderationState.queue.filter((draft) => String(draft?.id) !== String(id));
-  renderModerationList();
-  return cloneQueue();
 }
 
 export async function initModerationUI() {
@@ -155,14 +178,32 @@ function renderModerationList() {
   moderationState.queue.forEach((draft) => {
     const item = document.createElement('div');
     item.className = 'moderation-item';
-    item.innerHTML = `
-      <strong>${escapeHtml(draft?.title || draft?.title_short || draft?.name_ru || 'Без названия')}</strong>
-      <p>${escapeHtml(shortenText(draft?.description || ''))}</p>
-      <div class="moderation-actions">
-        <button type="button" data-moderation-action="approve" data-moderation-id="${escapeHtml(String(draft?.id || ''))}">Approve</button>
-        <button type="button" data-moderation-action="reject" data-moderation-id="${escapeHtml(String(draft?.id || ''))}">Reject</button>
-      </div>
-    `;
+
+    const title = document.createElement('strong');
+    title.textContent = String(draft?.title || draft?.title_short || draft?.name_ru || 'Без названия');
+    item.appendChild(title);
+
+    const description = document.createElement('p');
+    description.textContent = shortenText(draft?.description || '');
+    item.appendChild(description);
+
+    const actions = document.createElement('div');
+    actions.className = 'moderation-actions';
+
+    const approveButton = document.createElement('button');
+    approveButton.type = 'button';
+    approveButton.dataset.moderationAction = 'approve';
+    approveButton.dataset.moderationId = String(draft?.id || '');
+    approveButton.textContent = 'Approve';
+
+    const rejectButton = document.createElement('button');
+    rejectButton.type = 'button';
+    rejectButton.dataset.moderationAction = 'reject';
+    rejectButton.dataset.moderationId = String(draft?.id || '');
+    rejectButton.textContent = 'Reject';
+
+    actions.append(approveButton, rejectButton);
+    item.appendChild(actions);
     list.appendChild(item);
   });
 }

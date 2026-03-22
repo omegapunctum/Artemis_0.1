@@ -111,7 +111,7 @@ export async function logout() {
   }
 }
 
-async function refreshToken() {
+export async function refreshToken() {
   if (refreshPromise) return refreshPromise;
 
   refreshPromise = (async () => {

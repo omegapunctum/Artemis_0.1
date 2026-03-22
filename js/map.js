@@ -198,13 +198,13 @@ function bindPopupHandlers(map) {
 // Безопасно открывает popup даже при неполных данных.
 function openFeaturePopup(map, feature, lngLat) {
   try {
-    const html = buildPopupHtml(feature, map?.__artemis?.layerLookup);
+    const content = buildPopupContent(feature, map?.__artemis?.layerLookup);
     if (map.__artemis?.popup) {
       map.__artemis.popup.remove();
     }
     map.__artemis.popup = new maplibregl.Popup({ closeButton: true, maxWidth: '320px', className: POPUP_CLASS_NAME })
       .setLngLat(lngLat)
-      .setHTML(html)
+      .setDOMContent(content)
       .addTo(map);
   } catch (error) {
     console.debug('Popup fallback:', error);
@@ -216,32 +216,66 @@ function openFeaturePopup(map, feature, lngLat) {
 }
 
 // Строит содержимое popup из feature и layers.json.
-function buildPopupHtml(feature, layerLookup = new Map()) {
+function buildPopupContent(feature, layerLookup = new Map()) {
   const props = feature?.properties && typeof feature.properties === 'object' ? feature.properties : {};
-  const name = escapeHtml(props.name_ru || 'Без названия');
-  const description = escapeHtml(props.description || 'Описание отсутствует');
-  const imageUrl = String(props.image_url || '').trim();
-  const layerId = String(props.layer_id || '').trim();
-  const layerLabel = escapeHtml(layerLookup.get(layerId) || layerId || 'Слой не указан');
-  const dateText = [props.date_start, props.date_end].filter((value) => value !== null && value !== undefined && value !== '').join(' — ') || 'Даты не указаны';
-  const sourceUrl = String(props.source_url || '').trim();
-  const imageBlock = imageUrl
-    ? `<img class="popup-image" src="${escapeAttribute(imageUrl)}" alt="${name}" loading="lazy" />`
-    : '<div class="popup-image placeholder">Изображение отсутствует</div>';
-  const sourceBlock = sourceUrl
-    ? `<p><strong>Источник:</strong> <a href="${escapeAttribute(sourceUrl)}" target="_blank" rel="noopener noreferrer">Открыть</a></p>`
-    : '';
+  const article = document.createElement('article');
+  article.className = 'popup-card';
 
-  return `
-    <article class="popup-card">
-      <h3>${name}</h3>
-      ${imageBlock}
-      <p>${description}</p>
-      <p><strong>Слой:</strong> ${layerLabel}</p>
-      <p><strong>Даты:</strong> ${escapeHtml(dateText)}</p>
-      ${sourceBlock}
-    </article>
-  `;
+  const title = document.createElement('h3');
+  title.textContent = String(props.name_ru || 'Без названия');
+  article.appendChild(title);
+
+  const imageUrl = String(props.image_url || '').trim();
+  if (imageUrl) {
+    const image = document.createElement('img');
+    image.className = 'popup-image';
+    image.src = imageUrl;
+    image.alt = String(props.name_ru || 'Без названия');
+    image.loading = 'lazy';
+    article.appendChild(image);
+  } else {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'popup-image placeholder';
+    placeholder.textContent = 'Изображение отсутствует';
+    article.appendChild(placeholder);
+  }
+
+  const description = document.createElement('p');
+  description.textContent = String(props.description || 'Описание отсутствует');
+  article.appendChild(description);
+
+  article.appendChild(buildPopupMeta('Слой:', String(layerLookup.get(String(props.layer_id || '').trim()) || props.layer_id || 'Слой не указан')));
+  const dateText = [props?.date_start, props?.date_end].filter((value) => value !== null && value !== undefined && value !== '').join(' — ') || 'Даты не указаны';
+  article.appendChild(buildPopupMeta('Даты:', String(dateText)));
+
+  if (props?.source_license) {
+    article.appendChild(buildPopupMeta('Лицензия:', String(props.source_license)));
+  }
+
+  const sourceUrl = String(props?.source_url || '').trim();
+  if (sourceUrl) {
+    const row = document.createElement('p');
+    const strong = document.createElement('strong');
+    strong.textContent = 'Источник:';
+    row.append(strong, ' ');
+    const link = document.createElement('a');
+    link.href = sourceUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = sourceUrl;
+    row.appendChild(link);
+    article.appendChild(row);
+  }
+
+  return article;
+}
+
+function buildPopupMeta(label, value) {
+  const row = document.createElement('p');
+  const strong = document.createElement('strong');
+  strong.textContent = label;
+  row.append(strong, ' ', String(value || ''));
+  return row;
 }
 
 function fitToFeatures(map, geojson) {
