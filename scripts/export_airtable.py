@@ -48,6 +48,9 @@ DATE_RE = re.compile(r"^-?\d{4}(?:-\d{2}-\d{2})?$")
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 TRUE_SET = {True, 1, "1", "true", "yes", "y", "да"}
 FALSE_SET = {False, 0, "0", "false", "no", "n", "нет"}
+ALLOWED_LICENSES = {"CC0", "CC BY", "CC BY-SA", "PD"}
+ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximate", "unknown"}
+ALLOWED_LAYER_TYPES = {"point", "event", "place", "timeline", "route", "area"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -103,6 +106,8 @@ def to_float_or_none(value: Any, record_id: str, field: str, errors: List[Dict[s
 
 
 def parse_float(value: Any) -> Optional[float]:
+    if value in (None, ""):
+        return None
     try:
         return float(value)
     except (TypeError, ValueError):
@@ -131,10 +136,42 @@ def to_bool_or_none(value: Any, record_id: str, field: str, errors: List[Dict[st
     return None
 
 
-def parse_bool(value: Any) -> bool:
-    if value in [True, "true", "1", 1]:
+def parse_bool(value: Any) -> Optional[bool]:
+    if value in (None, ""):
+        return None
+    normalized = value.strip().lower() if isinstance(value, str) else value
+    if normalized in TRUE_SET:
         return True
-    return False
+    if normalized in FALSE_SET:
+        return False
+    return None
+
+
+def is_valid_iso_date(value: Any) -> bool:
+    if value is None:
+        return True
+    value_str = str(value).strip()
+    if not DATE_RE.fullmatch(value_str):
+        return False
+    try:
+        if len(value_str) == 4 or (value_str.startswith("-") and len(value_str) == 5):
+            return True
+        dt.date.fromisoformat(value_str)
+    except ValueError:
+        return False
+    return True
+
+
+def is_valid_license(value: Optional[str]) -> bool:
+    return value in ALLOWED_LICENSES
+
+
+def is_valid_layer_type(value: Optional[str]) -> bool:
+    return value in ALLOWED_LAYER_TYPES
+
+
+def is_valid_color_hex(value: Optional[str]) -> bool:
+    return value is not None and HEX_COLOR_RE.fullmatch(value.strip()) is not None
 
 
 def validate_coordinate_range(
@@ -178,6 +215,13 @@ def safe_str(value: Any) -> Optional[str]:
         return None
     text = str(value).strip()
     return text if text else None
+
+
+def add_issue(issues: List[Dict[str, Any]], severity: str, record_id: str, reason: str, field: Optional[str] = None) -> None:
+    payload: Dict[str, Any] = {"id": record_id or "<missing>", "reason": reason, "severity": severity}
+    if field:
+        payload["field"] = field
+    issues.append(payload)
 
 
 def map_record(record: Dict[str, Any], errors: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -366,16 +410,18 @@ def load_sample_records(sample_file: Path) -> List[Dict[str, Any]]:
     raise ValueError("Некорректный формат sample JSON: ожидается {records: [...]} или [...]")
 
 
-def build_geojson_features(mapped_records: Iterable[Dict[str, Any]]) -> Dict[str, Any]:
+def build_geojson_features(mapped_records: Iterable[Dict[str, Any]], warnings: List[Dict[str, Any]], errors: List[Dict[str, Any]]) -> Dict[str, Any]:
     features = []
     for m in mapped_records:
         lon = m.get("longitude")
         lat = m.get("latitude")
         if lat is None or lon is None:
-            geometry = None
+            add_issue(warnings, "warning", m.get("id") or "<missing>", "missing coordinates, skipped in geojson", "geometry")
+            continue
         else:
             if not (-90 <= lat <= 90 and -180 <= lon <= 180):
-                geometry = None
+                add_issue(errors, "critical", m.get("id") or "<missing>", "invalid coordinates, skipped in geojson", "geometry")
+                continue
             else:
                 geometry = {"type": "Point", "coordinates": [lon, lat]}
 
@@ -404,7 +450,7 @@ def build_geojson_features(mapped_records: Iterable[Dict[str, Any]]) -> Dict[str
                     "coordinates_confidence": m.get("coordinates_confidence"),
                     "tags": m.get("tags"),
                     "is_active": m.get("is_active"),
-                    "has_geometry": geometry is not None,
+                    "has_geometry": True,
                 },
             }
         )
@@ -418,6 +464,98 @@ def normalize_hex_color(value: Optional[str]) -> Optional[str]:
     if HEX_COLOR_RE.match(cleaned):
         return cleaned
     return None
+
+
+def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List[Dict[str, Any]], errors: List[Dict[str, Any]]) -> bool:
+    record_id = mapped.get("id") or "<missing>"
+    valid = True
+
+    def critical(field: str, reason: str) -> None:
+        nonlocal valid
+        valid = False
+        add_issue(errors, "critical", record_id, reason, field)
+
+    def warning(field: str, reason: str) -> None:
+        add_issue(warnings, "warning", record_id, reason, field)
+
+    if not mapped.get("id"):
+        critical("id", "missing id")
+    if not mapped.get("layer_id"):
+        critical("layer_id", "missing layer_id")
+    elif mapped["layer_id"] not in layer_ids:
+        critical("layer_id", "layer_id not found in layers")
+    if not is_valid_layer_type(mapped.get("layer_type")):
+        critical("layer_type", "invalid layer_type")
+    if not mapped.get("name_ru"):
+        critical("name_ru", "missing name_ru")
+    if not mapped.get("source_url"):
+        critical("source_url", "missing source_url")
+    if mapped.get("latitude") is not None and not (-90 <= mapped["latitude"] <= 90):
+        critical("latitude", "latitude out of range")
+    if mapped.get("longitude") is not None and not (-180 <= mapped["longitude"] <= 180):
+        critical("longitude", "longitude out of range")
+    if not is_valid_iso_date(mapped.get("date_start")):
+        critical("date_start", "invalid ISO date")
+    if not is_valid_iso_date(mapped.get("date_end")):
+        critical("date_end", "invalid ISO date")
+    if not is_valid_license(mapped.get("source_license")):
+        critical("source_license", "invalid source_license")
+    if mapped.get("coordinates_confidence") not in ALLOWED_COORDINATES_CONFIDENCE:
+        critical("coordinates_confidence", "invalid coordinates_confidence")
+    if not isinstance(mapped.get("is_active"), bool):
+        critical("is_active", "is_active must be boolean")
+    if mapped.get("title_short") and len(mapped["title_short"]) > 120:
+        critical("title_short", "title_short exceeds 120 characters")
+    if mapped.get("description") and len(mapped["description"]) > 2000:
+        critical("description", "description exceeds 2000 characters")
+    tags = mapped.get("tags") or []
+    if any(" " in tag for tag in tags):
+        critical("tags", "tags must be comma-separated without spaces")
+    if mapped.get("latitude") is None and mapped.get("longitude") is None:
+        warning("geometry", "coordinates are null")
+    elif mapped.get("latitude") is None or mapped.get("longitude") is None:
+        critical("geometry", "longitude/latitude must both be present or null")
+    if not mapped.get("image_url"):
+        warning("image_url", "missing image_url")
+    if not mapped.get("description"):
+        warning("description", "empty description")
+    return valid
+
+
+def validate_layer(layer: Dict[str, Any], warnings: List[Dict[str, Any]], errors: List[Dict[str, Any]]) -> bool:
+    layer_id = layer.get("id") or "<missing>"
+    valid = True
+    if not layer.get("id"):
+        add_issue(errors, "critical", layer_id, "missing layer_id", "layer_id")
+        valid = False
+    if not layer.get("name_ru"):
+        add_issue(errors, "critical", layer_id, "missing layer name_ru", "name_ru")
+        valid = False
+    if not is_valid_color_hex(layer.get("color_hex")):
+        add_issue(errors, "critical", layer_id, "invalid color_hex", "color_hex")
+        valid = False
+    if not isinstance(layer.get("is_enabled"), bool):
+        add_issue(errors, "critical", layer_id, "is_enabled must be boolean", "is_enabled")
+        valid = False
+    return valid
+
+
+def build_validation_report(
+    total_records: int,
+    valid_records: int,
+    skipped_records: int,
+    warnings: List[Dict[str, Any]],
+    errors: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    return {
+        "total_records": total_records,
+        "valid_records": valid_records,
+        "skipped_records": skipped_records,
+        "warnings_count": len(warnings),
+        "errors_count": len(errors),
+        "warnings": warnings,
+        "errors": errors,
+    }
 
 
 def build_layers(mapped_records: Iterable[Dict[str, Any]], errors: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -497,8 +635,8 @@ def run_self_test() -> int:
             "layer_color_hex": "#ABCDEF",
             "tags": "A, b ,C",
             "is_active_bool": True,
-            "source_license_enum": "cc-by",
-            "coordinates_confidence_enum": "high",
+            "source_license_enum": "CC BY",
+            "coordinates_confidence_enum": "exact",
             "source_url": "https://example.com/source",
         },
     }
@@ -511,6 +649,8 @@ def run_self_test() -> int:
     assert m["latitude"] == 55.7558
     assert normalize_hex_color(m["layer_color_hex"]) == "#abcdef"
     assert not errors
+    assert is_valid_iso_date(m["date_start"])
+    assert is_valid_license(m["source_license"])
     print("Self-test OK")
     return 0
 
@@ -559,6 +699,7 @@ def main() -> int:
     raw_path = out_dir / f"{prefix}features.json"
     geojson_path = out_dir / f"{prefix}features.geojson"
     layers_path = out_dir / f"{prefix}layers.json"
+    validation_report_path = out_dir / f"{prefix}validation_report.json"
     export_meta_path = out_dir / f"{prefix}export_meta.json"
     error_log_path = out_dir / f"{prefix}export_errors.log"
 
@@ -582,37 +723,52 @@ def main() -> int:
         print(f"Непредвиденная ошибка: {exc}", file=sys.stderr)
         return 1
 
+    warnings: List[Dict[str, Any]] = []
     errors: List[Dict[str, Any]] = []
-    mapped_records: List[Dict[str, Any]] = []
+    candidate_records: List[Dict[str, Any]] = []
     skipped_inactive = 0
     for record in records:
-        mapped = map_record(record, errors)
+        mapped = map_record(record, warnings)
         if not mapped.get("is_active") and not args.include_inactive:
             skipped_inactive += 1
             continue
-        mapped_records.append(mapped)
+        candidate_records.append(mapped)
 
+    layers = build_layers(candidate_records, warnings)
+    valid_layers = [layer for layer in layers if validate_layer(layer, warnings, errors)]
+    valid_layer_ids = {layer["id"] for layer in valid_layers}
+
+    mapped_records = [m for m in candidate_records if validate_feature(m, valid_layer_ids, warnings, errors)]
     mapped_records = sort_mapped_records(mapped_records)
     if args.exclude_without_geometry:
         mapped_records = [m for m in mapped_records if m.get("longitude") is not None and m.get("latitude") is not None]
 
-    geojson = build_geojson_features(mapped_records)
-    layers = build_layers(mapped_records, errors)
+    geojson = build_geojson_features(mapped_records, warnings, errors)
+    validation_report = build_validation_report(
+        total_records=len(records),
+        valid_records=len(mapped_records),
+        skipped_records=len(records) - len(mapped_records),
+        warnings=warnings,
+        errors=errors,
+    )
 
     export_meta = {
         "timestamp": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "source": "dry-run" if dry_run else "airtable",
         "records_total_source": len(records),
         "records_exported": len(mapped_records),
+        "records_geojson": len(geojson["features"]),
         "errors": len(errors),
+        "warnings": len(warnings),
         "skipped_inactive": skipped_inactive,
         "duration_seconds": round(time.time() - started_at, 3),
     }
 
     try:
-        write_json(raw_path, records)
+        write_json(raw_path, mapped_records)
         write_json(geojson_path, geojson)
-        write_json(layers_path, layers)
+        write_json(layers_path, valid_layers)
+        write_json(validation_report_path, validation_report)
         write_json(export_meta_path, export_meta)
 
         # Перезаписываем лог ошибок на каждый запуск
@@ -620,17 +776,24 @@ def main() -> int:
             error_log_path.unlink()
         error_log_path.parent.mkdir(parents=True, exist_ok=True)
         error_log_path.touch()
-        for err in errors:
+        for err in [*warnings, *errors]:
             log_error(error_log_path, err)
     except Exception as exc:  # noqa: BLE001
         print(f"Критическая ошибка сериализации/записи: {exc}", file=sys.stderr)
         return 1
 
     # Финальный вывод — в формате, согласованном с мастер-промптом
-    print(f"Успешно: {len(mapped_records)} | Ошибок: {len(errors)} | Source total: {len(records)}")
+    print(
+        f"Прочитано: {len(records)} | Валидно: {len(mapped_records)} | "
+        f"Пропущено: {validation_report['skipped_records']} | "
+        f"Warnings: {len(warnings)} | Critical: {len(errors)}"
+    )
 
     if args.commit:
-        maybe_commit([raw_path, geojson_path, layers_path, export_meta_path, error_log_path], len(mapped_records))
+        maybe_commit(
+            [raw_path, geojson_path, layers_path, validation_report_path, export_meta_path, error_log_path],
+            len(mapped_records),
+        )
 
     return 0
 
