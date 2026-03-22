@@ -175,8 +175,8 @@
       setStatus(`Карта готова. Найдено: ${foundCount}, на карте: ${mapCount}.`, { loading: false });
     } catch (error) {
       console.error('Ошибка инициализации:', error);
-      showError('Ошибка загрузки данных. Проверьте доступность /data/features.geojson и /data/layers.json.');
-      setStatus('Ошибка загрузки данных. Проверьте доступность /data/features.geojson и /data/layers.json.', { error: true, loading: false });
+      showError('Ошибка загрузки данных. Проверьте доступность data/features.geojson и data/layers.json.');
+      setStatus('Ошибка загрузки данных. Проверьте доступность data/features.geojson и data/layers.json.', { error: true, loading: false });
     }
   </script>
 </body>

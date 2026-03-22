@@ -3,6 +3,7 @@ import { showError, clearError, showLoading, hideLoading } from './ux.js';
 // Кеш, чтобы не делать повторные запросы к локальным файлам.
 let featuresCache = null;
 let layersCache = null;
+const DATA_BASE_PATH = 'data/';
 
 export async function loadFeatures() {
   if (featuresCache) return featuresCache;
@@ -10,7 +11,7 @@ export async function loadFeatures() {
   showLoading();
 
   try {
-    const response = await fetchWithRetry('/data/features.geojson');
+    const response = await fetchWithRetry(`${DATA_BASE_PATH}features.geojson`);
     if (!response.ok) {
       throw new Error(`Не удалось загрузить features.geojson: HTTP ${response.status}`);
     }
@@ -19,7 +20,7 @@ export async function loadFeatures() {
     clearError();
     return featuresCache;
   } catch (error) {
-    console.error('Ошибка при загрузке /data/features.geojson:', error);
+    console.error('Ошибка при загрузке data/features.geojson:', error);
     showError('Ошибка загрузки данных');
     throw error;
   } finally {
@@ -33,7 +34,7 @@ export async function loadLayers() {
   showLoading();
 
   try {
-    const response = await fetch('/data/layers.json');
+    const response = await fetch(`${DATA_BASE_PATH}layers.json`);
     if (!response.ok) {
       throw new Error(`Не удалось загрузить layers.json: HTTP ${response.status}`);
     }
@@ -42,7 +43,7 @@ export async function loadLayers() {
     clearError();
     return layersCache;
   } catch (error) {
-    console.error('Ошибка при загрузке /data/layers.json:', error);
+    console.error('Ошибка при загрузке data/layers.json:', error);
     throw error;
   } finally {
     hideLoading();
