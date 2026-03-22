@@ -1,8 +1,12 @@
 import json
+import logging
 import os
+import threading
 import urllib.error
 import urllib.parse
 import urllib.request
+from contextlib import contextmanager
+from datetime import datetime
 from typing import Any
 
 from fastapi import HTTPException, status
@@ -25,6 +29,14 @@ DEFAULT_COORDINATES_CONFIDENCE = "exact"
 DEFAULT_COORDINATES_SOURCE = "ugc"
 DEFAULT_SOURCE_URL = "UGC"
 DEFAULT_SOURCE_LICENSE = "CC BY"
+AIRTABLE_EXTERNAL_ID_FIELD = os.getenv("AIRTABLE_EXTERNAL_ID_FIELD", "external_id")
+PUBLISH_STATUS_PENDING = "pending"
+PUBLISH_STATUS_PUBLISHED = "published"
+PUBLISH_STATUS_FAILED = "failed"
+
+logger = logging.getLogger(__name__)
+_publish_locks: dict[int, threading.Lock] = {}
+_publish_locks_guard = threading.Lock()
 
 
 def is_moderator(user: User) -> bool:
@@ -61,17 +73,47 @@ def submit_draft_for_review(db: Session, draft: Draft) -> Draft:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Approved draft cannot be resubmitted")
     if draft.status == "review":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Draft already in review")
-    return update_draft(db, draft, changes={"status": "review"})
+    return update_draft(db, draft, changes={"status": "review", "publish_status": PUBLISH_STATUS_PENDING})
 
 
 def approve_draft(db: Session, draft: Draft) -> Draft:
-    if draft.status == "approved":
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Draft already approved")
-    if draft.status != "review":
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in review can be approved")
+    with _draft_publish_lock(draft.id):
+        db.refresh(draft)
 
-    create_airtable_feature(draft)
-    return update_draft(db, draft, changes={"status": "approved"})
+        if draft.airtable_record_id and draft.publish_status == PUBLISH_STATUS_PUBLISHED:
+            if draft.status != "approved":
+                return update_draft(
+                    db,
+                    draft,
+                    changes={
+                        "status": "approved",
+                        "published_at": draft.published_at or datetime.utcnow(),
+                    },
+                )
+            return draft
+
+        if draft.status not in {"review", "approved"}:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in review or approved can be published")
+
+        existing_record = find_existing_airtable_feature(draft)
+        if existing_record:
+            return _mark_draft_as_published(db, draft, existing_record)
+
+        draft = update_draft(db, draft, changes={"publish_status": PUBLISH_STATUS_PENDING})
+        try:
+            created_record = create_airtable_feature(draft)
+        except HTTPException as exc:
+            logger.warning("Failed to publish draft %s to Airtable: %s", draft.id, exc.detail)
+            if draft.publish_status != PUBLISH_STATUS_FAILED:
+                draft = update_draft(db, draft, changes={"publish_status": PUBLISH_STATUS_FAILED})
+            raise
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            logger.exception("Unexpected publish failure for draft %s", draft.id)
+            if draft.publish_status != PUBLISH_STATUS_FAILED:
+                update_draft(db, draft, changes={"publish_status": PUBLISH_STATUS_FAILED})
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Airtable publish failed") from exc
+
+        return _mark_draft_as_published(db, draft, created_record)
 
 
 def reject_draft(db: Session, draft: Draft) -> Draft:
@@ -85,17 +127,8 @@ def reject_draft(db: Session, draft: Draft) -> Draft:
 
 
 def create_airtable_feature(draft: Draft) -> dict[str, Any]:
-    token = os.getenv("AIRTABLE_TOKEN")
-    base_id = os.getenv("AIRTABLE_BASE") or os.getenv("AIRTABLE_BASE_ID")
-    table_name = os.getenv("AIRTABLE_TABLE", DEFAULT_AIRTABLE_TABLE)
-
-    if not token or not base_id:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Airtable is not configured",
-        )
-
-    url = f"{AIRTABLE_API_URL}/{base_id}/{urllib.parse.quote(table_name, safe='')}"
+    token, base_id, table_name = _get_airtable_config()
+    url = _build_airtable_table_url(base_id, table_name)
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
@@ -103,7 +136,10 @@ def create_airtable_feature(draft: Draft) -> dict[str, Any]:
     payload = {"fields": build_airtable_fields(draft)}
 
     if requests is not None:
-        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=30)
+        except requests.RequestException as exc:  # type: ignore[attr-defined]
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Airtable request failed: network error") from exc
         if response.status_code >= 400:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
@@ -132,6 +168,48 @@ def create_airtable_feature(draft: Draft) -> dict[str, Any]:
         ) from exc
 
 
+def find_existing_airtable_feature(draft: Draft) -> dict[str, Any] | None:
+    if draft.airtable_record_id:
+        return {"id": draft.airtable_record_id, "fields": build_airtable_fields(draft)}
+
+    token, base_id, table_name = _get_airtable_config()
+    external_id = get_draft_external_id(draft)
+    formula = f"{{{AIRTABLE_EXTERNAL_ID_FIELD}}}='{_escape_airtable_formula_value(external_id)}'"
+    url = _build_airtable_table_url(base_id, table_name)
+
+    if requests is not None:
+        try:
+            response = requests.get(
+                url,
+                headers={"Authorization": f"Bearer {token}"},
+                params={"maxRecords": 1, "filterByFormula": formula},
+                timeout=30,
+            )
+        except requests.RequestException as exc:  # type: ignore[attr-defined]
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Airtable request failed: network error") from exc
+        if response.status_code >= 400:
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"Airtable request failed: {response.status_code}")
+        records = response.json().get("records") or []
+        return records[0] if records else None
+
+    query = urllib.parse.urlencode({"maxRecords": 1, "filterByFormula": formula})
+    request = urllib.request.Request(
+        f"{url}?{query}",
+        headers={"Authorization": f"Bearer {token}"},
+        method="GET",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"Airtable request failed: {exc.code}") from exc
+    except urllib.error.URLError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Airtable request failed: network error") from exc
+
+    records = payload.get("records") or []
+    return records[0] if records else None
+
+
 def build_airtable_fields(draft: Draft) -> dict[str, Any]:
     longitude: float | None = None
     latitude: float | None = None
@@ -143,6 +221,7 @@ def build_airtable_fields(draft: Draft) -> dict[str, Any]:
             latitude = _to_float_or_none(coordinates[1])
 
     fields: dict[str, Any] = {
+        AIRTABLE_EXTERNAL_ID_FIELD: get_draft_external_id(draft),
         "name_ru": draft.title,
         "description": draft.description,
         "image_url": draft.image_url,
@@ -164,6 +243,59 @@ def build_airtable_fields(draft: Draft) -> dict[str, Any]:
         "longitude": longitude,
     }
     return fields
+
+
+def get_draft_external_id(draft: Draft) -> str:
+    return f"draft:{draft.id}"
+
+
+def _mark_draft_as_published(db: Session, draft: Draft, airtable_record: dict[str, Any]) -> Draft:
+    record_id = airtable_record.get("id")
+    if not record_id:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Airtable publish failed: missing record id")
+    published_at = draft.published_at or datetime.utcnow()
+    return update_draft(
+        db,
+        draft,
+        changes={
+            "status": "approved",
+            "publish_status": PUBLISH_STATUS_PUBLISHED,
+            "airtable_record_id": record_id,
+            "published_at": published_at,
+        },
+    )
+
+
+def _get_airtable_config() -> tuple[str, str, str]:
+    token = os.getenv("AIRTABLE_TOKEN")
+    base_id = os.getenv("AIRTABLE_BASE") or os.getenv("AIRTABLE_BASE_ID")
+    table_name = os.getenv("AIRTABLE_TABLE", DEFAULT_AIRTABLE_TABLE)
+
+    if not token or not base_id:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Airtable is not configured",
+        )
+    return token, base_id, table_name
+
+
+def _build_airtable_table_url(base_id: str, table_name: str) -> str:
+    return f"{AIRTABLE_API_URL}/{base_id}/{urllib.parse.quote(table_name, safe='')}"
+
+
+def _escape_airtable_formula_value(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("'", "\\'")
+
+
+@contextmanager
+def _draft_publish_lock(draft_id: int):
+    with _publish_locks_guard:
+        lock = _publish_locks.setdefault(draft_id, threading.Lock())
+    lock.acquire()
+    try:
+        yield
+    finally:
+        lock.release()
 
 
 def _to_float_or_none(value: Any) -> float | None:
