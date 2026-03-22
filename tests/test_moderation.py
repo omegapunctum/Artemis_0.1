@@ -1,5 +1,7 @@
 import os
 import unittest
+
+from fastapi import HTTPException
 from pathlib import Path
 from unittest.mock import patch
 
@@ -16,6 +18,8 @@ from app.auth.service import SessionLocal, User, init_db as init_auth_db  # noqa
 from app.drafts.schemas import DraftResponse  # noqa: E402
 from app.drafts.service import Draft, create_draft, get_user_draft, init_db as init_drafts_db  # noqa: E402
 from app.moderation.service import (  # noqa: E402
+    PUBLISH_STATUS_FAILED,
+    PUBLISH_STATUS_PUBLISHED,
     approve_draft,
     build_airtable_fields,
     is_moderator,
@@ -69,20 +73,60 @@ class ModerationFlowTests(unittest.TestCase):
         queue = list_review_drafts(self.db)
         self.assertEqual([item.id for item in queue], [draft.id])
 
-        with patch('app.moderation.service.create_airtable_feature') as create_airtable_mock:
+        with patch('app.moderation.service.find_existing_airtable_feature', return_value=None), patch(
+            'app.moderation.service.create_airtable_feature'
+        ) as create_airtable_mock:
             create_airtable_mock.return_value = {'id': 'rec123'}
             draft = approve_draft(self.db, draft)
 
         self.assertEqual(draft.status, 'approved')
+        self.assertEqual(draft.publish_status, PUBLISH_STATUS_PUBLISHED)
+        self.assertEqual(draft.airtable_record_id, 'rec123')
         payload = build_airtable_fields(draft)
         self.assertEqual(payload['name_ru'], 'Test point')
         self.assertEqual(payload['source_url'], 'UGC')
         self.assertEqual(payload['source_license'], 'CC BY')
         self.assertEqual(payload['longitude'], 37.6173)
         self.assertEqual(payload['latitude'], 55.7558)
+        self.assertEqual(payload['external_id'], f'draft:{draft.id}')
 
-        with self.assertRaises(Exception):
-            approve_draft(self.db, draft)
+        with patch('app.moderation.service.create_airtable_feature') as create_airtable_mock:
+            approved_again = approve_draft(self.db, draft)
+
+        self.assertEqual(approved_again.id, draft.id)
+        self.assertEqual(approved_again.airtable_record_id, 'rec123')
+        create_airtable_mock.assert_not_called()
+
+    def test_approve_uses_existing_airtable_record_without_duplicate_publish(self):
+        user = self.make_user('existing@example.com')
+        draft = create_draft(self.db, user, 'Existing', 'Desc', None)
+        draft = submit_draft_for_review(self.db, draft)
+
+        with patch('app.moderation.service.find_existing_airtable_feature', return_value={'id': 'rec-existing'}), patch(
+            'app.moderation.service.create_airtable_feature'
+        ) as create_airtable_mock:
+            approved = approve_draft(self.db, draft)
+
+        self.assertEqual(approved.status, 'approved')
+        self.assertEqual(approved.publish_status, PUBLISH_STATUS_PUBLISHED)
+        self.assertEqual(approved.airtable_record_id, 'rec-existing')
+        create_airtable_mock.assert_not_called()
+
+    def test_failed_publish_marks_draft_failed_without_approving(self):
+        user = self.make_user('failed@example.com')
+        draft = create_draft(self.db, user, 'Failure', 'Desc', None)
+        draft = submit_draft_for_review(self.db, draft)
+
+        with patch('app.moderation.service.find_existing_airtable_feature', return_value=None), patch(
+            'app.moderation.service.create_airtable_feature', side_effect=HTTPException(status_code=502, detail='boom')
+        ):
+            with self.assertRaises(Exception):
+                approve_draft(self.db, draft)
+
+        refreshed = self.db.query(Draft).filter(Draft.id == draft.id).first()
+        self.assertEqual(refreshed.status, 'review')
+        self.assertEqual(refreshed.publish_status, PUBLISH_STATUS_FAILED)
+        self.assertIsNone(refreshed.airtable_record_id)
 
     def test_reject_requires_review_status(self):
         user = self.make_user('user2@example.com')
@@ -114,6 +158,7 @@ class ModerationFlowTests(unittest.TestCase):
         self.assertIsNone(payload['latitude'])
         self.assertEqual(payload['image_url'], '/uploads/example.png')
         self.assertEqual(payload['layer_id'], 'ugc')
+        self.assertEqual(payload['external_id'], 'draft:None')
 
     def test_draft_response_schema_includes_status(self):
         payload = DraftResponse.model_validate(
@@ -124,6 +169,9 @@ class ModerationFlowTests(unittest.TestCase):
                 'geometry': None,
                 'image_url': None,
                 'status': 'draft',
+                'publish_status': 'pending',
+                'airtable_record_id': None,
+                'published_at': None,
                 'created_at': '2026-03-22T00:00:00',
                 'updated_at': '2026-03-22T00:00:00',
             }

@@ -17,6 +17,9 @@ class Draft(Base):
     geometry = Column(JSON, nullable=True)
     image_url = Column(String, nullable=True)
     status = Column(String, nullable=False, default="draft")
+    publish_status = Column(String, nullable=False, default="pending")
+    airtable_record_id = Column(String, nullable=True, unique=True)
+    published_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
@@ -30,6 +33,12 @@ def init_db() -> None:
             connection.execute(text("ALTER TABLE drafts ADD COLUMN image_url VARCHAR"))
         if "status" not in columns:
             connection.execute(text("ALTER TABLE drafts ADD COLUMN status VARCHAR DEFAULT 'draft'"))
+        if "publish_status" not in columns:
+            connection.execute(text("ALTER TABLE drafts ADD COLUMN publish_status VARCHAR DEFAULT 'pending'"))
+        if "airtable_record_id" not in columns:
+            connection.execute(text("ALTER TABLE drafts ADD COLUMN airtable_record_id VARCHAR"))
+        if "published_at" not in columns:
+            connection.execute(text("ALTER TABLE drafts ADD COLUMN published_at DATETIME"))
 
 
 def list_drafts(db: Session, user: User) -> list[Draft]:
