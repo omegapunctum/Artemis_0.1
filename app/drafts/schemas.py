@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class DraftCreate(BaseModel):
-    title: str = Field(min_length=1, max_length=255)
+    title: str = Field(min_length=3, max_length=255)
     description: str = Field(min_length=1)
     geometry: dict[str, Any] | None = None
 
@@ -19,7 +19,7 @@ class DraftCreate(BaseModel):
 
 
 class DraftUpdate(BaseModel):
-    title: str | None = Field(default=None, min_length=1, max_length=255)
+    title: str | None = Field(default=None, min_length=3, max_length=255)
     description: str | None = Field(default=None, min_length=1)
     geometry: dict[str, Any] | None = None
 

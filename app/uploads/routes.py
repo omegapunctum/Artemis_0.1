@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.service import User, get_current_user, get_db
 from app.drafts.service import get_user_draft
+from app.security.rate_limit import rate_limit
 from app.uploads.service import save_draft_image
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
@@ -17,6 +18,7 @@ class UploadImageResponse(BaseModel):
 def upload_image(
     draft_id: str = Form(...),
     file: UploadFile = File(...),
+    _: None = Depends(rate_limit(10, 60, prefix="upload-image", include_path=True)),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):

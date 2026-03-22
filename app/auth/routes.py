@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Cookie, Depends, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from .schemas import AccessTokenResponse, AuthCredentials
@@ -12,6 +12,7 @@ from .service import (
     rotate_refresh_token,
 )
 from .utils import COOKIE_SECURE, REFRESH_TOKEN_EXPIRE_DAYS
+from app.security.rate_limit import check_login_block, rate_limit, register_login_failure, reset_login_failures
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -28,13 +29,31 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
 
 
 @router.post("/register", response_model=AccessTokenResponse, status_code=status.HTTP_201_CREATED)
-def register(payload: AuthCredentials, db: Session = Depends(get_db)):
+def register(
+    payload: AuthCredentials,
+    _: None = Depends(rate_limit(3, 5 * 60, prefix="register")),
+    db: Session = Depends(get_db),
+):
     return {"access_token": register_user(db, payload.email, payload.password)}
 
 
 @router.post("/login", response_model=AccessTokenResponse)
-def login(payload: AuthCredentials, response: Response, db: Session = Depends(get_db)):
-    access_token, refresh_token = login_user(db, payload.email, payload.password)
+def login(
+    payload: AuthCredentials,
+    request: Request,
+    response: Response,
+    _: None = Depends(rate_limit(5, 60, prefix="login")),
+    db: Session = Depends(get_db),
+):
+    check_login_block(request)
+    try:
+        access_token, refresh_token = login_user(db, payload.email, payload.password)
+    except HTTPException as exc:
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+            register_login_failure(request, limit=5, window_seconds=60, block_seconds=60)
+        raise
+
+    reset_login_failures(request)
     set_refresh_cookie(response, refresh_token)
     return {"access_token": access_token}
 
