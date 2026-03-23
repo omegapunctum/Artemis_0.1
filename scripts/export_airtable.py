@@ -356,7 +356,7 @@ def fetch_airtable_records(
     max_records: Optional[int],
 ) -> List[Dict[str, Any]]:
     """Чтение всех страниц Airtable по offset (pageSize=100)."""
-    url = f"https://api.airtable.com/v0/{base}/{table}"
+    url = f"https://api.airtable.com/v0/{BASE}/{TABLE}"
     headers = {"Authorization": f"Bearer {token}"}
     records: List[Dict[str, Any]] = []
     offset: Optional[str] = None
