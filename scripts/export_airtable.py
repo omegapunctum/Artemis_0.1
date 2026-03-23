@@ -437,13 +437,19 @@ def build_geojson_features(mapped_records: Iterable[Dict[str, Any]], warnings: L
         if lon is None or lat is None:
             add_issue(warnings, "warning", m.get("id") or "<missing>", "missing coordinates, skipped in geojson", "geometry")
             continue
-        else:
+            
+    try:
+        lon = float(lon)
+        lat = float(lat)
+    except:
+        continue
+    
             if not (-90 <= lat <= 90 and -180 <= lon <= 180):
                 add_issue(errors, "critical", m.get("id") or "<missing>", "invalid coordinates, skipped in geojson", "geometry")
                 continue
-            else:
-                geometry = {"type": "Point", "coordinates": [lon, lat]}
-
+                
+            geometry = { "type": "Point", "coordinates": [lon, lat] }
+    
         features.append(
             {
                 "type": "Feature",
