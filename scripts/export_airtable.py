@@ -53,8 +53,8 @@ HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 TRUE_SET = {True, 1, "1", "true", "yes", "y", "да"}
 FALSE_SET = {False, 0, "0", "false", "no", "n", "нет"}
 ALLOWED_LICENSES = {"CC0", "CC BY", "CC BY-SA", "PD"}
-ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximate", "unknown"}
-ALLOWED_LAYER_TYPES = {"point", "event", "place", "timeline", "route", "area"}
+ALLOWED_COORDINATES_CONFIDENCE = {"ТОЧНО", "ПРИБЛИЗИТЕЛЬНО±Nкм", "УСЛОВНО"}
+ALLOWED_LAYER_TYPES = {"architecture", "route_point", "biogeography", "biography"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -314,6 +314,8 @@ def map_record(record: Dict[str, Any], errors: List[Dict[str, Any]]) -> Dict[str
         "source_url": source_url,
         "source_license": source_license,
         "coordinates_confidence": coordinates_confidence,
+        "coordinates_source": safe_str(fields.get("coordinates_source")),
+        "sequence_order": to_int_or_none(fields.get("sequence_order"), record_id, "sequence_order", errors),
         "tags": to_tags(fields.get("tags")),
         "is_active": is_active,
         # Доп. поля для слоёв (если в таблице присутствуют)
@@ -360,7 +362,7 @@ def fetch_airtable_records(
     max_records: Optional[int],
 ) -> List[Dict[str, Any]]:
     """Чтение всех страниц Airtable по offset (pageSize=100)."""
-    url = f"https://api.airtable.com/v0/{AIRTABLE_BASE}/{AIRTABLE_TABLE}"
+    url = f"https://api.airtable.com/v0/{base}/{table}"
     headers = {"Authorization": f"Bearer {token}"}
     records: List[Dict[str, Any]] = []
     offset: Optional[str] = None
@@ -403,9 +405,30 @@ def fetch_airtable_records(
 
 def generate_mock_records() -> List[Dict[str, Any]]:
     """Dry-run для CI: не требует secrets и не ходит в Airtable."""
-    return []
-
-
+    return [
+        {
+            "id": "recTEST",
+            "fields": {
+                "layer_id": "test_layer",
+                "layer_type": "biography",
+                "name_ru": "Тестовая запись",
+                "date_start": "1348",
+                "longitude": 37.6173,
+                "latitude": 55.7558,
+                "influence_radius_km": 12,
+                "layer_color_hex": "#ABCDEF",
+                "tags": "test",
+                "is_active_bool": True,
+                "source_license": "CC BY",
+                "coordinates_confidence": "ТОЧНО",
+                "source_url": "https://example.com/source",
+                "coordinates_source": "Wikipedia",
+                "sequence_order": 1,
+            },
+        }
+    ]
+    
+    
 def build_geojson_features(mapped_records: Iterable[Dict[str, Any]], warnings: List[Dict[str, Any]], errors: List[Dict[str, Any]]) -> Dict[str, Any]:
     features = []
     for m in mapped_records:
@@ -444,6 +467,8 @@ def build_geojson_features(mapped_records: Iterable[Dict[str, Any]], warnings: L
                     "source_url": m.get("source_url"),
                     "source_license": m.get("source_license"),
                     "coordinates_confidence": m.get("coordinates_confidence"),
+                    "coordinates_source": m.get("coordinates_source"),
+                    "sequence_order": m.get("sequence_order"),
                     "tags": m.get("tags"),
                     "is_active": m.get("is_active"),
                     "has_geometry": True,
@@ -665,23 +690,6 @@ def sort_mapped_records(mapped_records: List[Dict[str, Any]]) -> List[Dict[str, 
         )
 
     return sorted(mapped_records, key=key)
-
-def fetch_table(table_name):
-    url = f"{BASE_URL}/{table_name}"
-    records = []
-
-    while url:
-        resp = requests.get(url, headers=HEADERS)
-        if resp.status_code != 200:
-            raise Exception(f"HTTP {resp.status_code}: {resp.text}")
-
-        data = resp.json()
-        records.extend(data.get("records", []))
-
-        offset = data.get("offset")
-        url = f"{BASE_URL}/{table_name}?offset={offset}" if offset else None
-
-    return records
     
 def main() -> int:
     started_at = time.time()
@@ -775,7 +783,7 @@ def main() -> int:
     }
 
     try:
-        write_json(raw_path, mapped_records)
+        write_json(raw_path, records)
         write_json(geojson_path, geojson)
         write_json(layers_path, valid_layers)
         write_json(validation_report_path, validation_report)
