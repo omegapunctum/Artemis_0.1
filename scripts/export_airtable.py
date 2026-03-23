@@ -29,6 +29,13 @@ import datetime as dt
 import importlib.util
 import json
 import os
+
+AIRTABLE_TOKEN = os.getenv("AIRTABLE_TOKEN")
+AIRTABLE_BASE = os.getenv("AIRTABLE_BASE")
+
+if not AIRTABLE_TOKEN or not AIRTABLE_BASE:
+    raise Exception("Missing AIRTABLE_TOKEN or AIRTABLE_BASE")
+    
 import re
 import subprocess
 import sys
