@@ -133,6 +133,7 @@ Vanilla JavaScript (no frameworks):
 Serve static files:
 ```bash
 python -m http.server
+
 ---
 
 ## Project structure
