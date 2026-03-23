@@ -133,32 +133,3 @@ Vanilla JavaScript (no frameworks):
 Serve static files:
 ```bash
 python -m http.server
-
----
-
-## Project structure
-
-.
-├── index.html
-├── css/
-│   └── style.css
-├── js/
-│   ├── data.js
-│   ├── map.js
-│   ├── ui.js
-│   ├── auth.js
-│   ├── ui.ugc.js
-│   ├── ui.moderation.js
-│   └── pwa.js
-├── scripts/
-│   └── export_airtable.py
-├── data/
-│   ├── features.json
-│   ├── features.geojson
-│   └── layers.json
-├── .github/
-│   └── workflows/
-│       └── export-airtable.yml
-├── manifest.json
-├── sw.js
-└── README.md
