@@ -34,9 +34,6 @@ AIRTABLE_TOKEN = os.getenv("AIRTABLE_TOKEN")
 AIRTABLE_BASE = os.getenv("AIRTABLE_BASE")
 AIRTABLE_TABLE = os.getenv("AIRTABLE_TABLE")
 
-if not AIRTABLE_TOKEN or not AIRTABLE_BASE:
-    raise Exception("Missing AIRTABLE_TOKEN or AIRTABLE_BASE")
-    
 import re
 import subprocess
 import sys
