@@ -1094,7 +1094,7 @@
       "coordinates_source": "Wikipedia",
       "influence_radius_km": 0,
       "title_short": "Сант-Агнес на Навона — Борромини против Бернини, диалог соперников в камне",
-      "description": "Изогнутый конкавный фасад Борромини напротив фонтана Четырёх рек на площади Навона — состязание двух гениев барокко. Рядом — фонтан Четырёх рек Бернини и площадь Навона с его же фонтаном Четырёх рек. Целая площадь — музей римского барокко.",
+      "description": "Главная приходская церковь площади Навона, возведённая Борромини (1652–1672). Вогнутый фасад, нарочито противопоставленный выпуклому барабану купола, отвечает Бернини: храм стоит напротив его фонтана Четырёх рек. Весь ансамбль площади Навона — наглядный учебник противостояния двух гениев римского барокко.",
       "source_url": "https://en.wikipedia.org/wiki/Sant%27Agnese_in_Agone",
       "tags": "architecture,early_modern,europe,italy,rome,baroque,church",
       "latitude": 41.8989,
@@ -1603,6 +1603,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1627,6 +1628,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1651,6 +1653,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1675,6 +1678,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1699,6 +1703,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1723,6 +1728,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1748,6 +1754,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1772,6 +1779,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1797,6 +1805,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1821,6 +1830,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1839,12 +1849,13 @@
       "title_short": "Замок Нойшванштайн — романтический неосредневековый замок, прототип замка Диснея",
       "description": "Построен по приказу короля Людвига II Баварского. Романтическая медиевализация XIX века. Стал прототипом замка Спящей красавицы в Диснее. Посещает около 1,4 млн человек в год.",
       "source_url": "https://en.wikipedia.org/wiki/Neuschwanstein_Castle",
-      "tags": "architecture,medieval,modern,europe,germany,neo_gothic,castle,romanticism",
+      "tags": "architecture,modern,europe,germany,neo_gothic,castle,romanticism",
       "latitude": 47.5576,
       "longitude": 10.7498,
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1870,6 +1881,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1894,6 +1906,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1918,6 +1931,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1942,6 +1956,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1966,6 +1981,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -1990,6 +2006,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2014,6 +2031,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2038,6 +2056,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2054,7 +2073,7 @@
       "coordinates_source": "Wikipedia",
       "influence_radius_km": 0,
       "title_short": "Сен-Жильем-ле-Дезер — аббатство в ущелье, паломническая станция в южной Франции, ЮНЕСКО",
-      "description": "Аббатство основано паладином Гвильомом. Станция пути в Сантьяго. Романская церковь. Часть маршрута Сантьяго в списке ЮНЕСКО.",
+      "description": "Аббатство основано в 804 году паладином Гильемом Оранским — соратником Карла Великого. Романская церковь XI–XII вв. в ущелье реки Эро была одной из ключевых остановок на пути паломников в Сантьяго-де-Компостела. Часть маршрута Путей Святого Иакова в списке ЮНЕСКО.",
       "source_url": "https://en.wikipedia.org/wiki/Saint-Guilhem-le-D%C3%A9sert",
       "tags": "architecture,medieval,9th_century,europe,france,languedoc,romanesque,abbey,pilgrimage,unesco",
       "latitude": 43.7281,
@@ -2062,6 +2081,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2080,12 +2100,13 @@
       "title_short": "Пантеон в Риме — лучше всего сохранившееся древнеримское здание, античный эталон классицизма",
       "description": "Построен при императоре Адриане. Купол диаметром 43,3 м с глазом-окулюсом — решение, не превзойдённое 1300 лет. Праобраз для всех купольных сооружений классицизма. С VII века — церковь.",
       "source_url": "https://en.wikipedia.org/wiki/Pantheon,_Rome",
-      "tags": "architecture,classicism,ancient,europe,italy,temple,rome,antiquity",
+      "tags": "architecture,ancient,europe,italy,rome,temple,dome",
       "latitude": 41.8986,
       "longitude": 12.4769,
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2110,6 +2131,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2134,6 +2156,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2159,6 +2182,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2183,6 +2207,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2199,7 +2224,7 @@
       "coordinates_source": "Wikipedia",
       "influence_radius_km": 0,
       "title_short": "Смольный собор в Петербурге — русское барокко Растрелли, голубые купола и белые фасады",
-      "description": "Спроектирован Бартоломео Растрелли для Елизаветы I. Голубые купола и белые фасады — русский вариант европейского барокко.",
+      "description": "Спроектирован Бартоломео Растрелли для Елизаветы I (1748–1764). Голубые купола и белые фасады — образец «елизаветинского барокко», русской интерпретации европейского стиля. Пять глав и колокольня образуют живописный силуэт над Смольным двором — одну из визитных карточек Петербурга.",
       "source_url": "https://en.wikipedia.org/wiki/Smolny_Cathedral",
       "tags": "architecture,baroque,18th_century,europe,russia,saint_petersburg,rastrelli,cathedral",
       "latitude": 59.9488,
@@ -2207,6 +2232,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2231,6 +2257,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2255,6 +2282,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2280,6 +2308,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2304,6 +2333,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2320,7 +2350,7 @@
       "coordinates_source": "Wikipedia",
       "influence_radius_km": 0,
       "title_short": "Храм Карнак — крупнейший храмовый комплекс древнего Египта, аллея Овнов и сфинксов, ЮНЕСКО",
-      "description": "Строился 2000 лет. ​Наибольший храмовый комплекс древнего египта (100 га). Гипостильный зал 134 колонны, 16-метровых. Аллея Сфинксов 3 км. ЮНЕСКО.",
+      "description": "Крупнейший храмовый комплекс Древнего Египта (около 100 га), строившийся почти 2000 лет при 30 фараонах. Гипостильный зал — 134 колонны высотой до 24 м. Аллея Сфинксов протяжённостью 3 км ведёт к Луксорскому храму. ЮНЕСКО.",
       "source_url": "https://en.wikipedia.org/wiki/Karnak",
       "tags": "architecture,ancient,21st_century_bc,africa,egypt,luxor,new_kingdom,temple,amun,hypostyle,sphinx,unesco",
       "latitude": 25.7188,
@@ -2328,6 +2358,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2352,6 +2383,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2368,7 +2400,7 @@
       "coordinates_source": "Wikipedia",
       "influence_radius_km": 0,
       "title_short": "Монастырь Баталья — шедевр португальской мануэлинской готики, ЮНЕСКО",
-      "description": "Построен в честь победы при Алжубарроте. Образцовый пример мануэлинского стиля — синтеза поздней готики с морской символикой эпохи Великих открытий. Включён в список ЮНЕСКО.",
+      "description": "Доминиканский монастырь, построенный в честь победы Жоана I при Алжубарроте в 1385 году. Мануэлинский стиль — позднеготическая архитектура с морской символикой тростника, якорных цепей и экзотических растений — отражает эпоху португальских Великих открытий. Включён в список ЮНЕСКО.",
       "source_url": "https://en.wikipedia.org/wiki/Monastery_of_Batalha",
       "tags": "architecture,gothic,medieval,europe,portugal,monastery,manueline,unesco",
       "latitude": 39.66,
@@ -2376,6 +2408,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2400,6 +2433,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2425,6 +2459,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2448,7 +2483,8 @@
       "longitude": 2.295,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -2472,6 +2508,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2496,6 +2533,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2519,7 +2557,8 @@
       "longitude": 2.1204,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -2543,6 +2582,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2567,6 +2607,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2591,6 +2632,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2615,6 +2657,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2639,6 +2682,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2663,6 +2707,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2687,6 +2732,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2711,6 +2757,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2735,6 +2782,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2759,6 +2807,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2784,6 +2833,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2808,6 +2858,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2832,6 +2883,7 @@
       "is_active": true,
       "source_license": "CC BY-SA",
       "coordinates_confidence": "exact",
+      "source_quality": "high",
       "semantic_type": "architecture"
     }
   },
@@ -2855,7 +2907,8 @@
       "longitude": 103.867,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -2878,7 +2931,8 @@
       "longitude": 6.6222,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -2901,7 +2955,8 @@
       "longitude": 23.7257,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -2924,7 +2979,8 @@
       "longitude": 12.2347,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -2947,7 +3003,8 @@
       "longitude": 2.1204,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -2970,7 +3027,8 @@
       "longitude": -0.0983,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -2994,7 +3052,8 @@
       "longitude": 2.3499,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3018,7 +3077,8 @@
       "longitude": 12.0978,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3042,7 +3102,8 @@
       "longitude": -3.4167,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3065,7 +3126,8 @@
       "longitude": 30.5138,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3088,7 +3150,8 @@
       "longitude": -4.9739,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3111,7 +3174,8 @@
       "longitude": 66.9758,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3134,7 +3198,8 @@
       "longitude": 18.1122,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3157,7 +3222,8 @@
       "longitude": -72.545,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3180,7 +3246,8 @@
       "longitude": -2.9342,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3204,7 +3271,8 @@
       "longitude": 8.4436,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3227,7 +3295,8 @@
       "longitude": 22.7417,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3251,7 +3320,8 @@
       "longitude": 14.4005,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3274,7 +3344,8 @@
       "longitude": -6.9875,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3297,7 +3368,8 @@
       "longitude": 33.9757,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3321,7 +3393,8 @@
       "longitude": 1.4442,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3344,7 +3417,8 @@
       "longitude": -4.7006,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3368,7 +3442,8 @@
       "longitude": 16.3731,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3392,7 +3467,8 @@
       "longitude": -4.0244,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3415,7 +3491,8 @@
       "longitude": -9.2036,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3438,7 +3515,8 @@
       "longitude": -3.8275,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3461,7 +3539,8 @@
       "longitude": 26.5594,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3484,7 +3563,8 @@
       "longitude": 2.3519,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3508,7 +3588,8 @@
       "longitude": -1.7989,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3531,7 +3612,8 @@
       "longitude": 28.9744,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3554,7 +3636,8 @@
       "longitude": 38.2669,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3577,7 +3660,8 @@
       "longitude": 13.0384,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3600,7 +3684,8 @@
       "longitude": 2.2945,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3623,7 +3708,8 @@
       "longitude": -0.0983,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3646,7 +3732,8 @@
       "longitude": 22.9519,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3669,7 +3756,8 @@
       "longitude": 28.98,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3693,7 +3781,8 @@
       "longitude": 12.4664,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3716,7 +3805,8 @@
       "longitude": -0.0865,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3739,7 +3829,8 @@
       "longitude": 14.3222,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3762,7 +3853,8 @@
       "longitude": 12.7233,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3785,7 +3877,8 @@
       "longitude": 10.8861,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3809,7 +3902,8 @@
       "longitude": 6.958,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3832,7 +3926,8 @@
       "longitude": 30.3242,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3855,7 +3950,8 @@
       "longitude": 10.7522,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3878,7 +3974,8 @@
       "longitude": 31.2628,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3902,7 +3999,8 @@
       "longitude": -1.15,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3925,7 +4023,8 @@
       "longitude": -73.959,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3948,7 +4047,8 @@
       "longitude": 28.2278,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3971,7 +4071,8 @@
       "longitude": 31.6258,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -3995,7 +4096,8 @@
       "longitude": 11.57,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4018,7 +4120,8 @@
       "longitude": 116.5704,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4042,7 +4145,8 @@
       "longitude": 4.3958,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4065,7 +4169,8 @@
       "longitude": 35.2354,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4088,7 +4193,8 @@
       "longitude": -3.533,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4112,7 +4218,8 @@
       "longitude": 2.3364,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4136,7 +4243,8 @@
       "longitude": 12.6367,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4160,7 +4268,8 @@
       "longitude": 2.345,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4183,7 +4292,8 @@
       "longitude": 36.3061,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4207,7 +4317,8 @@
       "longitude": 12.3388,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4230,7 +4341,8 @@
       "longitude": 5.3944,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4253,7 +4365,8 @@
       "longitude": -98.8438,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4276,7 +4389,8 @@
       "longitude": 22.3767,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4299,7 +4413,8 @@
       "longitude": 35.4444,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4322,7 +4437,8 @@
       "longitude": 17.6347,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4345,7 +4461,8 @@
       "longitude": 22.9458,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4369,7 +4486,8 @@
       "longitude": 12.4664,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4392,7 +4510,8 @@
       "longitude": 22.3767,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4416,7 +4535,8 @@
       "longitude": 31.2828,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4439,7 +4559,8 @@
       "longitude": 11.5641,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4462,7 +4583,8 @@
       "longitude": 1.9842,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4486,7 +4608,8 @@
       "longitude": -1.5778,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4509,7 +4632,8 @@
       "longitude": 29.9091,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4532,7 +4656,8 @@
       "longitude": 52.5319,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4556,7 +4681,8 @@
       "longitude": 2.7017,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4580,7 +4706,8 @@
       "longitude": 1.4877,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4603,7 +4730,8 @@
       "longitude": 5.1214,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4627,7 +4755,8 @@
       "longitude": 19.9354,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4651,7 +4780,8 @@
       "longitude": 12.3406,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4675,7 +4805,8 @@
       "longitude": 11.2562,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4698,7 +4829,8 @@
       "longitude": -2.3614,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4721,7 +4853,8 @@
       "longitude": 22.2697,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4744,7 +4877,8 @@
       "longitude": 2.3461,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4768,7 +4902,8 @@
       "longitude": 1.2992,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4791,7 +4926,8 @@
       "longitude": 49.8452,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4814,7 +4950,8 @@
       "longitude": 21.6306,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4838,7 +4975,8 @@
       "longitude": 11.25,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4861,7 +4999,8 @@
       "longitude": -9.1333,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4884,7 +5023,8 @@
       "longitude": 23.6261,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4907,7 +5047,8 @@
       "longitude": 11.5695,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4930,7 +5071,8 @@
       "longitude": 21.0357,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4953,7 +5095,8 @@
       "longitude": 24.2317,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -4977,7 +5120,8 @@
       "longitude": 11.265,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5000,7 +5144,8 @@
       "longitude": -73.9726,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5023,7 +5168,8 @@
       "longitude": 19.0289,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5046,7 +5192,8 @@
       "longitude": 2.62,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5069,7 +5216,8 @@
       "longitude": 16.3119,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5093,7 +5241,8 @@
       "longitude": 11.5455,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5117,7 +5266,8 @@
       "longitude": -0.3683,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5140,7 +5290,8 @@
       "longitude": -3.7143,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5164,7 +5315,8 @@
       "longitude": 4.2992,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5187,7 +5339,8 @@
       "longitude": 116.3915,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5210,7 +5363,8 @@
       "longitude": -99.2194,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5233,7 +5387,8 @@
       "longitude": -73.9776,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5256,7 +5411,8 @@
       "longitude": 36.2111,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5279,7 +5435,8 @@
       "longitude": 66.9697,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5303,7 +5460,8 @@
       "longitude": -1.5114,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5327,7 +5485,8 @@
       "longitude": 37.6175,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5350,7 +5509,8 @@
       "longitude": -3.5881,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5373,7 +5533,8 @@
       "longitude": 24.7453,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5397,7 +5558,8 @@
       "longitude": -2.3292,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5420,7 +5582,8 @@
       "longitude": -77.0293,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5444,7 +5607,8 @@
       "longitude": -8.5442,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5467,7 +5631,8 @@
       "longitude": 28.9639,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5491,7 +5656,8 @@
       "longitude": 10.3964,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5514,7 +5680,8 @@
       "longitude": 12.4769,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5538,7 +5705,8 @@
       "longitude": 2.3794,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5561,7 +5729,8 @@
       "longitude": 51.6839,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5584,7 +5753,8 @@
       "longitude": -0.127,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5606,7 +5776,8 @@
       "longitude": -0.2608,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5628,7 +5799,8 @@
       "longitude": -78.4527,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5650,7 +5822,8 @@
       "longitude": 2.1744,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5672,7 +5845,8 @@
       "longitude": 12.1963,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5694,7 +5868,8 @@
       "longitude": 2.1204,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5716,7 +5891,8 @@
       "longitude": -8.5444,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5739,7 +5915,8 @@
       "longitude": 9.1742,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5761,7 +5938,8 @@
       "longitude": 2.3122,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5783,7 +5961,8 @@
       "longitude": 14.3158,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
@@ -5805,7 +5984,8 @@
       "longitude": 54.3986,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact"
+      "coordinates_confidence": "exact",
+      "source_quality": "high"
     }
   },
   {
