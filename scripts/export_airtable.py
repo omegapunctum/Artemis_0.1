@@ -745,11 +745,12 @@ def main() -> int:
     errors: List[Dict[str, Any]] = []
     candidate_records: List[Dict[str, Any]] = []
     skipped_inactive = 0
+    
     for record in records:
         mapped = map_record(record, warnings)
         if mapped.get("is_active") is False and not args.include_inactive:
             skipped_inactive += 1
-                continue
+            continue
         candidate_records.append(mapped)
 
     layers = build_layers(candidate_records, warnings)
