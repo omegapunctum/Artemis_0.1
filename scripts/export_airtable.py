@@ -747,9 +747,9 @@ def main() -> int:
     skipped_inactive = 0
     for record in records:
         mapped = map_record(record, warnings)
-       if not mapped.get("is_active") and not args.include_inactive:
-           skipped_inactive += 1
-           continue
+        if mapped.get("is_active") is False and not args.include_inactive:
+            skipped_inactive += 1
+            continue
         candidate_records.append(mapped)
 
     layers = build_layers(candidate_records, warnings)
