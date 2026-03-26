@@ -643,7 +643,7 @@
 {"record_id": "recYN7TDIiDx8JsXU", "field": "latitude", "warning": "using legacy fallback field", "value": 42.6407}
 {"record_id": "recYN7TDIiDx8JsXU", "field": "is_active", "warning": "using legacy fallback field", "value": true}
 {"record_id": "recYN7TDIiDx8JsXU", "field": "source_license", "warning": "using legacy fallback field", "value": "CC BY-SA"}
-{"record_id": "recYN7TDIiDx8JsXU", "field": "coordinates_confidence", "warning": "using legacy fallback field", "value": "exact"}
+{"record_id": "recYN7TDIiDx8JsXU", "field": "coordinates_confidence", "warning": "using legacy fallback field", "value": "approximate"}
 {"record_id": "recYOEzmpMZrJpjJO", "field": "longitude", "warning": "using legacy fallback field", "value": -72.545}
 {"record_id": "recYOEzmpMZrJpjJO", "field": "latitude", "warning": "using legacy fallback field", "value": -13.1631}
 {"record_id": "recYOEzmpMZrJpjJO", "field": "is_active", "warning": "using legacy fallback field", "value": true}
@@ -690,7 +690,7 @@
 {"record_id": "reca7q9oMYcmktSdv", "field": "latitude", "warning": "using legacy fallback field", "value": 40.6558}
 {"record_id": "reca7q9oMYcmktSdv", "field": "is_active", "warning": "using legacy fallback field", "value": true}
 {"record_id": "reca7q9oMYcmktSdv", "field": "source_license", "warning": "using legacy fallback field", "value": "CC BY-SA"}
-{"record_id": "reca7q9oMYcmktSdv", "field": "coordinates_confidence", "warning": "using legacy fallback field", "value": "exact"}
+{"record_id": "reca7q9oMYcmktSdv", "field": "coordinates_confidence", "warning": "using legacy fallback field", "value": "approximate"}
 {"record_id": "recaGT6agenbkaaTE", "field": "longitude", "warning": "using legacy fallback field", "value": 16.3731}
 {"record_id": "recaGT6agenbkaaTE", "field": "latitude", "warning": "using legacy fallback field", "value": 48.2085}
 {"record_id": "recaGT6agenbkaaTE", "field": "is_active", "warning": "using legacy fallback field", "value": true}
@@ -839,7 +839,7 @@
 {"record_id": "recfcHr6YKflHzPai", "field": "latitude", "warning": "using legacy fallback field", "value": 40.4319}
 {"record_id": "recfcHr6YKflHzPai", "field": "is_active", "warning": "using legacy fallback field", "value": true}
 {"record_id": "recfcHr6YKflHzPai", "field": "source_license", "warning": "using legacy fallback field", "value": "CC BY-SA"}
-{"record_id": "recfcHr6YKflHzPai", "field": "coordinates_confidence", "warning": "using legacy fallback field", "value": "exact"}
+{"record_id": "recfcHr6YKflHzPai", "field": "coordinates_confidence", "warning": "using legacy fallback field", "value": "approximate"}
 {"record_id": "recfcHr6YKflHzPai", "field": "date_start", "error": "invalid date: -221", "value": "-221"}
 {"record_id": "recgNJpBYgOLvquee", "field": "longitude", "warning": "using legacy fallback field", "value": 4.3958}
 {"record_id": "recgNJpBYgOLvquee", "field": "latitude", "warning": "using legacy fallback field", "value": 47.6347}
@@ -1137,7 +1137,7 @@
 {"record_id": "recuSMrkFSr3c9Rsk", "field": "latitude", "warning": "using legacy fallback field", "value": 59.4369}
 {"record_id": "recuSMrkFSr3c9Rsk", "field": "is_active", "warning": "using legacy fallback field", "value": true}
 {"record_id": "recuSMrkFSr3c9Rsk", "field": "source_license", "warning": "using legacy fallback field", "value": "CC BY-SA"}
-{"record_id": "recuSMrkFSr3c9Rsk", "field": "coordinates_confidence", "warning": "using legacy fallback field", "value": "exact"}
+{"record_id": "recuSMrkFSr3c9Rsk", "field": "coordinates_confidence", "warning": "using legacy fallback field", "value": "approximate"}
 {"record_id": "recuVnS8iSJLnzV2M", "field": "longitude", "warning": "using legacy fallback field", "value": -2.3292}
 {"record_id": "recuVnS8iSJLnzV2M", "field": "latitude", "warning": "using legacy fallback field", "value": 52.1136}
 {"record_id": "recuVnS8iSJLnzV2M", "field": "is_active", "warning": "using legacy fallback field", "value": true}

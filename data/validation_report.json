@@ -3879,7 +3879,7 @@
       "record_id": "recYN7TDIiDx8JsXU",
       "field": "coordinates_confidence",
       "warning": "using legacy fallback field",
-      "value": "exact"
+      "value": "approximate"
     },
     {
       "record_id": "recYOEzmpMZrJpjJO",
@@ -4161,7 +4161,7 @@
       "record_id": "reca7q9oMYcmktSdv",
       "field": "coordinates_confidence",
       "warning": "using legacy fallback field",
-      "value": "exact"
+      "value": "approximate"
     },
     {
       "record_id": "recaGT6agenbkaaTE",
@@ -5055,7 +5055,7 @@
       "record_id": "recfcHr6YKflHzPai",
       "field": "coordinates_confidence",
       "warning": "using legacy fallback field",
-      "value": "exact"
+      "value": "approximate"
     },
     {
       "record_id": "recfcHr6YKflHzPai",
@@ -6843,7 +6843,7 @@
       "record_id": "recuSMrkFSr3c9Rsk",
       "field": "coordinates_confidence",
       "warning": "using legacy fallback field",
-      "value": "exact"
+      "value": "approximate"
     },
     {
       "record_id": "recuVnS8iSJLnzV2M",

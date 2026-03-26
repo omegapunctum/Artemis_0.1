@@ -3218,7 +3218,7 @@
       "date_start": "1272",
       "name_ru": "Дубровник — средневековые стены города",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia",
+      "coordinates_source": "Wikipedia (representative point — периметр городских стен 2 км)",
       "influence_radius_km": 0,
       "title_short": "Дубровник — средневековые городские стены 2 км, южнославянская Атина, ЮНЕСКО",
       "description": "Городские стены длиной 2 км с башнями и бастионами. Республика Рагуза — вольный торговый город. Южнославянская Атина. ЮНЕСКО.",
@@ -3228,7 +3228,7 @@
       "longitude": 18.1122,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact",
+      "coordinates_confidence": "approximate",
       "source_quality": "high"
     }
   },
@@ -3437,7 +3437,7 @@
       "date_start": "1090",
       "name_ru": "Средневековые стены Авилы в Испании",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia",
+      "coordinates_source": "Wikipedia (representative point — городские стены 2.5 км, 87 башен)",
       "influence_radius_km": 0,
       "title_short": "Стены Авилы — лучше сохранившиеся романские городские стены в Испании, ЮНЕСКО",
       "description": "Городская стена длиной 2,5 км, 87 башен, 9 ворот. Построена по указу Альфонсо VI для защиты от мавров. Лучше сохранившиеся романские стены Испании. ЮНЕСКО.",
@@ -3447,7 +3447,7 @@
       "longitude": -4.7006,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact",
+      "coordinates_confidence": "approximate",
       "source_quality": "high"
     }
   },
@@ -4140,7 +4140,7 @@
       "date_start": "-221",
       "name_ru": "Великая Китайская стена",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia",
+      "coordinates_source": "Wikipedia (representative point — объект протяжённостью 21 000 км)",
       "influence_radius_km": 0,
       "title_short": "Великая Китайская стена — 21 000 км, самое длинное архитектурное сооружение в мире, ЮНЕСКО",
       "description": "21 000 км стен от династии Цинь до династии Мин. Строилась 2000 лет. От нашествия кочевников и монголов. 10 000 000 человек строило в пике. ЮНЕСКО.",
@@ -4150,7 +4150,7 @@
       "longitude": 116.5704,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact",
+      "coordinates_confidence": "approximate",
       "source_quality": "high"
     }
   },
@@ -5553,7 +5553,7 @@
       "date_start": "1219",
       "name_ru": "Старый город Таллина — городские стены средневековья",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia",
+      "coordinates_source": "Wikipedia (representative point — исторический центр города)",
       "influence_radius_km": 0,
       "title_short": "Старый Таллин — лучше сохранившийся ганзейский средневековый город, ЮНЕСКО",
       "description": "Один из лучших сохранившихся ганзейских средневековых городов Северной Европы. Сохранились средневековые стены, башни, церкви. ЮНЕСКО.",
@@ -5563,7 +5563,7 @@
       "longitude": 24.7453,
       "is_active": true,
       "source_license": "CC BY-SA",
-      "coordinates_confidence": "exact",
+      "coordinates_confidence": "approximate",
       "source_quality": "high"
     }
   },
