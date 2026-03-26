@@ -288,6 +288,7 @@ def map_record(record: Dict[str, Any], errors: List[Dict[str, Any]]) -> Dict[str
 
     longitude = validate_coordinate_range(longitude, -180.0, 180.0, record_id, "longitude", errors)
     latitude = validate_coordinate_range(latitude, -90.0, 90.0, record_id, "latitude", errors)
+    source_url = safe_str(fields.get("source_url"))
     if source_url is None:
         errors.append({"record_id": record_id, "field": "source_url", "warning": "missing source_url", "value": None})
     
