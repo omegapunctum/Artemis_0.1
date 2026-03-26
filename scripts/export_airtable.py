@@ -748,7 +748,7 @@ def main() -> int:
     for record in records:
         mapped = map_record(record, warnings)
        if not mapped.get("is_active") and not args.include_inactive:
-            skipped_inactive += 1
+                skipped_inactive += 1
             continue
         candidate_records.append(mapped)
 
