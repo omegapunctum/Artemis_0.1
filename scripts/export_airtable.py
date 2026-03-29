@@ -14,6 +14,7 @@
 Выходные файлы:
   - data/features.json        : сырые записи Airtable (records)
   - data/features.geojson     : GeoJSON FeatureCollection
+  - data/rejected.json        : отклонённые записи с причинами валидации
   - data/layers.json          : агрегированные метаданные слоёв
   - data/export_errors.log    : ошибки в формате JSON Lines
   - data/export_meta.json     : метаданные экспорта (timestamp, counts, source)
@@ -233,23 +234,34 @@ def map_record(record: Dict[str, Any], errors: List[Dict[str, Any]]) -> Dict[str
     record_id = record.get("id", "")
     fields = record.get("fields", {}) or {}
 
-    longitude = fields.get("longitude_num")
+    longitude_parse_error = False
+    latitude_parse_error = False
+
+    longitude = to_float_or_none(fields.get("longitude_num"), record_id, "longitude_num", errors)
+    if fields.get("longitude_num") not in (None, "") and longitude is None:
+        longitude_parse_error = True
     if longitude in (None, ""):
         legacy_longitude = fields.get("longitude")
         if legacy_longitude not in (None, ""):
             errors.append(
                 {"record_id": record_id, "field": "longitude", "warning": "using legacy fallback field", "value": legacy_longitude}
             )
-        longitude = parse_float(legacy_longitude)
+        longitude = to_float_or_none(legacy_longitude, record_id, "longitude", errors)
+        if legacy_longitude not in (None, "") and longitude is None:
+            longitude_parse_error = True
 
-    latitude = fields.get("latitude_num")
+    latitude = to_float_or_none(fields.get("latitude_num"), record_id, "latitude_num", errors)
+    if fields.get("latitude_num") not in (None, "") and latitude is None:
+        latitude_parse_error = True
     if latitude in (None, ""):
         legacy_latitude = fields.get("latitude")
         if legacy_latitude not in (None, ""):
             errors.append(
                 {"record_id": record_id, "field": "latitude", "warning": "using legacy fallback field", "value": legacy_latitude}
             )
-        latitude = parse_float(legacy_latitude)
+        latitude = to_float_or_none(legacy_latitude, record_id, "latitude", errors)
+        if legacy_latitude not in (None, "") and latitude is None:
+            latitude_parse_error = True
 
     is_active = fields.get("is_active_bool")
     if is_active in (None, ""):
@@ -305,6 +317,7 @@ def map_record(record: Dict[str, Any], errors: List[Dict[str, Any]]) -> Dict[str
         "date_end": to_date_or_none(fields.get("date_end"), record_id, "date_end", errors),
         "longitude": longitude,
         "latitude": latitude,
+        "_invalid_coordinates": longitude_parse_error or latitude_parse_error,
         "influence_radius_km": to_int_or_none(
             fields.get("influence_radius_km"), record_id, "influence_radius_km", errors
         ),
@@ -499,6 +512,8 @@ def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List
     def warning(field: str, reason: str) -> None:
         add_issue(warnings, "warning", record_id, reason, field)
 
+    if mapped.get("_invalid_coordinates"):
+        critical("geometry", "latitude/longitude must be float values")
     if not mapped.get("id"):
         critical("id", "missing id")
     if not mapped.get("layer_id"):
@@ -716,6 +731,7 @@ def main() -> int:
     prefix = "_test_" if dry_run else ""
     raw_path = out_dir / f"{prefix}features.json"
     geojson_path = out_dir / f"{prefix}features.geojson"
+    rejected_path = out_dir / f"{prefix}rejected.json"
     layers_path = out_dir / f"{prefix}layers.json"
     validation_report_path = out_dir / f"{prefix}validation_report.json"
     export_meta_path = out_dir / f"{prefix}export_meta.json"
@@ -757,7 +773,22 @@ def main() -> int:
     valid_layers = [layer for layer in layers if validate_layer(layer, warnings, errors)]
     valid_layer_ids = {layer["id"] for layer in valid_layers}
 
-    mapped_records = [m for m in candidate_records if validate_feature(m, valid_layer_ids, warnings, errors)]
+    mapped_records: List[Dict[str, Any]] = []
+    rejected_records: List[Dict[str, Any]] = []
+    for mapped in candidate_records:
+        prev_errors_len = len(errors)
+        if validate_feature(mapped, valid_layer_ids, warnings, errors):
+            mapped_records.append(mapped)
+            continue
+        record_id = mapped.get("id") or "<missing>"
+        reasons = [
+            {"field": err.get("field"), "reason": err.get("reason")}
+            for err in errors[prev_errors_len:]
+            if err.get("id") == record_id and err.get("severity") == "critical"
+        ]
+        if not reasons:
+            reasons = [{"field": None, "reason": "rejected by validation"}]
+        rejected_records.append({"id": record_id, "reasons": reasons})
     mapped_records = sort_mapped_records(mapped_records)
     if args.exclude_without_geometry:
         mapped_records = [m for m in mapped_records if m.get("longitude") is not None and m.get("latitude") is not None]
@@ -786,6 +817,7 @@ def main() -> int:
     try:
         write_json(raw_path, records)
         write_json(geojson_path, geojson)
+        write_json(rejected_path, rejected_records)
         write_json(layers_path, valid_layers)
         write_json(validation_report_path, validation_report)
         write_json(export_meta_path, export_meta)
@@ -810,7 +842,7 @@ def main() -> int:
 
     if args.commit:
         maybe_commit(
-            [raw_path, geojson_path, layers_path, validation_report_path, export_meta_path, error_log_path],
+            [raw_path, geojson_path, rejected_path, layers_path, validation_report_path, export_meta_path, error_log_path],
             len(mapped_records),
         )
 
