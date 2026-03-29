@@ -39,6 +39,7 @@ import re
 import subprocess
 import sys
 import time
+from urllib.parse import urlparse
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -56,6 +57,7 @@ FALSE_SET = {False, 0, "0", "false", "no", "n", "нет"}
 ALLOWED_LICENSES = {"CC0", "CC BY", "CC BY-SA", "PD"}
 ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximately±Nkm", "conditional"}
 ALLOWED_LAYER_TYPES = {"architecture", "route_point", "biogeography", "biography"}
+ALLOWED_COORDINATES_SOURCES = {"wikipedia"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -177,6 +179,23 @@ def is_valid_layer_type(value: Optional[str]) -> bool:
 
 def is_valid_color_hex(value: Optional[str]) -> bool:
     return value is not None and HEX_COLOR_RE.fullmatch(value.strip()) is not None
+
+
+def is_valid_url(value: Optional[str]) -> bool:
+    if value is None:
+        return False
+    parsed = urlparse(value.strip())
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
+def normalize_coordinates_source(value: Any) -> Optional[str]:
+    text = safe_str(value)
+    if text is None:
+        return None
+    normalized = re.sub(r"\s+", "_", text.strip().lower())
+    if normalized.startswith("wikipedia"):
+        return "wikipedia"
+    return normalized
 
 
 def validate_coordinate_range(
@@ -301,8 +320,6 @@ def map_record(record: Dict[str, Any], errors: List[Dict[str, Any]]) -> Dict[str
     longitude = validate_coordinate_range(longitude, -180.0, 180.0, record_id, "longitude", errors)
     latitude = validate_coordinate_range(latitude, -90.0, 90.0, record_id, "latitude", errors)
     source_url = safe_str(fields.get("source_url"))
-    if source_url is None:
-        errors.append({"record_id": record_id, "field": "source_url", "warning": "missing source_url", "value": None})
         
     mapped = {
         "id": record_id,
@@ -327,7 +344,7 @@ def map_record(record: Dict[str, Any], errors: List[Dict[str, Any]]) -> Dict[str
         "source_url": source_url,
         "source_license": source_license,
         "coordinates_confidence": coordinates_confidence,
-        "coordinates_source": safe_str(fields.get("coordinates_source")),
+        "coordinates_source": normalize_coordinates_source(fields.get("coordinates_source")),
         "sequence_order": to_int_or_none(fields.get("sequence_order"), record_id, "sequence_order", errors),
         "tags": to_tags(fields.get("tags")),
         "is_active": is_active,
@@ -524,8 +541,9 @@ def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List
         critical("layer_type", "invalid layer_type")
     if not mapped.get("name_ru"):
         critical("name_ru", "missing name_ru")
-    if not mapped.get("source_url"):
-        warning("source_url", "missing source_url")
+    source_url = mapped.get("source_url")
+    if not is_valid_url(source_url):
+        critical("source_url", "invalid_source_url")
     if mapped.get("latitude") is not None and not (-90 <= mapped["latitude"] <= 90):
         critical("latitude", "latitude out of range")
     if mapped.get("longitude") is not None and not (-180 <= mapped["longitude"] <= 180):
@@ -535,9 +553,12 @@ def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List
     if not is_valid_iso_date(mapped.get("date_end")):
         critical("date_end", "invalid ISO date")
     if not is_valid_license(mapped.get("source_license")):
-        critical("source_license", "invalid source_license")
+        critical("source_license", "invalid_license")
     if mapped.get("coordinates_confidence") not in ALLOWED_COORDINATES_CONFIDENCE:
         critical("coordinates_confidence", "invalid coordinates_confidence")
+    coordinates_source = mapped.get("coordinates_source")
+    if coordinates_source not in ALLOWED_COORDINATES_SOURCES:
+        critical("coordinates_source", "invalid_coordinates_source")
     if not isinstance(mapped.get("is_active"), bool):
         critical("is_active", "is_active must be boolean")
     if mapped.get("title_short") and len(mapped["title_short"]) > 120:
@@ -551,8 +572,9 @@ def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List
         warning("geometry", "coordinates are null")
     elif mapped.get("latitude") is None or mapped.get("longitude") is None:
         critical("geometry", "longitude/latitude must both be present or null")
-    if not mapped.get("image_url"):
-        warning("image_url", "missing image_url")
+    image_url = mapped.get("image_url")
+    if image_url and not is_valid_url(image_url):
+        critical("image_url", "invalid_image_url")
     if not mapped.get("description"):
         warning("description", "empty description")
     return valid
