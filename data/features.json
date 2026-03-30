@@ -1,0 +1,515 @@
+[
+  {
+    "id": "rec0x9MvhXQFWErOy",
+    "createdTime": "2026-03-30T09:18:21.000Z",
+    "fields": {
+      "id": "x1y2z3a4-1122-4b9a-8c7d-6e5f4a3b2c1d",
+      "layer_id": [
+        "rec9Uig4TqQTf9Mic"
+      ],
+      "name_en": "Burj Khalifa",
+      "date_end": "2010",
+      "date_start": "2004",
+      "name_ru": "Бурдж-Халифа",
+      "layer_type": "architecture",
+      "coordinates_source": "Wikipedia / Official Site",
+      "influence_radius_km": 5,
+      "title_short": "Самое высокое здание в истории человечества",
+      "description": "828-метровый небоскрёб. Форма основана на геометрии цветка и минимизирует ветровые нагрузки.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Burj_Khalifa_Dubai_Skyline.jpg",
+      "source_url": "https://www.burjkhalifa.ae/en/",
+      "latitude": 25.1972,
+      "longitude": 55.2741,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "rec1GDGqssFGehzEx",
+    "createdTime": "2026-03-30T09:18:21.000Z",
+    "fields": {
+      "id": "h1i2t3e4-1971-4b9a-8c7d-6e5f4a3b2c1d",
+      "layer_id": [
+        "recGFqZ87FnbU0yS2"
+      ],
+      "name_en": "Villa Savoye",
+      "date_end": "1931",
+      "date_start": "1929",
+      "name_ru": "Вилла Савой",
+      "layer_type": "architecture",
+      "coordinates_source": "Wikipedia / Britannica",
+      "influence_radius_km": 1,
+      "title_short": "Манифест современной архитектуры Ле Корбюзье",
+      "description": "Воплощение 5 принципов: опоры, крыша-сад, свободный план, ленточные окна, свободный фасад.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Villa_Savoye_Front_View.jpg",
+      "source_url": "https://en.wikipedia.org/wiki/Villa_Savoye",
+      "latitude": 48.9244,
+      "longitude": 2.0283,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "rec7xto7TNSberKPg",
+    "createdTime": "2026-03-30T09:16:13.000Z",
+    "fields": {
+      "id": "p1a2n3t4-1758-4b9a-8c7d-6e5f4a3b2c1d",
+      "layer_id": [
+        "recd5a9BoEUWzKe26"
+      ],
+      "name_en": "St. Peter's Basilica",
+      "date_end": "1626",
+      "date_start": "1506",
+      "name_ru": "Собор Святого Петра",
+      "layer_type": "architecture",
+      "coordinates_source": "Vatican / Wikipedia",
+      "influence_radius_km": 1,
+      "title_short": "Величайший собор христианского мира",
+      "description": "Плод работы Браманте, Рафаэля и Микеланджело. Купол стал образцом для западной архитектуры.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:St_Peter%27s_Basilica_at_Night.jpg",
+      "source_url": "https://en.wikipedia.org/wiki/St._Peter%27s_Basilica",
+      "latitude": 41.9022,
+      "longitude": 12.4533,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "rec8RKV55zHUCA4bc",
+    "createdTime": "2026-03-30T09:16:13.000Z",
+    "fields": {
+      "id": "v1e2r3s4-1661-4b7a-9c2d-8e6f5a4b3c2d",
+      "layer_id": [
+        "recyseSDjnvVbf4kd"
+      ],
+      "name_en": "Chartres Cathedral",
+      "date_end": "1252",
+      "date_start": "1194",
+      "name_ru": "Шартрский собор",
+      "layer_type": "architecture",
+      "coordinates_source": "UNESCO / Wikipedia",
+      "influence_radius_km": 2,
+      "title_short": "Совершенный образец высокой готики",
+      "description": "Храм с ансамблем витражей (2500 кв. м) и системным использованием аркбутанов.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Chartres_Cathedral_View_2023.jpg",
+      "source_url": "https://whc.unesco.org/en/list/81/",
+      "latitude": 48.4478,
+      "longitude": 1.4878,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "rec9KIQPB9M377wgE",
+    "createdTime": "2026-03-30T09:18:21.000Z",
+    "fields": {
+      "id": "n1e2o3f4-2004-4b9a-8c7d-6e5f4a3b2c1d",
+      "layer_id": [
+        "recixNuq3MDPJPRZD"
+      ],
+      "name_en": "Centre Pompidou",
+      "date_end": "1977",
+      "date_start": "1971",
+      "name_ru": "Центр Жоржа Помпиду",
+      "layer_type": "architecture",
+      "coordinates_source": "Wikipedia / Pompidou Site",
+      "influence_radius_km": 1,
+      "title_short": "Манифест архитектуры хай-тек в центре Парижа",
+      "description": "Здание «вывернутое наизнанку»: все коммуникации вынесены на фасад и выделены цветом.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Centre_Pompidou_Paris_2021.jpg",
+      "source_url": "https://en.wikipedia.org/wiki/Centre_Pompidou",
+      "latitude": 48.8606,
+      "longitude": 2.3522,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "recAJJSQH0dvmnpp0",
+    "createdTime": "2026-03-30T09:18:21.000Z",
+    "fields": {
+      "id": "a1r2d3e4-1928-4b9a-8c7d-6e5f4a3b2c1d",
+      "layer_id": [
+        "recXiwpjwSqzGVjdK"
+      ],
+      "name_en": "Panthéon (Paris)",
+      "date_end": "1790",
+      "date_start": "1758",
+      "name_ru": "Пантеон (Париж)",
+      "layer_type": "architecture",
+      "coordinates_source": "Wikipedia / Britannica",
+      "influence_radius_km": 1,
+      "title_short": "Храм Просвещения и национальный мавзолей Франции",
+      "description": "Монументальное здание Суффло, вдохновлённое античностью. Место погребения Гюго, Золя, Кюри.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Pantheon_de_Paris_2019.jpg",
+      "source_url": "https://en.wikipedia.org/wiki/Panth%C3%A9on",
+      "latitude": 48.8461,
+      "longitude": 2.3458,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "recC9HLvvR9Xi1rKR",
+    "createdTime": "2026-03-30T09:16:13.000Z",
+    "fields": {
+      "id": "e2a3b4c5-1238-4f91-b0d2-e3f4a5b6c7d8",
+      "layer_id": [
+        "recfoIIqDhG0Y4Xho"
+      ],
+      "name_en": "Pantheon (Rome)",
+      "date_end": "0128",
+      "date_start": "0118",
+      "name_ru": "Пантеон (Рим)",
+      "layer_type": "architecture",
+      "coordinates_source": "Wikipedia / Britannica",
+      "influence_radius_km": 1,
+      "title_short": "«Храм всех богов» с величайшим куполом древности",
+      "description": "Храм с неармированным бетонным куполом (43,3 м) и окулусом. Шедевр римской инженерии.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Pantheon_Rome_2017.jpg",
+      "source_url": "https://en.wikipedia.org/wiki/Pantheon,_Rome",
+      "latitude": 41.8986,
+      "longitude": 12.4769,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "recDQaBEVGxTRjCat",
+    "createdTime": "2026-03-30T09:16:13.000Z",
+    "fields": {
+      "id": "b1c2d3e4-1506-4b9a-8c7d-6e5f4a3b2c1d",
+      "layer_id": [
+        "recOvzuZeUOl81TVz"
+      ],
+      "name_en": "Santiago de Compostela Cathedral",
+      "date_end": "1211",
+      "date_start": "1075",
+      "name_ru": "Собор в Сантьяго-де-Компостела",
+      "layer_type": "architecture",
+      "coordinates_source": "Official Site / Wikipedia",
+      "influence_radius_km": 1,
+      "title_short": "Главный паломнический собор средневековой Европы",
+      "description": "Классическая романская базилика над гробницей апостола. Портик Славы мастера Матео.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Cathedral_of_Santiago_de_Compostela_Obradoiro.jpg",
+      "source_url": "https://catedraldesantiago.es/en/cathedral/",
+      "latitude": 42.8806,
+      "longitude": -8.5442,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "recHqE46e2W3EDBlO",
+    "createdTime": "2026-03-30T09:18:21.000Z",
+    "fields": {
+      "id": "b7r8u9t0-1963-4b9a-8c7d-6e5f4a3b2c1d",
+      "layer_id": [
+        "reclYzFlRbskL24cq"
+      ],
+      "name_en": "Chrysler Building",
+      "date_end": "1930",
+      "date_start": "1928",
+      "name_ru": "Крайслер-билдинг",
+      "layer_type": "architecture",
+      "coordinates_source": "Wikipedia / PBS",
+      "influence_radius_km": 1,
+      "title_short": "Самый узнаваемый небоскрёб в стиле ар-деко",
+      "description": "Стальная корона с треугольными окнами и орнаментами. Символ индустриальной роскоши.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Chrysler_Building_Midtown_Manhattan.jpg",
+      "source_url": "https://en.wikipedia.org/wiki/Chrysler_Building",
+      "latitude": 40.7516,
+      "longitude": -73.9755,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "recIO5H5Vqw2xwfLq",
+    "createdTime": "2026-03-30T09:18:21.000Z",
+    "fields": {
+      "id": "g1a2u3d4-1904-4b9a-8c7d-6e5f4a3b2c1d",
+      "layer_id": [
+        "recMn3l81rTXSOwlU"
+      ],
+      "name_en": "Palace of Versailles",
+      "date_end": "1715",
+      "date_start": "1661",
+      "name_ru": "Версальский дворец",
+      "layer_type": "architecture",
+      "coordinates_source": "UNESCO / Wikipedia",
+      "influence_radius_km": 15,
+      "title_short": "Резиденция «Короля-Солнца» и символ абсолютизма",
+      "description": "Грандиозный ансамбль с Зеркальной галереей и регулярными садами Ленотра. Модель барокко.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Versailles_Palace_Garden_View.jpg",
+      "source_url": "https://en.wikipedia.org/wiki/Palace_of_Versailles",
+      "latitude": 48.8048,
+      "longitude": 2.1203,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "recS69tE4CQPTy105",
+    "createdTime": "2026-03-30T09:16:13.000Z",
+    "fields": {
+      "id": "f9e8d7c6-1194-4b1a-9d2c-1b3a4f5e6d7c",
+      "layer_id": [
+        "recyYqRibiQRn7aY7"
+      ],
+      "name_en": "Alhambra",
+      "date_end": "1358",
+      "date_start": "1238",
+      "name_ru": "Альгамбра",
+      "layer_type": "architecture",
+      "coordinates_source": "UNESCO / Wikipedia",
+      "influence_radius_km": 3,
+      "title_short": "Дворцовый комплекс мусульманской Испании",
+      "description": "Резиденция династии Насридов. Известна резьбой по стукко, мукарнами и Львиным двориком.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Alhambra_Granada_Spain.jpg",
+      "source_url": "https://en.wikipedia.org/wiki/Alhambra",
+      "latitude": 37.1775,
+      "longitude": -3.59,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "recV3Kj5ounTF55mw",
+    "createdTime": "2026-03-30T09:18:21.000Z",
+    "fields": {
+      "id": "s1a2m3p4-5566-4b9a-8c7d-6e5f4a3b2c1d",
+      "layer_id": [
+        "rec2ncluHiLODNnaq"
+      ],
+      "name_en": "Jewish Museum Berlin",
+      "date_end": "1999",
+      "date_start": "1992",
+      "name_ru": "Еврейский музей в Берлине",
+      "layer_type": "architecture",
+      "coordinates_source": "Official Site / Wikipedia",
+      "influence_radius_km": 1,
+      "title_short": "Архитектурное воплощение немецко-еврейской истории",
+      "description": "Зигзагообразное здание Либескинда с «пустотами», передающее ощущение исторического разрыва.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:J%C3%BCdisches_Museum_Berlin_Libeskind_Bau.jpg",
+      "source_url": "https://www.jmberlin.de/en/libeskind-building",
+      "latitude": 52.502,
+      "longitude": 13.395,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "recZbIE0P3vL62bPj",
+    "createdTime": "2026-03-30T09:16:13.000Z",
+    "fields": {
+      "id": "c7b6a5d4-0532-4f9e-8d2c-1b3a4f5e6d7c",
+      "layer_id": [
+        "rectnuWteYliOpxow"
+      ],
+      "name_en": "Parthenon",
+      "date_end": "-0432",
+      "date_start": "-0447",
+      "name_ru": "Парфенон",
+      "layer_type": "architecture",
+      "coordinates_source": "Wikipedia / Saylor",
+      "influence_radius_km": 1,
+      "title_short": "Кульминация классического дорического ордера",
+      "description": "Мраморный храм Афины на Акрополе. Использует сложные оптические корректировки линий.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:The_Parthenon_Athens.jpg",
+      "source_url": "https://en.wikipedia.org/wiki/Parthenon",
+      "latitude": 37.9715,
+      "longitude": 23.7266,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "recZsGTVquE5d26YO",
+    "createdTime": "2026-03-30T09:16:13.000Z",
+    "fields": {
+      "id": "8f5d2e1a-2580-4c11-9a3f-123456789abc",
+      "layer_id": [
+        "reccBhhL2wUa80Qqo"
+      ],
+      "name_en": "Stonehenge",
+      "date_end": "-1600",
+      "date_start": "-3100",
+      "name_ru": "Стоунхендж",
+      "layer_type": "architecture",
+      "coordinates_source": "UNESCO / Wikipedia",
+      "influence_radius_km": 5,
+      "title_short": "Крупнейший мегалитический комплекс Европы",
+      "description": "Доисторический памятник из кольца камней весом до 50 тонн. Включает рвы и курганы, ориентированные на солнцестояние.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Stonehenge_2017_01.jpg",
+      "source_url": "https://whc.unesco.org/en/list/373/",
+      "latitude": 51.1789,
+      "longitude": -1.8262,
+      "is_active": true,
+      "source_license": "PD",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "receHpSDGZ82Cx05k",
+    "createdTime": "2026-03-30T09:16:13.000Z",
+    "fields": {
+      "id": "d4c3b2a1-0447-49f8-b1c2-3d4e5f6a7b8c",
+      "layer_id": [
+        "recJXK27B03UlbFeK"
+      ],
+      "name_en": "Great Pyramid of Giza",
+      "date_end": "-2566",
+      "date_start": "-2589",
+      "name_ru": "Великая пирамида Гизы (Пирамида Хеопса)",
+      "layer_type": "architecture",
+      "coordinates_source": "Wikipedia / Britannica",
+      "influence_radius_km": 10,
+      "title_short": "Последнее из сохранившихся чудес света",
+      "description": "Крупнейшая египетская пирамида, гробница фараона Хуфу. Состоит из 2,3 млн блоков. Высота 146,6 м.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Great_Pyramid_of_Giza_2023.jpg",
+      "source_url": "https://en.wikipedia.org/wiki/Great_Pyramid_of_Giza",
+      "latitude": 29.9792,
+      "longitude": 31.1342,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "recmLwS8nYaR2dYEF",
+    "createdTime": "2026-03-30T09:18:21.000Z",
+    "fields": {
+      "id": "m1o2d3e4-1929-4b9a-8c7d-6e5f4a3b2c1d",
+      "layer_id": [
+        "recdRYJNImF7gWIFV"
+      ],
+      "name_en": "Casa Batlló",
+      "date_end": "1906",
+      "date_start": "1904",
+      "name_ru": "Каса-Батльо",
+      "layer_type": "architecture",
+      "coordinates_source": "UNESCO / Wikipedia",
+      "influence_radius_km": 1,
+      "title_short": "Шедевр органического модернизма Антонио Гауди",
+      "description": "Реконструкция жилого дома с фасадом из мозаики и балконами-масками. Отсутствие прямых линий.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Casa_Batll%C3%B3_Barcelona_Main.jpg",
+      "source_url": "https://www.casabatllo.es/en/",
+      "latitude": 41.3917,
+      "longitude": 2.1649,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "recr1NbkVTbJwP5Ia",
+    "createdTime": "2026-03-30T09:18:21.000Z",
+    "fields": {
+      "id": "d1e2c3o4-1992-4b9a-8c7d-6e5f4a3b2c1d",
+      "layer_id": [
+        "recLxj4PljgKcqGCj"
+      ],
+      "name_en": "Royal National Theatre",
+      "date_end": "1976",
+      "date_start": "1963",
+      "name_ru": "Королевский национальный театр",
+      "layer_type": "architecture",
+      "coordinates_source": "Wikipedia / Dezeen",
+      "influence_radius_km": 1,
+      "title_short": "Икона британского брутализма на берегу Темзы",
+      "description": "Многоуровневые бетонные террасы. Использование «грубого бетона» как эстетической основы.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:National_Theatre_South_Bank_2015.jpg",
+      "source_url": "https://en.wikipedia.org/wiki/Royal_National_Theatre",
+      "latitude": 51.5072,
+      "longitude": -0.1142,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "recylJimofuhRUv49",
+    "createdTime": "2026-03-30T09:16:13.000Z",
+    "fields": {
+      "id": "f1e2d3c4-0072-4b3a-9c8d-7e6f5a4b3c2d",
+      "layer_id": [
+        "rec14Pg6aG1qbuorT"
+      ],
+      "name_en": "Great Ziggurat of Ur",
+      "date_end": "-2000",
+      "date_start": "-2100",
+      "name_ru": "Великий зиккурат в Уре",
+      "layer_type": "architecture",
+      "coordinates_source": "Wikipedia / Britannica",
+      "influence_radius_km": 2,
+      "title_short": "Главный храм-гора древнего Шумера",
+      "description": "Трехъярусная пирамидальная платформа из сырцового кирпича. Посвящена богу луны Нанне.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Great_Ziggurat_of_Ur_2021.jpg",
+      "source_url": "https://www.britannica.com/topic/ziggurat-at-Ur",
+      "latitude": 30.9628,
+      "longitude": 46.1031,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  },
+  {
+    "id": "reczZVbBhaCDZx97j",
+    "createdTime": "2026-03-30T09:16:13.000Z",
+    "fields": {
+      "id": "a1b2c3d4-1075-4f3e-8c2a-1b3a4f5e6d7c",
+      "layer_id": [
+        "recw3ji9ZL9VpwG5F"
+      ],
+      "name_en": "Hagia Sophia",
+      "date_end": "0537",
+      "date_start": "0532",
+      "name_ru": "Собор Святой Софии",
+      "layer_type": "architecture",
+      "coordinates_source": "UNESCO / Wikipedia",
+      "influence_radius_km": 1,
+      "title_short": "Шедевр «Золотого века» Византии",
+      "description": "Первая реализация купола на пандантивах. Символ слияния античной инженерии и восточного мистицизма.",
+      "image_url": "https://commons.wikimedia.org/wiki/File:Hagia_Sophia_Mars_2013.jpg",
+      "source_url": "https://en.wikipedia.org/wiki/Hagia_Sophia",
+      "latitude": 41.0086,
+      "longitude": 28.9801,
+      "is_active": true,
+      "source_license": "CC BY-SA",
+      "coordinates_confidence": "EXACT",
+      "validated": true
+    }
+  }
+]
