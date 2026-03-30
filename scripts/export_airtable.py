@@ -57,7 +57,7 @@ FALSE_SET = {False, 0, "0", "false", "no", "n", "нет"}
 ALLOWED_LICENSES = {"CC0", "CC BY", "CC BY-SA", "PD"}
 ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximately±Nkm", "conditional"}
 ALLOWED_LAYER_TYPES = {"architecture", "route_point", "biogeography", "biography"}
-ALLOWED_COORDINATES_SOURCES = {"Wikipedia", "Pleiades", "GBIF", "IUCN", "expert"}
+LAYERS_TABLE_NAME = "Layers"
 
 
 def parse_args() -> argparse.Namespace:
@@ -251,7 +251,11 @@ def add_issue(issues: List[Dict[str, Any]], severity: str, record_id: str, reaso
     issues.append(payload)
 
 
-def map_record(record: Dict[str, Any], errors: List[Dict[str, Any]]) -> Dict[str, Any]:
+def map_record(
+    record: Dict[str, Any],
+    errors: List[Dict[str, Any]],
+    linked_layer_to_public_id: Dict[str, str],
+) -> Dict[str, Any]:
     """Преобразование записи Airtable в нормализованную структуру properties."""
     record_id = record.get("id", "")
     fields = record.get("fields", {}) or {}
@@ -325,12 +329,22 @@ def map_record(record: Dict[str, Any], errors: List[Dict[str, Any]]) -> Dict[str
     if source_draft_id is None and external_id and external_id.startswith("draft:"):
         source_draft_id = external_id
 
+    raw_layer_id = normalize_linked_record_id(fields.get("layer_id"))
+    mapped_layer_id = raw_layer_id
+    unknown_layer_link = False
+    if isinstance(fields.get("layer_id"), list) or (raw_layer_id and raw_layer_id.startswith("rec")):
+        mapped_layer_id = linked_layer_to_public_id.get(raw_layer_id or "")
+        if raw_layer_id and not mapped_layer_id:
+            unknown_layer_link = True
+
     mapped = {
         "id": record_id,
         "airtable_record_id": record_id,
         "external_id": external_id,
         "source_draft_id": source_draft_id,
-        "layer_id": normalize_linked_record_id(fields.get("layer_id")),
+        "layer_id": mapped_layer_id,
+        "_raw_layer_link_id": raw_layer_id,
+        "_unknown_layer_link": unknown_layer_link,
         "layer_type": safe_str(fields.get("layer_type")),
         "name_ru": safe_str(fields.get("name_ru")),
         "name_en": safe_str(fields.get("name_en")),
@@ -479,6 +493,22 @@ def generate_mock_records() -> List[Dict[str, Any]]:
             },
         }
     ]
+
+
+def generate_mock_layers_records() -> List[Dict[str, Any]]:
+    return [
+        {
+            "id": "recLayerTEST",
+            "fields": {
+                "layer_id": "test_layer",
+                "name_ru": "Тестовый слой",
+                "name_en": "Test layer",
+                "color_hex": "#ABCDEF",
+                "icon": "test",
+                "is_enabled": True,
+            },
+        }
+    ]
     
     
 def build_geojson_features(mapped_records: Iterable[Dict[str, Any]], warnings: List[Dict[str, Any]], errors: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -544,6 +574,29 @@ def normalize_hex_color(value: Optional[str]) -> Optional[str]:
     return None
 
 
+def map_layers(layer_records: Iterable[Dict[str, Any]]) -> Tuple[Dict[str, str], List[Dict[str, Any]]]:
+    linked_layer_to_public_id: Dict[str, str] = {}
+    layers: List[Dict[str, Any]] = []
+
+    for record in layer_records:
+        record_id = record.get("id")
+        fields = record.get("fields", {}) or {}
+        layer_id = safe_str(fields.get("layer_id"))
+        if record_id and layer_id:
+            linked_layer_to_public_id[record_id] = layer_id
+        layers.append(
+            {
+                "layer_id": layer_id,
+                "name_ru": safe_str(fields.get("name_ru")),
+                "name_en": safe_str(fields.get("name_en")),
+                "color_hex": normalize_hex_color(safe_str(fields.get("color_hex"))),
+                "icon": safe_str(fields.get("icon")),
+                "is_enabled": parse_bool(fields.get("is_enabled")),
+            }
+        )
+    return linked_layer_to_public_id, layers
+
+
 def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List[Dict[str, Any]], errors: List[Dict[str, Any]]) -> bool:
     record_id = mapped.get("id") or "<missing>"
     valid = True
@@ -574,21 +627,15 @@ def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List
     mapped["date_valid"] = date_valid
     if not is_valid_license(mapped.get("source_license")):
         critical("source_license", "invalid_license")
-    coordinates_source = mapped.get("coordinates_source")
-    if coordinates_source not in ALLOWED_COORDINATES_SOURCES:
-        critical("coordinates_source", "invalid_coordinates_source")
-    if mapped.get("title_short") and len(mapped["title_short"]) > 120:
-        critical("title_short", "title_too_long")
-    if mapped.get("description") and len(mapped["description"]) > 2000:
-        critical("description", "description_too_long")
-    image_url = mapped.get("image_url")
-    if image_url and not is_valid_url(image_url):
-        critical("image_url", "invalid_image_url")
+    if mapped.get("coordinates_source"):
+        warning("coordinates_source", "coordinates_source_saved_as_is")
+    if mapped.get("image_url") and not is_valid_url(mapped.get("image_url")):
+        warning("image_url", "invalid_image_url_nonfatal")
     layer_id = mapped.get("layer_id")
     if not layer_id:
-        critical("layer_id", "missing_layer_id")
+        critical("layer_id", "unknown_layer_link" if mapped.get("_unknown_layer_link") else "missing_layer_id")
     elif layer_id not in layer_ids:
-        critical("layer_id", "unknown_layer_id")
+        critical("layer_id", "unknown_layer_link")
     return valid
 
 
@@ -626,38 +673,6 @@ def build_validation_report(
         "warnings": warnings,
         "errors": errors,
     }
-
-
-def build_layers(mapped_records: Iterable[Dict[str, Any]], errors: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    by_layer: Dict[str, Dict[str, Any]] = {}
-    for m in mapped_records:
-        lid = m.get("layer_id")
-        if not lid:
-            continue
-        raw_color = m.get("layer_color_hex")
-        normalized_color = normalize_hex_color(raw_color)
-        if raw_color is None:
-            normalized_color = "#999999"
-        elif normalized_color is None:
-            errors.append(
-                {
-                    "record_id": m.get("id"),
-                    "field": "layer_color_hex",
-                    "error": "invalid hex color, set to null",
-                    "value": raw_color,
-                }
-            )
-        if lid not in by_layer:
-            layer_name_ru = safe_str(m.get("layer_name_ru")) or lid
-            by_layer[lid] = {
-                "layer_id": lid,
-                "name_ru": layer_name_ru,
-                "name_en": safe_str(m.get("name_en")),
-                "color_hex": normalized_color,
-                "icon": m.get("layer_icon"),
-                "is_enabled": True,
-            }
-    return [by_layer[k] for k in sorted(by_layer.keys())]
 
 
 def write_json(path: Path, data: Any) -> None:
@@ -713,7 +728,7 @@ def run_self_test() -> int:
             "coordinates_source": "Wikipedia",
         },
     }
-    m = map_record(sample, errors)
+    m = map_record(sample, errors, {"history": "history"})
     assert m["date_start"] == "-0753"
     assert m["tags"] == ["a", "b", "c"]
     assert m["validated"] is True
@@ -775,15 +790,18 @@ def main() -> int:
     error_log_path = out_dir / f"{prefix}export_errors.log"
 
     records: List[Dict[str, Any]]
+    layer_records: List[Dict[str, Any]]
     try:
         if dry_run:
             records = generate_mock_records()
+            layer_records = generate_mock_layers_records()
             if args.max_records is not None:
                 records = records[: args.max_records]
             print("Dry-run: mock data generated")
         else:
             assert token is not None and base is not None and table is not None
             records = fetch_airtable_records(token, base, table, args.max_records)
+            layer_records = fetch_airtable_records(token, base, LAYERS_TABLE_NAME, None)
     except PermissionError as exc:
         print(str(exc), file=sys.stderr)
         return 2
@@ -794,15 +812,18 @@ def main() -> int:
         print(f"Непредвиденная ошибка: {exc}", file=sys.stderr)
         return 1
 
+    print(f"Загружено Features: {len(records)}")
+    print(f"Загружено Layers: {len(layer_records)}")
+
     warnings: List[Dict[str, Any]] = []
     errors: List[Dict[str, Any]] = []
     candidate_records: List[Dict[str, Any]] = []
-    
+
+    linked_layer_to_public_id, layers = map_layers(layer_records)
     for record in records:
-        mapped = map_record(record, warnings)
+        mapped = map_record(record, warnings, linked_layer_to_public_id)
         candidate_records.append(mapped)
 
-    layers = build_layers(candidate_records, warnings)
     valid_layers = [layer for layer in layers if validate_layer(layer, warnings, errors)]
     valid_layer_ids = {layer["layer_id"] for layer in valid_layers}
 
@@ -881,6 +902,9 @@ def main() -> int:
     print(f"VALID: {len(mapped_records)}")
     print(f"REJECTED: {len(rejected_records)}")
     print(f"LAYERS: {len(valid_layers)}")
+    if rejected_records:
+        preview = rejected_records[:3]
+        print(f"REJECT_PREVIEW: {json.dumps(preview, ensure_ascii=False)}")
     if len(mapped_records) == 0:
         print("WARNING: valid features = 0")
 
