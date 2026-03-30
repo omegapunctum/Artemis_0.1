@@ -101,16 +101,33 @@ class ModerationFlowTests(unittest.TestCase):
         user = self.make_user('existing@example.com')
         draft = create_draft(self.db, user, 'Existing', 'Desc', None)
         draft = submit_draft_for_review(self.db, draft)
+        result_context = {}
 
         with patch('app.moderation.service.find_existing_airtable_feature', return_value={'id': 'rec-existing'}), patch(
             'app.moderation.service.create_airtable_feature'
         ) as create_airtable_mock:
-            approved = approve_draft(self.db, draft)
+            approved = approve_draft(self.db, draft, result_context=result_context)
 
         self.assertEqual(approved.status, 'approved')
         self.assertEqual(approved.publish_status, PUBLISH_STATUS_PUBLISHED)
         self.assertEqual(approved.airtable_record_id, 'rec-existing')
+        self.assertEqual(result_context['result'], 'published_skipped_duplicate')
         create_airtable_mock.assert_not_called()
+
+    def test_reapprove_already_published_returns_stable_result(self):
+        user = self.make_user('stable@example.com')
+        draft = create_draft(self.db, user, 'Stable', 'Desc', None)
+        draft = submit_draft_for_review(self.db, draft)
+
+        with patch('app.moderation.service.find_existing_airtable_feature', return_value={'id': 'rec-stable'}):
+            approved = approve_draft(self.db, draft)
+
+        self.assertEqual(approved.publish_status, PUBLISH_STATUS_PUBLISHED)
+        result_context = {}
+        approved_again = approve_draft(self.db, approved, result_context=result_context)
+
+        self.assertEqual(approved_again.id, approved.id)
+        self.assertEqual(result_context['result'], 'approved_already_published')
 
     def test_failed_publish_marks_draft_failed_without_approving(self):
         user = self.make_user('failed@example.com')

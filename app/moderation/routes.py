@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
 
 from app.auth.service import User, get_current_user, get_db
@@ -50,13 +50,17 @@ def moderation_queue(
 def approve_draft_endpoint(
     draft_id: int,
     request: Request,
+    response: Response,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     request.state.user_id = current_user.id
     require_moderator(current_user)
     draft = get_draft_for_moderation(db, draft_id)
-    approved = approve_draft(db, draft, request=request, moderator=current_user)
+    result_context: dict[str, str] = {}
+    approved = approve_draft(db, draft, request=request, moderator=current_user, result_context=result_context)
+    if result_context.get("result"):
+        response.headers["X-Moderation-Result"] = result_context["result"]
     return approved
 
 

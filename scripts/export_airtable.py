@@ -311,8 +311,16 @@ def map_record(record: Dict[str, Any], errors: List[Dict[str, Any]]) -> Dict[str
     latitude = validate_coordinate_range(latitude, -90.0, 90.0, record_id, "latitude", errors)
     source_url = safe_str(fields.get("source_url"))
         
+    external_id = safe_str(fields.get("external_id"))
+    source_draft_id = safe_str(fields.get("source_draft_id"))
+    if source_draft_id is None and external_id and external_id.startswith("draft:"):
+        source_draft_id = external_id
+
     mapped = {
         "id": record_id,
+        "airtable_record_id": record_id,
+        "external_id": external_id,
+        "source_draft_id": source_draft_id,
         "layer_id": safe_str(fields.get("layer_id")),
         "layer_type": safe_str(fields.get("layer_type")),
         "name_ru": safe_str(fields.get("name_ru")),
@@ -344,6 +352,21 @@ def map_record(record: Dict[str, Any], errors: List[Dict[str, Any]]) -> Dict[str
         "layer_icon": safe_str(fields.get("layer_icon") or fields.get("icon")),
     }
     return mapped
+
+
+def get_origin_key(mapped: Dict[str, Any]) -> Optional[str]:
+    for field in ("external_id", "airtable_record_id", "source_draft_id"):
+        value = mapped.get(field)
+        if value:
+            return str(value)
+    return None
+
+
+def get_dedupe_key(mapped: Dict[str, Any]) -> Tuple[Any, ...]:
+    origin_key = get_origin_key(mapped)
+    if origin_key:
+        return ("origin", origin_key)
+    return ("fallback", mapped.get("name_ru") or "", mapped.get("latitude"), mapped.get("longitude"))
 
 
 def airtable_get_with_retry(
@@ -471,6 +494,10 @@ def build_geojson_features(mapped_records: Iterable[Dict[str, Any]], warnings: L
                 "geometry": geometry,
                 "properties": {
                     "id": m.get("id"),
+                    "airtable_record_id": m.get("airtable_record_id"),
+                    "external_id": m.get("external_id"),
+                    "source_draft_id": m.get("source_draft_id"),
+                    "origin_key": get_origin_key(m),
                     "layer_id": m.get("layer_id"),
                     "layer_type": m.get("layer_type"),
                     "name_ru": m.get("name_ru"),
@@ -765,21 +792,17 @@ def main() -> int:
 
     mapped_records: List[Dict[str, Any]] = []
     rejected_records: List[Dict[str, Any]] = []
-    seen_dedupe_keys: set[Tuple[str, float, float]] = set()
+    seen_dedupe_keys: set[Tuple[Any, ...]] = set()
     for mapped in candidate_records:
         prev_errors_len = len(errors)
         if validate_feature(mapped, valid_layer_ids, warnings, errors):
-            dedupe_key = (
-                mapped.get("name_ru") or "",
-                mapped.get("latitude"),
-                mapped.get("longitude"),
-            )
+            dedupe_key = get_dedupe_key(mapped)
             if dedupe_key in seen_dedupe_keys:
                 add_issue(errors, "critical", mapped.get("id") or "<missing>", "duplicate", "dedupe")
                 rejected_records.append(
                     {"id": mapped.get("id") or "<missing>", "name_ru": mapped.get("name_ru"), "reasons": ["duplicate"]}
                 )
-                print(f"REJECT: {mapped.get('name_ru') or '<missing>'} — duplicate")
+                print(f"REJECT: {mapped.get('name_ru') or '<missing>'} — duplicate ({dedupe_key})")
                 continue
             seen_dedupe_keys.add(dedupe_key)
             mapped_records.append(mapped)

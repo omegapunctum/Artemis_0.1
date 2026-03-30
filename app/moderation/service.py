@@ -77,7 +77,14 @@ def submit_draft_for_review(db: Session, draft: Draft) -> Draft:
     return update_draft(db, draft, changes={"status": "review", "publish_status": PUBLISH_STATUS_PENDING})
 
 
-def approve_draft(db: Session, draft: Draft, request: Request | None = None, moderator: User | None = None) -> Draft:
+def approve_draft(
+    db: Session,
+    draft: Draft,
+    request: Request | None = None,
+    moderator: User | None = None,
+    result_context: dict[str, str] | None = None,
+) -> Draft:
+    logger.info("APPROVE: draft_id=%s", draft.id)
     with _draft_publish_lock(draft.id):
         db.refresh(draft)
 
@@ -91,10 +98,14 @@ def approve_draft(db: Session, draft: Draft, request: Request | None = None, mod
                         "published_at": draft.published_at or datetime.utcnow(),
                     },
                 )
+                logger.info("UPDATE: existing feature refreshed for draft_id=%s", published.id)
+                _set_approve_result(result_context, "approved_already_published")
                 metrics.increment('publishes_success')
                 log_event(logging.INFO, 'moderation.approve', route=request.url.path if request else None, request_id=getattr(getattr(request, 'state', None), 'request_id', None), user_id=getattr(moderator, 'id', None), draft_id=published.id)
                 log_event(logging.INFO, 'moderation.publish.success', route=request.url.path if request else None, request_id=getattr(getattr(request, 'state', None), 'request_id', None), user_id=getattr(moderator, 'id', None), draft_id=published.id)
                 return published
+            logger.info("SKIP: duplicate publish for draft_id=%s", draft.id)
+            _set_approve_result(result_context, "approved_already_published")
             return draft
 
         if draft.status not in {"review", "approved"}:
@@ -103,6 +114,8 @@ def approve_draft(db: Session, draft: Draft, request: Request | None = None, mod
         existing_record = find_existing_airtable_feature(draft)
         if existing_record:
             published = _mark_draft_as_published(db, draft, existing_record)
+            logger.info("SKIP: duplicate publish for draft_id=%s", published.id)
+            _set_approve_result(result_context, "published_skipped_duplicate")
             metrics.increment('publishes_success')
             log_event(logging.INFO, 'moderation.approve', route=request.url.path if request else None, request_id=getattr(getattr(request, 'state', None), 'request_id', None), user_id=getattr(moderator, 'id', None), draft_id=published.id)
             log_event(logging.INFO, 'moderation.publish.success', route=request.url.path if request else None, request_id=getattr(getattr(request, 'state', None), 'request_id', None), user_id=getattr(moderator, 'id', None), draft_id=published.id)
@@ -127,6 +140,8 @@ def approve_draft(db: Session, draft: Draft, request: Request | None = None, mod
             raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Airtable publish failed") from exc
 
         published = _mark_draft_as_published(db, draft, created_record)
+        logger.info("PUBLISH: created feature for draft_id=%s", published.id)
+        _set_approve_result(result_context, "published_created")
         metrics.increment('publishes_success')
         log_event(logging.INFO, 'moderation.approve', route=request.url.path if request else None, request_id=getattr(getattr(request, 'state', None), 'request_id', None), user_id=getattr(moderator, 'id', None), draft_id=published.id)
         log_event(logging.INFO, 'moderation.publish.success', route=request.url.path if request else None, request_id=getattr(getattr(request, 'state', None), 'request_id', None), user_id=getattr(moderator, 'id', None), draft_id=published.id)
@@ -320,3 +335,8 @@ def _to_float_or_none(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _set_approve_result(result_context: dict[str, str] | None, result: str) -> None:
+    if result_context is not None:
+        result_context["result"] = result
