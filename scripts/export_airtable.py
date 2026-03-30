@@ -235,6 +235,15 @@ def safe_str(value: Any) -> Optional[str]:
     return text if text else None
 
 
+def normalize_linked_record_id(value: Any) -> Optional[str]:
+    """Нормализация linked record из Airtable (обычно ['rec...'])."""
+    if isinstance(value, list):
+        if not value:
+            return None
+        return safe_str(value[0])
+    return safe_str(value)
+
+
 def add_issue(issues: List[Dict[str, Any]], severity: str, record_id: str, reason: str, field: Optional[str] = None) -> None:
     payload: Dict[str, Any] = {"id": record_id or "<missing>", "reason": reason, "severity": severity}
     if field:
@@ -321,7 +330,7 @@ def map_record(record: Dict[str, Any], errors: List[Dict[str, Any]]) -> Dict[str
         "airtable_record_id": record_id,
         "external_id": external_id,
         "source_draft_id": source_draft_id,
-        "layer_id": safe_str(fields.get("layer_id")),
+        "layer_id": normalize_linked_record_id(fields.get("layer_id")),
         "layer_type": safe_str(fields.get("layer_type")),
         "name_ru": safe_str(fields.get("name_ru")),
         "name_en": safe_str(fields.get("name_en")),
@@ -575,13 +584,18 @@ def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List
     image_url = mapped.get("image_url")
     if image_url and not is_valid_url(image_url):
         critical("image_url", "invalid_image_url")
+    layer_id = mapped.get("layer_id")
+    if not layer_id:
+        critical("layer_id", "missing_layer_id")
+    elif layer_id not in layer_ids:
+        critical("layer_id", "unknown_layer_id")
     return valid
 
 
 def validate_layer(layer: Dict[str, Any], warnings: List[Dict[str, Any]], errors: List[Dict[str, Any]]) -> bool:
-    layer_id = layer.get("id") or "<missing>"
+    layer_id = layer.get("layer_id") or "<missing>"
     valid = True
-    if not layer.get("id"):
+    if not layer.get("layer_id"):
         add_issue(errors, "critical", layer_id, "missing layer_id", "layer_id")
         valid = False
     if not layer.get("name_ru"):
@@ -634,9 +648,11 @@ def build_layers(mapped_records: Iterable[Dict[str, Any]], errors: List[Dict[str
                 }
             )
         if lid not in by_layer:
+            layer_name_ru = safe_str(m.get("layer_name_ru")) or lid
             by_layer[lid] = {
-                "id": lid,
-                "name_ru": m.get("layer_name_ru") or lid,
+                "layer_id": lid,
+                "name_ru": layer_name_ru,
+                "name_en": safe_str(m.get("name_en")),
                 "color_hex": normalized_color,
                 "icon": m.get("layer_icon"),
                 "is_enabled": True,
@@ -788,7 +804,7 @@ def main() -> int:
 
     layers = build_layers(candidate_records, warnings)
     valid_layers = [layer for layer in layers if validate_layer(layer, warnings, errors)]
-    valid_layer_ids = {layer["id"] for layer in valid_layers}
+    valid_layer_ids = {layer["layer_id"] for layer in valid_layers}
 
     mapped_records: List[Dict[str, Any]] = []
     rejected_records: List[Dict[str, Any]] = []
@@ -862,7 +878,11 @@ def main() -> int:
         return 1
 
     # Финальный вывод — в формате, согласованном с мастер-промптом
-    print(f"VALID: {len(mapped_records)} | REJECTED: {len(rejected_records)}")
+    print(f"VALID: {len(mapped_records)}")
+    print(f"REJECTED: {len(rejected_records)}")
+    print(f"LAYERS: {len(valid_layers)}")
+    if len(mapped_records) == 0:
+        print("WARNING: valid features = 0")
 
     if args.commit:
         maybe_commit(

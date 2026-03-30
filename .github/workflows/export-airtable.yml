@@ -37,9 +37,12 @@ jobs:
         run: |
           set -euo pipefail
           python scripts/export_airtable.py
-          success_count=$(find data -maxdepth 1 -type f \( -name '*.json' -o -name '*.geojson' \) | wc -l)
-          error_count=0
-          echo "Успешно: ${success_count} | Ошибок: ${error_count}"
+          if [ -f data/features.geojson ]; then
+            echo "features.geojson size: $(wc -c < data/features.geojson) bytes"
+          else
+            echo "features.geojson is missing" >&2
+            exit 1
+          fi
 
       - name: Debug data files
         run: ls -lh data/
