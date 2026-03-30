@@ -90,6 +90,8 @@ Vanilla JavaScript (no frameworks):
 uvicorn app.main:app --reload --port 8001
 ```
 
+Do not run backend via `api.main:app` — `api/` is legacy compatibility only.
+
 ### Run frontend
 ```bash
 python -m http.server 8000

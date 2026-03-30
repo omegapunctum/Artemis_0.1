@@ -3,4 +3,6 @@
 [TODO: legacy shim, remove after migration]
 """
 
-raise RuntimeError("Use app.main:app instead")
+raise RuntimeError(
+    "Legacy runtime path disabled: use canonical backend entrypoint app.main:app"
+)
