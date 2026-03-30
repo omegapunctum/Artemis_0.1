@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 ALLOWED_LICENSES = {"CC0", "CC BY", "CC BY-SA", "PD"}
-ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximate", "unknown"}
+ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximate", "conditional"}
 HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 AIRTABLE_API_URL = "https://api.airtable.com/v0"
 PAGE_SIZE = 100
@@ -189,7 +189,7 @@ def validate_feature(feature: Dict[str, Any], layers_set: set[str]) -> Dict[str,
     if source_license not in ALLOWED_LICENSES:
         errors.append("source_license must be one of: CC0, CC BY, CC BY-SA, PD")
     if coordinates_confidence not in ALLOWED_COORDINATES_CONFIDENCE:
-        errors.append("coordinates_confidence must be one of: exact, approximate, unknown")
+        errors.append("coordinates_confidence must be one of: exact, approximate, conditional")
 
     if not is_valid_iso_date(date_start):
         errors.append("date_start must be ISO date or null")

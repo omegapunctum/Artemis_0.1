@@ -1,9 +1,21 @@
 import unittest
 
-from scripts.export_airtable import get_dedupe_key, get_origin_key, map_layers, map_record, validate_feature
+from scripts.export_airtable import (
+    get_dedupe_key,
+    get_origin_key,
+    map_layers,
+    map_record,
+    normalize_coordinates_confidence,
+    validate_feature,
+)
 
 
 class ExportAirtableIdempotencyTests(unittest.TestCase):
+    def test_coordinates_confidence_legacy_normalization(self):
+        self.assertEqual(normalize_coordinates_confidence("EXACT"), "exact")
+        self.assertEqual(normalize_coordinates_confidence("APPROXIMATE±5km"), "approximate")
+        self.assertEqual(normalize_coordinates_confidence("CONDITIONAL"), "conditional")
+
     def test_origin_key_priority(self):
         mapped = {
             "external_id": "draft:100",

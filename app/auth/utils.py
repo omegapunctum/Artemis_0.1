@@ -21,8 +21,19 @@ ALGORITHM = os.getenv("AUTH_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 REFRESH_COOKIE_NAME = os.getenv("REFRESH_COOKIE_NAME", "refresh_token")
-COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
-COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "strict")
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+APP_ENV = (os.getenv("APP_ENV") or os.getenv("ENV") or "development").strip().lower()
+COOKIE_HTTPONLY = _env_bool("COOKIE_HTTPONLY", True)
+COOKIE_SECURE = _env_bool("COOKIE_SECURE", APP_ENV == "production")
+COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "lax")
 COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN") or None
 COOKIE_PATH = os.getenv("COOKIE_PATH", "/")
 

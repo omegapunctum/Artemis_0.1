@@ -18,6 +18,7 @@ from .service import (
 )
 from .utils import (
     COOKIE_DOMAIN,
+    COOKIE_HTTPONLY,
     COOKIE_PATH,
     COOKIE_SAMESITE,
     COOKIE_SECURE,
@@ -31,7 +32,7 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
     response.set_cookie(
         key=REFRESH_COOKIE_NAME,
         value=refresh_token,
-        httponly=True,
+        httponly=COOKIE_HTTPONLY,
         secure=COOKIE_SECURE,
         samesite=COOKIE_SAMESITE,
         domain=COOKIE_DOMAIN,
@@ -140,7 +141,7 @@ def logout(
     logout_user(refresh_token)
     response.delete_cookie(
         key=REFRESH_COOKIE_NAME,
-        httponly=True,
+        httponly=COOKIE_HTTPONLY,
         secure=COOKIE_SECURE,
         samesite=COOKIE_SAMESITE,
         domain=COOKIE_DOMAIN,

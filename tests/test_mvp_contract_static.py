@@ -1,4 +1,6 @@
 import unittest
+import json
+import logging
 from pathlib import Path
 
 from scripts.export_airtable import get_dedupe_key, get_origin_key, validate_feature
@@ -31,7 +33,7 @@ class MvpContractStaticTests(unittest.TestCase):
             'validated': True,
             'source_url': 'https://example.com/source',
             'source_license': 'CC BY',
-            'coordinates_confidence': 'exact',
+            'coordinates_confidence': 'conditional',
             'layer_id': 'roman_empire',
             'longitude': 30.5,
             'latitude': 50.4,
@@ -41,6 +43,24 @@ class MvpContractStaticTests(unittest.TestCase):
         self.assertEqual(get_origin_key(mapped), 'draft:10')
         self.assertEqual(get_dedupe_key(mapped), ('Feature', 50.4, 30.5))
         self.assertTrue(validate_feature(mapped, {'roman_empire'}, warnings, errors))
+
+    def test_release_guard_features_geojson_exists_and_is_valid(self):
+        path = Path("data/features.geojson")
+        self.assertTrue(path.exists(), "data/features.geojson must exist")
+        content = path.read_text(encoding="utf-8").strip()
+        if not content:
+            logging.warning("data/features.geojson is empty (allowed)")
+            return
+        payload = json.loads(content)
+        self.assertEqual(payload.get("type"), "FeatureCollection")
+        self.assertIsInstance(payload.get("features"), list)
+
+    def test_service_worker_does_not_cache_api_routes(self):
+        source = Path("sw.js").read_text(encoding="utf-8")
+        self.assertIn("isPrivateRequest(url)", source)
+        self.assertIn("api/auth", source)
+        self.assertIn("api/me", source)
+        self.assertIn("event.respondWith(fetch(request));", source)
 
 
 if __name__ == '__main__':

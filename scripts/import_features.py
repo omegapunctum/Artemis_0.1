@@ -117,6 +117,22 @@ def parse_bool(value: Optional[str], field_name: str) -> Optional[bool]:
     raise ValidationError(f"{field_name}: неверное булево значение ({value})")
 
 
+def normalize_coordinates_confidence(value: Optional[str]) -> Optional[str]:
+    """Normalize coordinates confidence enum, including legacy values."""
+    if value is None:
+        return None
+    raw = value.strip()
+    upper_raw = raw.upper()
+    if upper_raw == "EXACT":
+        return "exact"
+    if upper_raw.startswith("APPROXIMATE"):
+        return "approximate"
+    if upper_raw == "CONDITIONAL":
+        return "conditional"
+    lowered = raw.lower()
+    return lowered if lowered in {"exact", "approximate", "conditional"} else raw
+
+
 def validate_coordinates(longitude: Optional[float], latitude: Optional[float]) -> None:
     """Validate coordinate constraints and null-pair rule."""
     if longitude is None and latitude is None:
@@ -159,7 +175,7 @@ def validate_and_transform(row: Dict[str, str]) -> Dict[str, Any]:
         "date_end": normalized["date_end"],
         "longitude": longitude,
         "latitude": latitude,
-        "coordinates_confidence": normalized["coordinates_confidence"],
+        "coordinates_confidence": normalize_coordinates_confidence(normalized["coordinates_confidence"]),
         "coordinates_source": normalized["coordinates_source"],
         "influence_radius_km": influence_radius_km,
         "sequence_order": sequence_order,

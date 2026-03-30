@@ -55,7 +55,7 @@ HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 TRUE_SET = {True, 1, "1", "true", "yes", "y", "да"}
 FALSE_SET = {False, 0, "0", "false", "no", "n", "нет"}
 ALLOWED_LICENSES = {"CC0", "CC BY", "CC BY-SA", "PD"}
-ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximate", "unknown"}
+ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximate", "conditional"}
 ALLOWED_LAYER_TYPES = {"architecture", "route_point", "biogeography", "biography"}
 LAYERS_TABLE_NAME = "Layers"
 
@@ -195,11 +195,18 @@ def normalize_coordinates_confidence(value: Any) -> Optional[str]:
     raw = safe_str(value)
     if raw is None:
         return None
-    normalized = raw.strip().lower()
+    normalized = raw.strip()
+    upper_normalized = normalized.upper()
+    if upper_normalized == "EXACT":
+        return "exact"
+    if upper_normalized == "CONDITIONAL":
+        return "conditional"
+    if upper_normalized.startswith("APPROXIMATE"):
+        return "approximate"
+
+    normalized = normalized.lower()
     if normalized == "approximately±nkm":
         normalized = "approximate"
-    if normalized == "conditional":
-        normalized = "unknown"
     return normalized
 
 
