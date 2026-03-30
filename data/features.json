@@ -12,7 +12,9 @@
       "date_start": "2004",
       "name_ru": "Бурдж-Халифа",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia / Official Site",
+      "coordinates_source": [
+        "Wikipedia / Official Site"
+      ],
       "influence_radius_km": 5,
       "title_short": "Самое высокое здание в истории человечества",
       "description": "828-метровый небоскрёб. Форма основана на геометрии цветка и минимизирует ветровые нагрузки.",
@@ -39,7 +41,9 @@
       "date_start": "1929",
       "name_ru": "Вилла Савой",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia / Britannica",
+      "coordinates_source": [
+        "Wikipedia / Britannica"
+      ],
       "influence_radius_km": 1,
       "title_short": "Манифест современной архитектуры Ле Корбюзье",
       "description": "Воплощение 5 принципов: опоры, крыша-сад, свободный план, ленточные окна, свободный фасад.",
@@ -66,7 +70,9 @@
       "date_start": "1506",
       "name_ru": "Собор Святого Петра",
       "layer_type": "architecture",
-      "coordinates_source": "Vatican / Wikipedia",
+      "coordinates_source": [
+        "Vatican / Wikipedia"
+      ],
       "influence_radius_km": 1,
       "title_short": "Величайший собор христианского мира",
       "description": "Плод работы Браманте, Рафаэля и Микеланджело. Купол стал образцом для западной архитектуры.",
@@ -93,7 +99,9 @@
       "date_start": "1194",
       "name_ru": "Шартрский собор",
       "layer_type": "architecture",
-      "coordinates_source": "UNESCO / Wikipedia",
+      "coordinates_source": [
+        "UNESCO / Wikipedia"
+      ],
       "influence_radius_km": 2,
       "title_short": "Совершенный образец высокой готики",
       "description": "Храм с ансамблем витражей (2500 кв. м) и системным использованием аркбутанов.",
@@ -120,7 +128,9 @@
       "date_start": "1971",
       "name_ru": "Центр Жоржа Помпиду",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia / Pompidou Site",
+      "coordinates_source": [
+        "Wikipedia / Pompidou Site"
+      ],
       "influence_radius_km": 1,
       "title_short": "Манифест архитектуры хай-тек в центре Парижа",
       "description": "Здание «вывернутое наизнанку»: все коммуникации вынесены на фасад и выделены цветом.",
@@ -147,7 +157,9 @@
       "date_start": "1758",
       "name_ru": "Пантеон (Париж)",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia / Britannica",
+      "coordinates_source": [
+        "Wikipedia / Britannica"
+      ],
       "influence_radius_km": 1,
       "title_short": "Храм Просвещения и национальный мавзолей Франции",
       "description": "Монументальное здание Суффло, вдохновлённое античностью. Место погребения Гюго, Золя, Кюри.",
@@ -174,7 +186,9 @@
       "date_start": "0118",
       "name_ru": "Пантеон (Рим)",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia / Britannica",
+      "coordinates_source": [
+        "Wikipedia / Britannica"
+      ],
       "influence_radius_km": 1,
       "title_short": "«Храм всех богов» с величайшим куполом древности",
       "description": "Храм с неармированным бетонным куполом (43,3 м) и окулусом. Шедевр римской инженерии.",
@@ -201,7 +215,9 @@
       "date_start": "1075",
       "name_ru": "Собор в Сантьяго-де-Компостела",
       "layer_type": "architecture",
-      "coordinates_source": "Official Site / Wikipedia",
+      "coordinates_source": [
+        "Official Site / Wikipedia"
+      ],
       "influence_radius_km": 1,
       "title_short": "Главный паломнический собор средневековой Европы",
       "description": "Классическая романская базилика над гробницей апостола. Портик Славы мастера Матео.",
@@ -228,7 +244,9 @@
       "date_start": "1928",
       "name_ru": "Крайслер-билдинг",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia / PBS",
+      "coordinates_source": [
+        "Wikipedia / PBS"
+      ],
       "influence_radius_km": 1,
       "title_short": "Самый узнаваемый небоскрёб в стиле ар-деко",
       "description": "Стальная корона с треугольными окнами и орнаментами. Символ индустриальной роскоши.",
@@ -255,7 +273,9 @@
       "date_start": "1661",
       "name_ru": "Версальский дворец",
       "layer_type": "architecture",
-      "coordinates_source": "UNESCO / Wikipedia",
+      "coordinates_source": [
+        "UNESCO / Wikipedia"
+      ],
       "influence_radius_km": 15,
       "title_short": "Резиденция «Короля-Солнца» и символ абсолютизма",
       "description": "Грандиозный ансамбль с Зеркальной галереей и регулярными садами Ленотра. Модель барокко.",
@@ -282,7 +302,9 @@
       "date_start": "1238",
       "name_ru": "Альгамбра",
       "layer_type": "architecture",
-      "coordinates_source": "UNESCO / Wikipedia",
+      "coordinates_source": [
+        "UNESCO / Wikipedia"
+      ],
       "influence_radius_km": 3,
       "title_short": "Дворцовый комплекс мусульманской Испании",
       "description": "Резиденция династии Насридов. Известна резьбой по стукко, мукарнами и Львиным двориком.",
@@ -309,7 +331,9 @@
       "date_start": "1992",
       "name_ru": "Еврейский музей в Берлине",
       "layer_type": "architecture",
-      "coordinates_source": "Official Site / Wikipedia",
+      "coordinates_source": [
+        "Official Site / Wikipedia"
+      ],
       "influence_radius_km": 1,
       "title_short": "Архитектурное воплощение немецко-еврейской истории",
       "description": "Зигзагообразное здание Либескинда с «пустотами», передающее ощущение исторического разрыва.",
@@ -336,7 +360,9 @@
       "date_start": "-0447",
       "name_ru": "Парфенон",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia / Saylor",
+      "coordinates_source": [
+        "Wikipedia / Saylor"
+      ],
       "influence_radius_km": 1,
       "title_short": "Кульминация классического дорического ордера",
       "description": "Мраморный храм Афины на Акрополе. Использует сложные оптические корректировки линий.",
@@ -363,7 +389,9 @@
       "date_start": "-3100",
       "name_ru": "Стоунхендж",
       "layer_type": "architecture",
-      "coordinates_source": "UNESCO / Wikipedia",
+      "coordinates_source": [
+        "UNESCO / Wikipedia"
+      ],
       "influence_radius_km": 5,
       "title_short": "Крупнейший мегалитический комплекс Европы",
       "description": "Доисторический памятник из кольца камней весом до 50 тонн. Включает рвы и курганы, ориентированные на солнцестояние.",
@@ -390,7 +418,9 @@
       "date_start": "-2589",
       "name_ru": "Великая пирамида Гизы (Пирамида Хеопса)",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia / Britannica",
+      "coordinates_source": [
+        "Wikipedia / Britannica"
+      ],
       "influence_radius_km": 10,
       "title_short": "Последнее из сохранившихся чудес света",
       "description": "Крупнейшая египетская пирамида, гробница фараона Хуфу. Состоит из 2,3 млн блоков. Высота 146,6 м.",
@@ -417,7 +447,9 @@
       "date_start": "1904",
       "name_ru": "Каса-Батльо",
       "layer_type": "architecture",
-      "coordinates_source": "UNESCO / Wikipedia",
+      "coordinates_source": [
+        "UNESCO / Wikipedia"
+      ],
       "influence_radius_km": 1,
       "title_short": "Шедевр органического модернизма Антонио Гауди",
       "description": "Реконструкция жилого дома с фасадом из мозаики и балконами-масками. Отсутствие прямых линий.",
@@ -444,7 +476,9 @@
       "date_start": "1963",
       "name_ru": "Королевский национальный театр",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia / Dezeen",
+      "coordinates_source": [
+        "Wikipedia / Dezeen"
+      ],
       "influence_radius_km": 1,
       "title_short": "Икона британского брутализма на берегу Темзы",
       "description": "Многоуровневые бетонные террасы. Использование «грубого бетона» как эстетической основы.",
@@ -471,7 +505,9 @@
       "date_start": "-2100",
       "name_ru": "Великий зиккурат в Уре",
       "layer_type": "architecture",
-      "coordinates_source": "Wikipedia / Britannica",
+      "coordinates_source": [
+        "Wikipedia / Britannica"
+      ],
       "influence_radius_km": 2,
       "title_short": "Главный храм-гора древнего Шумера",
       "description": "Трехъярусная пирамидальная платформа из сырцового кирпича. Посвящена богу луны Нанне.",
@@ -498,7 +534,9 @@
       "date_start": "0532",
       "name_ru": "Собор Святой Софии",
       "layer_type": "architecture",
-      "coordinates_source": "UNESCO / Wikipedia",
+      "coordinates_source": [
+        "UNESCO / Wikipedia"
+      ],
       "influence_radius_km": 1,
       "title_short": "Шедевр «Золотого века» Византии",
       "description": "Первая реализация купола на пандантивах. Символ слияния античной инженерии и восточного мистицизма.",
