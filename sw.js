@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = '2026-03-30-v4';
 const STATIC_CACHE = `artemis-static-${CACHE_VERSION}`;
 const DATA_CACHE = `artemis-data-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `artemis-runtime-${CACHE_VERSION}`;
@@ -102,7 +102,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (hasAuthHeader || isPrivateRequest(url)) {
+  if (hasAuthHeader || request.credentials === 'include' || isPrivateRequest(url)) {
     console.debug('[SW] skip private/auth request:', url.pathname);
     event.respondWith(fetch(request));
     return;
@@ -141,7 +141,10 @@ function isPrivateRequest(url) {
     'api/private',
     'api/admin',
     'api/moderation',
-    'api/drafts'
+    'api/drafts',
+    'api/auth',
+    'api/me',
+    'api/uploads'
   ];
   const normalizedPath = trimBasePath(url.pathname);
 
@@ -199,7 +202,9 @@ async function handleStaticRequest(request) {
     }
 
     const networkResponse = await fetch(request);
-    await cache.put(request, networkResponse.clone());
+    if (isCacheableResponse(networkResponse)) {
+      await cache.put(request, networkResponse.clone());
+    }
     console.debug('[SW] static cache miss -> network:', request.url);
     return networkResponse;
   } catch (error) {
@@ -217,6 +222,14 @@ async function handleStaticRequest(request) {
       return Response.error();
     }
   }
+}
+
+function isCacheableResponse(response) {
+  const cacheControl = String(response.headers.get('Cache-Control') || '').toLowerCase();
+  if (cacheControl.includes('no-store') || cacheControl.includes('private')) {
+    return false;
+  }
+  return true;
 }
 
 function getBasePath() {
@@ -244,7 +257,9 @@ async function handleDataRequest(request) {
     try {
       const networkResponse = await fetch(request);
       if (networkResponse.ok) {
-        await cache.put(request, networkResponse.clone());
+        if (isCacheableResponse(networkResponse)) {
+      await cache.put(request, networkResponse.clone());
+    }
       }
       console.debug('[SW] data network hit:', request.url);
       return networkResponse;

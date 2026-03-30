@@ -16,7 +16,13 @@ from .service import (
     register_user,
     rotate_refresh_token,
 )
-from .utils import COOKIE_SECURE, REFRESH_TOKEN_EXPIRE_DAYS
+from .utils import (
+    COOKIE_DOMAIN,
+    COOKIE_PATH,
+    COOKIE_SAMESITE,
+    COOKIE_SECURE,
+    REFRESH_TOKEN_EXPIRE_DAYS,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -27,7 +33,9 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
         value=refresh_token,
         httponly=True,
         secure=COOKIE_SECURE,
-        samesite="strict",
+        samesite=COOKIE_SAMESITE,
+        domain=COOKIE_DOMAIN,
+        path=COOKIE_PATH,
         max_age=REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
 
@@ -130,6 +138,13 @@ def logout(
     refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
 ):
     logout_user(refresh_token)
-    response.delete_cookie(key=REFRESH_COOKIE_NAME, httponly=True, secure=COOKIE_SECURE, samesite="strict")
+    response.delete_cookie(
+        key=REFRESH_COOKIE_NAME,
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        domain=COOKIE_DOMAIN,
+        path=COOKIE_PATH,
+    )
     log_event(logging.INFO, 'auth.logout', route=request.url.path, request_id=request.state.request_id)
     return {"message": "Logged out"}

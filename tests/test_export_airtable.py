@@ -18,7 +18,7 @@ class ExportAirtableIdempotencyTests(unittest.TestCase):
 
     def test_dedupe_key_fallback_without_origin(self):
         mapped = {"name_ru": "Test", "latitude": 1.0, "longitude": 2.0}
-        self.assertEqual(get_dedupe_key(mapped), ("fallback", "Test", 1.0, 2.0))
+        self.assertEqual(get_dedupe_key(mapped), ("Test", 1.0, 2.0))
 
     def test_map_layer_linked_record_to_public_layer_id(self):
         linked_map, _ = map_layers(
@@ -52,6 +52,7 @@ class ExportAirtableIdempotencyTests(unittest.TestCase):
             "source_license": "CC BY",
             "coordinates_source": "UNESCO / Wikipedia",
             "layer_id": "roman_empire",
+            "coordinates_confidence": "exact",
         }
         warnings = []
         errors = []

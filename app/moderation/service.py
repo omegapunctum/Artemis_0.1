@@ -74,7 +74,7 @@ def submit_draft_for_review(db: Session, draft: Draft) -> Draft:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Approved draft cannot be resubmitted")
     if draft.status == "review":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Draft already in review")
-    return update_draft(db, draft, changes={"status": "review", "publish_status": PUBLISH_STATUS_PENDING})
+    return update_draft(db, draft, allow_system_fields=True, changes={"status": "review", "publish_status": PUBLISH_STATUS_PENDING})
 
 
 def approve_draft(
@@ -93,6 +93,7 @@ def approve_draft(
                 published = update_draft(
                     db,
                     draft,
+                    allow_system_fields=True,
                     changes={
                         "status": "approved",
                         "published_at": draft.published_at or datetime.utcnow(),
@@ -121,7 +122,7 @@ def approve_draft(
             log_event(logging.INFO, 'moderation.publish.success', route=request.url.path if request else None, request_id=getattr(getattr(request, 'state', None), 'request_id', None), user_id=getattr(moderator, 'id', None), draft_id=published.id)
             return published
 
-        draft = update_draft(db, draft, changes={"publish_status": PUBLISH_STATUS_PENDING})
+        draft = update_draft(db, draft, allow_system_fields=True, changes={"publish_status": PUBLISH_STATUS_PENDING})
         try:
             created_record = create_airtable_feature(draft)
         except HTTPException as exc:
@@ -129,14 +130,14 @@ def approve_draft(
             metrics.increment('publishes_fail')
             log_event(logging.ERROR, 'moderation.publish.fail', route=request.url.path if request else None, request_id=getattr(getattr(request, 'state', None), 'request_id', None), user_id=getattr(moderator, 'id', None), draft_id=draft.id, status_code=exc.status_code)
             if draft.publish_status != PUBLISH_STATUS_FAILED:
-                draft = update_draft(db, draft, changes={"publish_status": PUBLISH_STATUS_FAILED})
+                draft = update_draft(db, draft, allow_system_fields=True, changes={"publish_status": PUBLISH_STATUS_FAILED})
             raise
         except Exception as exc:  # pragma: no cover - defensive fallback
             logger.exception("Unexpected publish failure for draft %s", draft.id)
             metrics.increment('publishes_fail')
             log_event(logging.ERROR, 'moderation.publish.fail', route=request.url.path if request else None, request_id=getattr(getattr(request, 'state', None), 'request_id', None), user_id=getattr(moderator, 'id', None), draft_id=draft.id)
             if draft.publish_status != PUBLISH_STATUS_FAILED:
-                update_draft(db, draft, changes={"publish_status": PUBLISH_STATUS_FAILED})
+                update_draft(db, draft, allow_system_fields=True, changes={"publish_status": PUBLISH_STATUS_FAILED})
             raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Airtable publish failed") from exc
 
         published = _mark_draft_as_published(db, draft, created_record)
@@ -155,7 +156,7 @@ def reject_draft(db: Session, draft: Draft) -> Draft:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Draft already rejected")
     if draft.status != "review":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in review can be rejected")
-    return update_draft(db, draft, changes={"status": "rejected"})
+    return update_draft(db, draft, allow_system_fields=True, changes={"status": "rejected"})
 
 
 def create_airtable_feature(draft: Draft) -> dict[str, Any]:
@@ -289,6 +290,7 @@ def _mark_draft_as_published(db: Session, draft: Draft, airtable_record: dict[st
     return update_draft(
         db,
         draft,
+        allow_system_fields=True,
         changes={
             "status": "approved",
             "publish_status": PUBLISH_STATUS_PUBLISHED,

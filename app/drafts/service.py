@@ -7,6 +7,10 @@ from sqlalchemy.orm import Session
 from app.auth.service import Base, User, engine
 
 
+
+
+EDITABLE_STATUSES = {"draft", "rejected"}
+
 class Draft(Base):
     __tablename__ = "drafts"
 
@@ -65,7 +69,21 @@ def update_draft(
     draft: Draft,
     *,
     changes: dict,
+    allow_system_fields: bool = False,
 ) -> Draft:
+    # Русский комментарий: после публикации черновик должен быть read-only.
+    if draft.publish_status == "published":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Published draft is read-only")
+
+    # Русский комментарий: обычный пользователь не может вручную менять служебные статусы.
+    if not allow_system_fields:
+        blocked_fields = {"status", "publish_status", "airtable_record_id", "published_at", "user_id", "id"}
+        for blocked_field in blocked_fields:
+            changes.pop(blocked_field, None)
+
+        if draft.status not in EDITABLE_STATUSES:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Draft is not editable in current status")
+
     for field, value in changes.items():
         setattr(draft, field, value)
     db.commit()

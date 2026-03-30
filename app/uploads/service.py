@@ -13,12 +13,14 @@ ALLOWED_CONTENT_TYPES = {
     "image/jpg": ".jpg",
     "image/jpeg": ".jpg",
     "image/png": ".png",
+    "image/webp": ".webp",
 }
+ALLOWED_LICENSES = {"CC0", "CC BY", "CC BY-SA", "PD"}
 UPLOADS_ROOT = Path("uploads")
 ORPHAN_MAX_AGE_HOURS = 24
 
 
-def save_draft_image(db: Session, draft: Draft, user: User, file: UploadFile, request=None) -> str:
+def _save_file_for_user(user: User, file: UploadFile) -> str:
     extension = ALLOWED_CONTENT_TYPES.get(file.content_type)
     if extension is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported image type")
@@ -38,8 +40,23 @@ def save_draft_image(db: Session, draft: Draft, user: User, file: UploadFile, re
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to allocate file name")
 
     destination.write_bytes(content)
+    return f"/uploads/{user.id}/{filename}"
 
-    image_url = f"/uploads/{user.id}/{filename}"
+
+def save_uploaded_file(user: User, file: UploadFile, license_value: str | None) -> tuple[str, str]:
+    # Русский комментарий: лицензия обязательна для MVP и проверяется на whitelist.
+    normalized_license = (license_value or "").strip()
+    if not normalized_license:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="License is required")
+    if normalized_license not in ALLOWED_LICENSES:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported license")
+
+    image_url = _save_file_for_user(user, file)
+    return image_url, normalized_license
+
+
+def save_draft_image(db: Session, draft: Draft, user: User, file: UploadFile, request=None) -> str:
+    image_url = _save_file_for_user(user, file)
     update_draft(db, draft, changes={"image_url": image_url})
     return image_url
 

@@ -55,7 +55,7 @@ HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 TRUE_SET = {True, 1, "1", "true", "yes", "y", "да"}
 FALSE_SET = {False, 0, "0", "false", "no", "n", "нет"}
 ALLOWED_LICENSES = {"CC0", "CC BY", "CC BY-SA", "PD"}
-ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximately±Nkm", "conditional"}
+ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximate", "unknown"}
 ALLOWED_LAYER_TYPES = {"architecture", "route_point", "biogeography", "biography"}
 LAYERS_TABLE_NAME = "Layers"
 
@@ -191,6 +191,17 @@ def is_valid_url(value: Optional[str]) -> bool:
 def normalize_coordinates_source(value: Any) -> Optional[str]:
     return safe_str(value)
 
+def normalize_coordinates_confidence(value: Any) -> Optional[str]:
+    raw = safe_str(value)
+    if raw is None:
+        return None
+    normalized = raw.strip().lower()
+    if normalized == "approximately±nkm":
+        normalized = "approximate"
+    if normalized == "conditional":
+        normalized = "unknown"
+    return normalized
+
 
 def validate_coordinate_range(
     value: Optional[float],
@@ -307,9 +318,9 @@ def map_record(
                 }
             )
 
-    coordinates_confidence = safe_str(fields.get("coordinates_confidence_enum"))
+    coordinates_confidence = normalize_coordinates_confidence(fields.get("coordinates_confidence_enum"))
     if coordinates_confidence is None:
-        coordinates_confidence = safe_str(fields.get("coordinates_confidence"))
+        coordinates_confidence = normalize_coordinates_confidence(fields.get("coordinates_confidence"))
         if coordinates_confidence is not None:
             errors.append(
                 {
@@ -386,10 +397,7 @@ def get_origin_key(mapped: Dict[str, Any]) -> Optional[str]:
 
 
 def get_dedupe_key(mapped: Dict[str, Any]) -> Tuple[Any, ...]:
-    origin_key = get_origin_key(mapped)
-    if origin_key:
-        return ("origin", origin_key)
-    return ("fallback", mapped.get("name_ru") or "", mapped.get("latitude"), mapped.get("longitude"))
+    return (mapped.get("name_ru") or "", mapped.get("latitude"), mapped.get("longitude"))
 
 
 def airtable_get_with_retry(
@@ -627,6 +635,8 @@ def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List
     mapped["date_valid"] = date_valid
     if not is_valid_license(mapped.get("source_license")):
         critical("source_license", "invalid_license")
+    if mapped.get("coordinates_confidence") not in ALLOWED_COORDINATES_CONFIDENCE:
+        critical("coordinates_confidence", "invalid_coordinates_confidence")
     if mapped.get("coordinates_source"):
         warning("coordinates_source", "coordinates_source_saved_as_is")
     if mapped.get("image_url") and not is_valid_url(mapped.get("image_url")):

@@ -12,6 +12,16 @@ from app.security.rate_limit import rate_limit
 router = APIRouter(prefix="/drafts", tags=["drafts"])
 
 
+@router.get("/my", response_model=list[DraftResponse])
+def get_my_drafts(
+    request: Request,
+    _: None = Depends(rate_limit(60, 60, prefix="draft-list-my", include_path=True)),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return get_drafts(request=request, _=None, db=db, current_user=current_user)
+
+
 @router.get("", response_model=list[DraftResponse])
 def get_drafts(
     request: Request,

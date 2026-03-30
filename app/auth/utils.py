@@ -1,16 +1,30 @@
+import logging
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import bcrypt
 from jose import JWTError, jwt
 
-SECRET_KEY = os.getenv("AUTH_SECRET_KEY", "change-me-in-production")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
-REFRESH_TOKEN_EXPIRE_DAYS = 7
-REFRESH_COOKIE_NAME = "refresh_token"
+logger = logging.getLogger(__name__)
+
+# Русский комментарий: секрет вшитым значением не используем — только env или временный ключ для dev.
+_SECRET_FROM_ENV = os.getenv("AUTH_SECRET_KEY")
+if _SECRET_FROM_ENV:
+    SECRET_KEY = _SECRET_FROM_ENV
+else:
+    SECRET_KEY = secrets.token_urlsafe(48)
+    logger.warning("AUTH_SECRET_KEY is not set. Generated ephemeral key for current process only.")
+
+ALGORITHM = os.getenv("AUTH_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+REFRESH_COOKIE_NAME = os.getenv("REFRESH_COOKIE_NAME", "refresh_token")
 COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "strict")
+COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN") or None
+COOKIE_PATH = os.getenv("COOKIE_PATH", "/")
 
 
 def hash_password(password: str) -> str:
