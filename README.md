@@ -39,13 +39,16 @@ Vanilla JavaScript (no frameworks):
 - `ui.moderation.js` — moderation panel
 - `pwa.js` — PWA logic
 
-### Backend
-- FastAPI
+### Backend (canonical)
+- FastAPI app entrypoint: **`app.main:app`**
+- Canonical API base path: **`/api`**
 - Auth API (JWT + refresh cookie)
 - Drafts API (CRUD)
 - Upload API (images)
 - Moderation API (review + publish)
 - Airtable integration (publish pipeline)
+
+> Legacy note: `api/main.py` is a temporary compatibility shim for old runtime configs and should be removed after infra migration.
 
 ### CI/CD
 - GitHub Actions
@@ -65,71 +68,31 @@ Vanilla JavaScript (no frameworks):
 
 ---
 
-## Features
+## API Contract (MVP)
 
-### Core Map
-- Interactive map (MapLibre)
-- Clustering
-- Filters and layers
-- Popup with metadata
-- Object list
-
-### User-Generated Content (UGC)
-- Create/edit drafts
-- Attach images
-- Geometry support (optional)
-- Private until published
-
-### Moderation
-- Review queue
-- Approve / reject drafts
-- Publish to Airtable
-- Automatic inclusion via ETL
-
-### Authentication
-- JWT access token (short-lived)
-- Refresh token (cookie-based)
-- No persistent client storage
-
-### PWA
-- Installable app
-- Offline support (cached data)
-- Service Worker
-- Basic offline UX
-
----
-
-## Data Model (Simplified)
-
-### Feature
-- id
-- layer_id
-- name
-- description
-- coordinates (GeoJSON)
-- image_url
-- source_url
-- source_license
-
-### Draft
-- id
-- user_id
-- title
-- description
-- geometry (optional)
-- image_url
-- status (draft / review / approved / rejected)
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
+- `GET /api/me`
+- `GET /api/health`
 
 ---
 
 ## Development
 
 ### Requirements
-- Node.js (optional, for tooling)
-- Python (for ETL)
+- Python 3.11+
 - FastAPI backend
 
-### Run Frontend
-Serve static files:
+### Run backend
 ```bash
-python -m http.server
+uvicorn app.main:app --reload --port 8001
+```
+
+### Run frontend
+```bash
+python -m http.server 8000
+```
+
+By default frontend tries `window.ARTEMIS_API_BASE`/meta override, then `/api`.
