@@ -56,6 +56,7 @@ TRUE_SET = {True, 1, "1", "true", "yes", "y", "да"}
 FALSE_SET = {False, 0, "0", "false", "no", "n", "нет"}
 ALLOWED_LICENSES = {"CC0", "CC BY", "CC BY-SA", "PD"}
 ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximate", "conditional"}
+ALLOWED_COORDINATES_SOURCES = {"Wikipedia", "Pleiades", "GBIF", "IUCN", "expert estimate"}
 ALLOWED_LAYER_TYPES = {"architecture", "route_point", "biogeography", "biography"}
 LAYERS_TABLE_NAME = "Layers"
 
@@ -748,8 +749,8 @@ def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List
         critical("source_license", "invalid_license")
     if mapped.get("coordinates_confidence") not in ALLOWED_COORDINATES_CONFIDENCE:
         critical("coordinates_confidence", "invalid_coordinates_confidence")
-    if mapped.get("coordinates_source"):
-        warning("coordinates_source", "coordinates_source_saved_as_is")
+    if mapped.get("coordinates_source") and mapped.get("coordinates_source") not in ALLOWED_COORDINATES_SOURCES:
+        critical("coordinates_source", "invalid_coordinates_source")
     if mapped.get("image_url") and not is_valid_url(mapped.get("image_url")):
         critical("image_url", "invalid_image_url")
     layer_id = mapped.get("layer_id")
