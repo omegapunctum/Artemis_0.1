@@ -120,6 +120,44 @@ class RateLimitUnitTests(unittest.TestCase):
                 source_url='https://example.com',
                 source_license='GPL',
             )
+        with self.assertRaises(ValidationError):
+            DraftCreate(
+                name_ru='Name',
+                date_start='2026-01-01',
+                source_url='https://example.com',
+                coordinates_confidence='EXACT',
+            )
+        with self.assertRaises(ValidationError):
+            DraftCreate(
+                name_ru='Name',
+                date_start='2026-01-01',
+                source_url='https://example.com',
+                layer_type='',
+            )
+
+    def test_draft_update_rejects_invalid_enum_values(self):
+        with self.assertRaises(ValidationError):
+            DraftUpdate(layer_type='wrong')
+        with self.assertRaises(ValidationError):
+            DraftUpdate(coordinates_confidence='EXACT')
+        with self.assertRaises(ValidationError):
+            DraftUpdate(source_license='MIT')
+        with self.assertRaises(ValidationError):
+            DraftUpdate(source_license='')
+
+    def test_draft_update_accepts_valid_optional_enum_and_none(self):
+        payload = DraftUpdate(
+            layer_type='architecture',
+            coordinates_confidence='conditional',
+            source_license='PD',
+        )
+        self.assertEqual(payload.layer_type, 'architecture')
+        self.assertEqual(payload.coordinates_confidence, 'conditional')
+        self.assertEqual(payload.source_license, 'PD')
+        with_none = DraftUpdate(layer_type=None, coordinates_confidence=None, source_license=None)
+        self.assertIsNone(with_none.layer_type)
+        self.assertIsNone(with_none.coordinates_confidence)
+        self.assertIsNone(with_none.source_license)
 
     def test_draft_create_rejects_invalid_coordinates(self):
         with self.assertRaises(ValidationError):

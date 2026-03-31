@@ -159,6 +159,67 @@ class AuthIntegrationTests(unittest.TestCase):
         self.assertEqual(valid_update_response.status_code, 200)
         self.assertEqual(valid_update_response.json()["description"], "Обновленное описание")
 
+    def test_draft_endpoints_reject_invalid_enums_on_create_and_update(self):
+        access_token, _ = self._create_user_and_login()
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        create_payload = {
+            "name_ru": "Черновик",
+            "date_start": "2026-01-01",
+            "source_url": "https://example.com/source",
+            "description": "Описание",
+            "layer_type": "biography",
+            "coordinates_confidence": "exact",
+            "source_license": "CC BY-SA",
+        }
+
+        invalid_create_cases = (
+            {"layer_type": "wrong"},
+            {"coordinates_confidence": "EXACT"},
+            {"source_license": "MIT"},
+            {"layer_type": ""},
+        )
+        for patch in invalid_create_cases:
+            response = self.session.post(
+                f"{self.BASE_URL}/api/drafts",
+                headers=headers,
+                json={**create_payload, **patch},
+                timeout=5,
+            )
+            self.assertEqual(response.status_code, 422)
+
+        create_response = self.session.post(
+            f"{self.BASE_URL}/api/drafts",
+            headers=headers,
+            json=create_payload,
+            timeout=5,
+        )
+        self.assertEqual(create_response.status_code, 201)
+        draft_id = create_response.json()["id"]
+
+        invalid_update_cases = (
+            {"layer_type": "wrong"},
+            {"coordinates_confidence": "EXACT"},
+            {"source_license": "MIT"},
+            {"source_license": ""},
+        )
+        for payload in invalid_update_cases:
+            response = self.session.put(
+                f"{self.BASE_URL}/api/drafts/{draft_id}",
+                headers=headers,
+                json=payload,
+                timeout=5,
+            )
+            self.assertEqual(response.status_code, 422)
+
+        valid_update = self.session.put(
+            f"{self.BASE_URL}/api/drafts/{draft_id}",
+            headers=headers,
+            json={"layer_type": "route_point", "coordinates_confidence": "approximate", "source_license": "PD"},
+            timeout=5,
+        )
+        self.assertEqual(valid_update.status_code, 200)
+
 
 if __name__ == "__main__":
     unittest.main()

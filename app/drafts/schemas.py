@@ -4,10 +4,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
 
-ALLOWED_LAYER_TYPES = {"architecture", "route_point", "biogeography", "biography"}
-ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximate", "conditional"}
-ALLOWED_SOURCE_LICENSES = {"CC0", "CC BY", "CC BY-SA", "PD"}
-
 FORBIDDEN_DRAFT_FIELDS = {
     "etl_status",
     "etl_error",
@@ -33,11 +29,11 @@ DATE_START_PATTERN = re.compile(r"^-?\d{4}(?:-\d{2}-\d{2})?$")
 class DraftPayloadBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    layer_type: str | None = None
+    layer_type: Literal["architecture", "route_point", "biogeography", "biography"] | None = None
     name_en: str | None = None
-    coordinates_confidence: str | None = None
+    coordinates_confidence: Literal["exact", "approximate", "conditional"] | None = None
     coordinates_source: str | None = None
-    source_license: str | None = None
+    source_license: Literal["CC0", "CC BY", "CC BY-SA", "PD"] | None = None
     source_url: HttpUrl | None = None
     latitude: float | None = None
     longitude: float | None = None
@@ -58,36 +54,6 @@ class DraftPayloadBase(BaseModel):
         if forbidden:
             raise ValueError(f"forbidden fields in payload: {', '.join(forbidden)}")
         return payload
-
-    @field_validator("layer_type")
-    @classmethod
-    def validate_layer_type(cls, value: str | None) -> str | None:
-        if value is None:
-            return value
-        if value not in ALLOWED_LAYER_TYPES:
-            raise ValueError(f"layer_type must be one of: {', '.join(sorted(ALLOWED_LAYER_TYPES))}")
-        return value
-
-    @field_validator("coordinates_confidence")
-    @classmethod
-    def validate_coordinates_confidence(cls, value: str | None) -> str | None:
-        if value is None:
-            return value
-        if value not in ALLOWED_COORDINATES_CONFIDENCE:
-            raise ValueError(
-                "coordinates_confidence must be one of: "
-                f"{', '.join(sorted(ALLOWED_COORDINATES_CONFIDENCE))}"
-            )
-        return value
-
-    @field_validator("source_license")
-    @classmethod
-    def validate_source_license(cls, value: str | None) -> str | None:
-        if value is None:
-            return value
-        if value not in ALLOWED_SOURCE_LICENSES:
-            raise ValueError(f"source_license must be one of: {', '.join(sorted(ALLOWED_SOURCE_LICENSES))}")
-        return value
 
     @field_validator("latitude")
     @classmethod
