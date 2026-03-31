@@ -1003,6 +1003,18 @@ def main() -> int:
             )
             continue
 
+        longitude = mapped.get("longitude")
+        latitude = mapped.get("latitude")
+        if longitude is None or latitude is None:
+            rejected_features.append(
+                {
+                    "id": mapped.get("id") or "<missing>",
+                    "name_ru": mapped.get("name_ru"),
+                    "reasons": ["missing_geometry"],
+                }
+            )
+            continue
+
         dedupe_key = get_dedupe_key(mapped)
         if dedupe_key in seen_dedupe_keys:
             rejected_features.append(
@@ -1017,8 +1029,6 @@ def main() -> int:
         valid_features.append(mapped)
 
     valid_features = sort_mapped_records(valid_features)
-    if args.exclude_without_geometry:
-        valid_features = [m for m in valid_features if m.get("longitude") is not None and m.get("latitude") is not None]
 
     geojson = build_geojson_features(valid_features, warnings, errors)
     validation_report = build_validation_report(
