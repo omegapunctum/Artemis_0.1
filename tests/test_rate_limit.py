@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from fastapi import HTTPException
+from pydantic import ValidationError
 
 from app.security.rate_limit import (
     check_login_block,
@@ -87,11 +88,94 @@ class RateLimitUnitTests(unittest.TestCase):
         self.assertEqual(login_failure_store, {})
         self.assertEqual(login_block_store, {})
 
-    def test_draft_title_min_length_is_three(self):
-        with self.assertRaises(Exception):
-            DraftCreate(title='ab', description='desc', geometry=None)
-        payload = DraftUpdate(title='abc')
-        self.assertEqual(payload.title, 'abc')
+    def test_draft_create_requires_name_date_source(self):
+        with self.assertRaises(ValidationError):
+            DraftCreate(description='desc', date_start='2026-01-01', source_url='https://example.com')
+        with self.assertRaises(ValidationError):
+            DraftCreate(name_ru='Name', description='desc', source_url='https://example.com')
+        with self.assertRaises(ValidationError):
+            DraftCreate(name_ru='Name', description='desc', date_start='2026-01-01')
+
+    def test_draft_create_rejects_invalid_enum_values(self):
+        with self.assertRaises(ValidationError):
+            DraftCreate(
+                name_ru='Name',
+                date_start='2026-01-01',
+                source_url='https://example.com',
+                description='desc',
+                layer_type='unknown',
+            )
+        with self.assertRaises(ValidationError):
+            DraftCreate(
+                name_ru='Name',
+                date_start='2026-01-01',
+                source_url='https://example.com',
+                description='desc',
+                coordinates_confidence='somewhere',
+            )
+        with self.assertRaises(ValidationError):
+            DraftCreate(
+                name_ru='Name',
+                date_start='2026-01-01',
+                source_url='https://example.com',
+                description='desc',
+                source_license='GPL',
+            )
+
+    def test_draft_create_rejects_invalid_coordinates(self):
+        with self.assertRaises(ValidationError):
+            DraftCreate(
+                name_ru='Name',
+                date_start='2026-01-01',
+                source_url='https://example.com',
+                description='desc',
+                latitude=100,
+                longitude=40,
+            )
+        with self.assertRaises(ValidationError):
+            DraftCreate(
+                name_ru='Name',
+                date_start='2026-01-01',
+                source_url='https://example.com',
+                description='desc',
+                latitude=40,
+            )
+        with self.assertRaises(ValidationError):
+            DraftCreate(
+                name_ru='Name',
+                date_start='2026-01-01',
+                source_url='https://example.com',
+                description='desc',
+                geometry={'type': 'Point', 'coordinates': [37.6, 55.7]},
+            )
+
+    def test_draft_payload_blocks_system_fields_and_status_update(self):
+        with self.assertRaises(ValidationError):
+            DraftCreate(
+                name_ru='Name',
+                date_start='2026-01-01',
+                source_url='https://example.com',
+                description='desc',
+                etl_status='ready',
+            )
+        with self.assertRaises(ValidationError):
+            DraftUpdate(status='approved')
+
+    def test_valid_draft_payload_passes_validation(self):
+        payload = DraftCreate(
+            name_ru='Feature',
+            date_start='2026-01-01',
+            source_url='https://example.com/source',
+            description='valid description',
+            title_short='Short title',
+            layer_type='biography',
+            coordinates_confidence='exact',
+            source_license='CC BY',
+            latitude=55.7558,
+            longitude=37.6173,
+            geometry={'type': 'Point', 'coordinates': [37.6173, 55.7558]},
+        )
+        self.assertEqual(payload.name_ru, 'Feature')
 
 
 if __name__ == '__main__':

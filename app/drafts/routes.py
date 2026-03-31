@@ -49,7 +49,7 @@ def create_draft_endpoint(
 ):
     request.state.user_id = current_user.id
     try:
-        draft = create_draft(db, current_user, payload.title, payload.description, payload.geometry)
+        draft = create_draft(db, current_user, payload.name_ru, payload.description, payload.geometry)
         log_event(logging.INFO, 'draft.create', route=request.url.path, request_id=request.state.request_id, user_id=current_user.id, draft_id=draft.id)
         return draft
     except HTTPException:
@@ -71,7 +71,15 @@ def update_draft_endpoint(
     request.state.user_id = current_user.id
     try:
         draft = get_user_draft(db, draft_id, current_user)
-        updated = update_draft(db, draft, changes=payload.model_dump(exclude_unset=True))
+        changes = payload.model_dump(exclude_unset=True)
+        storage_changes = {}
+        if "name_ru" in changes:
+            storage_changes["title"] = changes["name_ru"]
+        if "description" in changes:
+            storage_changes["description"] = changes["description"]
+        if "geometry" in changes:
+            storage_changes["geometry"] = changes["geometry"]
+        updated = update_draft(db, draft, changes=storage_changes)
         log_event(logging.INFO, 'draft.update', route=request.url.path, request_id=request.state.request_id, user_id=current_user.id, draft_id=updated.id)
         return updated
     except HTTPException:

@@ -1,13 +1,117 @@
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
+
+ALLOWED_LAYER_TYPES = {"architecture", "route_point", "biogeography", "biography"}
+ALLOWED_COORDINATES_CONFIDENCE = {"exact", "approximate", "conditional"}
+ALLOWED_SOURCE_LICENSES = {"CC0", "CC BY", "CC BY-SA", "PD"}
+
+FORBIDDEN_DRAFT_FIELDS = {
+    "etl_status",
+    "etl_error",
+    "date_valid",
+    "dedupe_key",
+    "published_from_draft_id",
+    "version",
+    "created_at",
+    "updated_at",
+    "status",
+    "publish_status",
+    "airtable_record_id",
+    "published_at",
+    "id",
+    "user_id",
+}
 
 
-class DraftCreate(BaseModel):
-    title: str = Field(min_length=3, max_length=255)
-    description: str = Field(min_length=1)
+class DraftPayloadBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    layer_type: str | None = None
+    coordinates_confidence: str | None = None
+    source_license: str | None = None
+    source_url: HttpUrl | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    title_short: str | None = Field(default=None, max_length=120)
+    description: str | None = Field(default=None, max_length=2000)
     geometry: dict[str, Any] | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_forbidden_fields(cls, payload: Any) -> Any:
+        if not isinstance(payload, dict):
+            return payload
+        forbidden = sorted(FORBIDDEN_DRAFT_FIELDS.intersection(payload.keys()))
+        if forbidden:
+            raise ValueError(f"forbidden fields in payload: {', '.join(forbidden)}")
+        return payload
+
+    @field_validator("layer_type")
+    @classmethod
+    def validate_layer_type(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        if value not in ALLOWED_LAYER_TYPES:
+            raise ValueError(f"layer_type must be one of: {', '.join(sorted(ALLOWED_LAYER_TYPES))}")
+        return value
+
+    @field_validator("coordinates_confidence")
+    @classmethod
+    def validate_coordinates_confidence(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        if value not in ALLOWED_COORDINATES_CONFIDENCE:
+            raise ValueError(
+                "coordinates_confidence must be one of: "
+                f"{', '.join(sorted(ALLOWED_COORDINATES_CONFIDENCE))}"
+            )
+        return value
+
+    @field_validator("source_license")
+    @classmethod
+    def validate_source_license(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        if value not in ALLOWED_SOURCE_LICENSES:
+            raise ValueError(f"source_license must be one of: {', '.join(sorted(ALLOWED_SOURCE_LICENSES))}")
+        return value
+
+    @field_validator("latitude")
+    @classmethod
+    def validate_latitude(cls, value: float | None) -> float | None:
+        if value is None:
+            return value
+        if not -90 <= value <= 90:
+            raise ValueError("latitude must be between -90 and 90")
+        return value
+
+    @field_validator("longitude")
+    @classmethod
+    def validate_longitude(cls, value: float | None) -> float | None:
+        if value is None:
+            return value
+        if not -180 <= value <= 180:
+            raise ValueError("longitude must be between -180 and 180")
+        return value
+
+    @model_validator(mode="after")
+    def validate_coordinates_pair(self) -> "DraftPayloadBase":
+        has_latitude = self.latitude is not None
+        has_longitude = self.longitude is not None
+        if has_latitude != has_longitude:
+            raise ValueError("latitude and longitude must be provided together")
+        if self.geometry is not None and (not has_latitude or not has_longitude):
+            raise ValueError("latitude and longitude are required when geometry is provided")
+        return self
+
+
+class DraftCreate(DraftPayloadBase):
+    name_ru: str = Field(min_length=1)
+    date_start: str = Field(min_length=1)
+    source_url: HttpUrl
+    description: str = Field(min_length=1, max_length=2000)
 
     @field_validator("geometry")
     @classmethod
@@ -18,10 +122,9 @@ class DraftCreate(BaseModel):
         return value
 
 
-class DraftUpdate(BaseModel):
-    title: str | None = Field(default=None, min_length=3, max_length=255)
-    description: str | None = Field(default=None, min_length=1)
-    geometry: dict[str, Any] | None = None
+class DraftUpdate(DraftPayloadBase):
+    name_ru: str | None = Field(default=None, min_length=1)
+    date_start: str | None = Field(default=None, min_length=1)
 
     @field_validator("geometry")
     @classmethod
