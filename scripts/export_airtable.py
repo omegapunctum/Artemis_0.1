@@ -302,9 +302,19 @@ def normalize_linked_record_id(value: Any) -> Optional[str]:
 
 
 def add_issue(issues: List[Dict[str, Any]], severity: str, record_id: str, reason: str, field: Optional[str] = None) -> None:
-    payload: Dict[str, Any] = {"id": record_id or "<missing>", "reason": reason, "severity": severity}
+    normalized_id = record_id or "<missing>"
+    payload: Dict[str, Any] = {
+        "id": normalized_id,
+        "record_id": normalized_id,
+        "reason": reason,
+        "severity": severity,
+    }
     if field:
         payload["field"] = field
+    if severity == "critical":
+        payload["error"] = reason
+    elif severity == "warning":
+        payload["warning"] = reason
     issues.append(payload)
 
 
