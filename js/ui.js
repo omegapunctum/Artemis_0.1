@@ -556,6 +556,7 @@ function renderCards(elements, state, map) {
     const item = document.createElement('li');
     item.className = `ribbon-card${state.selectedFeatureId === featureId ? ' is-selected' : ''}`;
     item.dataset.featureId = featureId;
+    item.setAttribute('aria-selected', String(state.selectedFeatureId === featureId));
     item.tabIndex = 0;
 
     const image = buildImageNode(props, 'Object image');
@@ -582,6 +583,16 @@ function renderCards(elements, state, map) {
     });
 
     list.appendChild(item);
+  });
+}
+
+function syncSelectedCardState(elements, selectedFeatureId) {
+  if (!elements.cardsRibbon) return;
+  const cards = elements.cardsRibbon.querySelectorAll('.ribbon-card[data-feature-id]');
+  cards.forEach((card) => {
+    const isSelected = Boolean(selectedFeatureId) && card.dataset.featureId === selectedFeatureId;
+    card.classList.toggle('is-selected', isSelected);
+    card.setAttribute('aria-selected', String(isSelected));
   });
 }
 
@@ -860,6 +871,7 @@ function selectFeature(state, elements, map, feature, options = {}) {
   state.selectedFeatureId = getFeatureUiId(selectedFeature);
   setSelectedFeatureId(map, state.selectedFeatureId);
   renderCards(elements, state, map);
+  syncSelectedCardState(elements, state.selectedFeatureId);
   renderBookmarksPanel(elements, state, map);
   if (options.centerOnMap) focusFeatureOnMap(map, selectedFeature);
   if (options.openDetail !== false) {
@@ -875,6 +887,7 @@ function clearSelection(state, elements, map) {
   state.selectedFeatureId = null;
   setSelectedFeatureId(map, null);
   hideDetailPanel(elements);
+  syncSelectedCardState(elements, null);
   renderCards(elements, state, map);
 }
 

@@ -277,11 +277,17 @@ function bindPopupHandlers(map) {
     if (!feature) return;
     const coordinates = feature?.geometry?.coordinates;
     const onFeatureClick = map?.__artemis?.featureClickHandler;
+    let handledByExternal = false;
     if (typeof onFeatureClick === 'function') {
-      onFeatureClick(feature, Array.isArray(coordinates) ? coordinates : [event.lngLat.lng, event.lngLat.lat], event);
-      return;
+      handledByExternal = onFeatureClick(
+        feature,
+        Array.isArray(coordinates) ? coordinates : [event.lngLat.lng, event.lngLat.lat],
+        event
+      ) === true;
     }
-    openFeaturePopup(map, feature, Array.isArray(coordinates) ? coordinates : event.lngLat);
+    if (!handledByExternal) {
+      openFeaturePopup(map, feature, Array.isArray(coordinates) ? coordinates : event.lngLat);
+    }
   });
 
   map.on('click', CLUSTER_LAYER_ID, (event) => {
