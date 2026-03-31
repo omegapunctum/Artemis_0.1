@@ -3,6 +3,7 @@ import unittest
 
 from fastapi import HTTPException
 from pathlib import Path
+from pydantic import ValidationError
 from unittest.mock import patch
 
 DB_PATH = Path('artemis_auth.db')
@@ -15,7 +16,7 @@ os.environ.setdefault('AIRTABLE_BASE', 'base123')
 os.environ.setdefault('AIRTABLE_TABLE', 'Features')
 
 from app.auth.service import SessionLocal, User, init_db as init_auth_db  # noqa: E402
-from app.drafts.schemas import DraftResponse  # noqa: E402
+from app.drafts.schemas import DraftCreate, DraftResponse, DraftUpdate  # noqa: E402
 from app.drafts.service import Draft, create_draft, get_user_draft, init_db as init_drafts_db  # noqa: E402
 from app.moderation.service import (  # noqa: E402
     PUBLISH_STATUS_FAILED,
@@ -194,6 +195,66 @@ class ModerationFlowTests(unittest.TestCase):
             }
         )
         self.assertEqual(payload.status, 'draft')
+
+
+class DraftValidationEdgeCasesTests(unittest.TestCase):
+    def setUp(self):
+        self.valid_create = {
+            "name_ru": "Тест",
+            "date_start": "2026-01-01",
+            "source_url": "https://example.com/source",
+            "layer_type": "biography",
+            "coordinates_confidence": "exact",
+            "source_license": "CC BY-SA",
+        }
+
+    def assert_create_invalid(self, payload):
+        with self.assertRaises(ValidationError):
+            DraftCreate.model_validate(payload)
+
+    def assert_update_invalid(self, payload):
+        with self.assertRaises(ValidationError):
+            DraftUpdate.model_validate(payload)
+
+    def test_required_fields_create_validation(self):
+        self.assert_create_invalid({"date_start": "2026-01-01", "source_url": "https://example.com/source"})
+        self.assert_create_invalid({"name_ru": "", "date_start": "2026-01-01", "source_url": "https://example.com/source"})
+        self.assert_create_invalid({"name_ru": "Тест", "source_url": "https://example.com/source"})
+        self.assert_create_invalid({"name_ru": "Тест", "date_start": "2026/01/01", "source_url": "https://example.com/source"})
+        self.assert_create_invalid({"name_ru": "Тест", "date_start": "2026-01-01"})
+        self.assert_create_invalid({"name_ru": "Тест", "date_start": "2026-01-01", "source_url": "not-url"})
+
+    def test_coordinates_validation(self):
+        self.assert_create_invalid({**self.valid_create, "latitude": 55.7})
+        self.assert_create_invalid({**self.valid_create, "longitude": 37.6})
+        self.assert_create_invalid({**self.valid_create, "latitude": 95.0, "longitude": 37.6})
+        self.assert_create_invalid({**self.valid_create, "latitude": 55.7, "longitude": 200.0})
+        valid = DraftCreate.model_validate({**self.valid_create, "latitude": 55.7, "longitude": 37.6})
+        self.assertEqual(valid.latitude, 55.7)
+        self.assertEqual(valid.longitude, 37.6)
+
+    def test_enum_validation(self):
+        self.assert_create_invalid({**self.valid_create, "layer_type": "wrong"})
+        self.assert_create_invalid({**self.valid_create, "coordinates_confidence": "EXACT"})
+        self.assert_create_invalid({**self.valid_create, "source_license": "MIT"})
+        self.assert_create_invalid({**self.valid_create, "layer_type": "BIOGRAPHY"})
+        valid = DraftCreate.model_validate(
+            {**self.valid_create, "layer_type": "architecture", "coordinates_confidence": "approximate", "source_license": "PD"}
+        )
+        self.assertEqual(valid.layer_type, "architecture")
+
+    def test_system_fields_are_forbidden(self):
+        for field_name in ("etl_status", "status", "published_from_draft_id", "created_at", "updated_at"):
+            self.assert_create_invalid({**self.valid_create, field_name: "forbidden"})
+
+    def test_update_flow_validation(self):
+        self.assert_update_invalid({"created_at": "2026-01-01T00:00:00"})
+        self.assert_update_invalid({"status": "review"})
+        self.assert_update_invalid({"source_license": "INVALID"})
+        self.assert_update_invalid({"latitude": 55.7})
+        self.assert_update_invalid({"latitude": 95.0, "longitude": 37.6})
+        valid = DraftUpdate.model_validate({"description": "ok", "latitude": 55.7, "longitude": 37.6, "source_license": "PD"})
+        self.assertEqual(valid.description, "ok")
 
 
 if __name__ == '__main__':
