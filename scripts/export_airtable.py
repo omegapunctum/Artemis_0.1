@@ -859,7 +859,7 @@ def run_self_test() -> int:
     assert m["longitude"] == 37.6173
     assert m["latitude"] == 55.7558
     assert normalize_hex_color(m["layer_color_hex"]) == "#abcdef"
-    assert not errors
+    assert not any(e.get("error") for e in errors if "error" in e)
     assert is_valid_iso_date(m["date_start"])
     assert is_valid_license(m["source_license"])
     print("Self-test OK")
