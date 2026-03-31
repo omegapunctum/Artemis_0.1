@@ -57,7 +57,7 @@
         <div id="search-dropdown" class="top-panel search-dropdown" hidden></div>
       </div>
       <div class="top-actions">
-        <button id="ugc-create-btn" type="button" aria-label="Create draft">Create draft</button>
+        <button id="ugc-create-btn" class="ui-button ui-button-primary" type="button" aria-label="Create draft">Create draft</button>
         <button id="moderation-toggle-btn" type="button" aria-label="Toggle moderation workspace" aria-expanded="false" data-moderation-action="toggle-workspace" hidden>Moderation</button>
         <button id="filters-btn" type="button" aria-label="Toggle filters" aria-expanded="false">Filters</button>
         <button id="layers-btn" type="button" aria-label="Toggle layers" aria-expanded="false">Layers</button>
@@ -94,7 +94,7 @@
     </section>
 
     <aside id="detail-panel" class="glass-panel detail-panel" hidden aria-label="Object details" aria-hidden="true">
-      <header class="detail-panel-head">
+      <header class="detail-panel-head panel-header">
         <h2 class="detail-panel-heading">Details</h2>
         <div class="detail-panel-actions">
           <button id="detail-panel-expand" class="floating-card-close" type="button" aria-label="Expand detail panel" aria-expanded="false">⇧</button>
@@ -105,7 +105,7 @@
     </aside>
 
     <aside id="ugc-panel" class="glass-panel ugc-panel" hidden aria-label="Draft editor" aria-hidden="true">
-      <header class="ugc-panel-head">
+      <header class="ugc-panel-head panel-header">
         <div>
           <h2 id="ugc-panel-title" class="ugc-panel-title">Create draft</h2>
           <p id="ugc-panel-subtitle" class="ugc-panel-subtitle">Draft status: pristine</p>
@@ -117,7 +117,7 @@
       <section class="ugc-my-drafts">
         <div class="ugc-my-drafts-head">
           <h3>My drafts</h3>
-          <button id="ugc-refresh-drafts-btn" type="button">Refresh</button>
+          <button id="ugc-refresh-drafts-btn" class="ui-button" type="button">Refresh</button>
         </div>
         <div id="ugc-drafts-empty" class="ugc-empty-state" hidden>No drafts yet</div>
         <ul id="ugc-drafts-list" class="ugc-drafts-list"></ul>
@@ -153,7 +153,7 @@
               <option value="conditional">conditional</option>
             </select>
           </label>
-          <button id="ugc-use-map-center-btn" type="button">Use current map center</button>
+          <button id="ugc-use-map-center-btn" class="ui-button ui-button-secondary" type="button">Use current map center</button>
         </section>
         <section class="ugc-form-section">
           <h3>Media & source</h3>
@@ -167,16 +167,16 @@
         </section>
         <div id="ugc-field-errors" class="ugc-field-errors"></div>
         <div class="ugc-form-actions">
-          <button id="ugc-save-btn" type="submit">Save draft</button>
-          <button id="ugc-submit-btn" type="button">Submit for review</button>
-          <button id="ugc-delete-btn" type="button">Delete draft</button>
-          <button id="ugc-cancel-btn" type="button">Cancel</button>
+          <button id="ugc-save-btn" class="ui-button ui-button-primary" type="submit">Save draft</button>
+          <button id="ugc-submit-btn" class="ui-button ui-button-success" type="button">Submit for review</button>
+          <button id="ugc-delete-btn" class="ui-button ui-button-danger" type="button">Delete draft</button>
+          <button id="ugc-cancel-btn" class="ui-button ui-button-secondary" type="button">Cancel</button>
         </div>
       </form>
     </aside>
 
     <aside id="moderation-workspace" class="glass-panel moderation-workspace" hidden aria-label="Moderation workspace" aria-hidden="true">
-      <header class="moderation-head">
+      <header class="moderation-head panel-header">
         <h2>Moderation queue</h2>
         <div class="moderation-head-actions">
           <button type="button" data-moderation-action="mobile-back" class="moderation-mobile-back">Back</button>
