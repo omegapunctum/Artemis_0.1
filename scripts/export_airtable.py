@@ -991,8 +991,10 @@ def main() -> int:
             critical_reasons = [
                 issue.get("reason")
                 for issue in errors[record_errors_start:]
-                if issue.get("severity") == "critical" and issue.get("record_id") == (mapped.get("id") or "<missing>")
+                if issue.get("severity") == "critical" and issue.get("id") == (mapped.get("id") or "<missing>")
             ]
+            if not critical_reasons:
+                critical_reasons = ["validation_failed"]
             rejected_features.append(
                 {
                     "id": mapped.get("id") or "<missing>",
