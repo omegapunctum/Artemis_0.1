@@ -1,6 +1,6 @@
 import { buildApiError, login, register, logout, getCurrentUser, fetchWithAuth } from './auth.js';
 import { loadLayers } from './data.js';
-import { clearError, showLoading, hideLoading, normalizeAppError, showSystemMessage, ensureOnlineAction, createInlineStateBlock } from './ux.js';
+import { clearError, showLoading, hideLoading, normalizeAppError, showSystemMessage, ensureOnlineAction } from './ux.js';
 import { setText, toSafeText } from './safe-dom.js';
 
 let ugcInitialized = false;
@@ -767,22 +767,17 @@ function setGlobalError(els, message, { retry = null } = {}) {
   const safeMessage = String(message || '').trim();
   const visible = Boolean(safeMessage);
   host.hidden = !visible;
-  host.classList.toggle('ugc-error-state', visible);
-  host.setAttribute('aria-live', 'polite');
+  host.setAttribute('aria-live', 'assertive');
+  host.setAttribute('role', 'alert');
 
   if (!visible) {
-    host.replaceChildren();
+    setText(host, '');
+    host.removeAttribute('data-retry');
     return;
   }
 
-  const block = createInlineStateBlock({
-    variant: 'error',
-    title: 'Unable to complete action',
-    message: safeMessage,
-    actionLabel: typeof retry === 'function' ? 'Retry' : '',
-    onAction: retry
-  });
-  host.replaceChildren(block);
+  setText(host, safeMessage);
+  host.dataset.retry = typeof retry === 'function' ? 'true' : 'false';
 }
 
 function ensureUgcErrorHost(els) {
@@ -791,7 +786,7 @@ function ensureUgcErrorHost(els) {
 
   const host = document.createElement('div');
   host.id = 'ugc-global-error';
-  host.className = 'ugc-error-state';
+  host.className = 'ugc-error-state ugc-error-banner';
   host.hidden = true;
 
   const anchor = els.form || els.ugcDraftsList || els.ugcPanel.firstElementChild;
@@ -809,10 +804,29 @@ function resolveUgcActionErrorMessage(error, els, fallbackMessage) {
   const authMessage = handleAuthError(error, els);
   if (authMessage) return authMessage;
 
-  const serverMessage = String(error?.message || '').trim();
+  const serverMessage = extractServerErrorMessage(error);
   if (serverMessage) return serverMessage;
 
   return normalizeAppError(error, fallbackMessage).message || fallbackMessage;
+}
+
+function extractServerErrorMessage(error) {
+  const payload = error?.payload;
+  const candidates = [
+    error?.message,
+    payload?.message,
+    payload?.error,
+    payload?.error?.message,
+    payload?.detail,
+    payload?.details?.message
+  ];
+
+  for (const value of candidates) {
+    const message = String(value || '').trim();
+    if (message) return message;
+  }
+
+  return '';
 }
 
 function handleAuthError(error, els) {
