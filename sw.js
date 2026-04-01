@@ -187,6 +187,13 @@ async function handleNavigationRequest(request) {
     if (networkResponse && networkResponse.ok) {
       await cache.put(INDEX_URL, networkResponse.clone());
       console.debug('[SW] navigation network hit -> cache updated');
+      return networkResponse;
+    }
+
+    const fallback = await cache.match(INDEX_URL);
+    if (fallback) {
+      console.debug('[SW] navigation non-OK response, fallback to cached shell');
+      return fallback;
     }
 
     return networkResponse;
