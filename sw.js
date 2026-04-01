@@ -190,20 +190,18 @@ function isStaticAssetRequest(url, request) {
 async function handleNavigationRequest(request) {
   try {
     const cache = await caches.open(STATIC_CACHE);
-    const cachedResponse = await cache.match(INDEX_URL);
+    const networkResponse = await fetch(request);
 
-    if (cachedResponse) {
-      console.debug('[SW] navigation cache hit');
-      return cachedResponse;
+    if (networkResponse && networkResponse.ok) {
+      await cache.put(INDEX_URL, networkResponse.clone());
+      console.debug('[SW] navigation network hit -> cache updated');
     }
 
-    const networkResponse = await fetch(request);
-    await cache.put(INDEX_URL, networkResponse.clone());
-    console.debug('[SW] navigation cache miss -> network');
     return networkResponse;
   } catch (error) {
     console.debug('[SW] navigation network failed, fallback to cached shell');
-    const fallback = await caches.match(INDEX_URL);
+    const cache = await caches.open(STATIC_CACHE);
+    const fallback = await cache.match(INDEX_URL);
     if (fallback) return fallback;
     return Response.error();
   }
