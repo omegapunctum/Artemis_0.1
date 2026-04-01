@@ -185,7 +185,10 @@ async function handleNavigationRequest(request) {
     const networkResponse = await fetch(request);
 
     if (networkResponse && networkResponse.ok) {
-      await cache.put(INDEX_URL, networkResponse.clone());
+      const contentType = networkResponse.headers.get('Content-Type') || '';
+      if (contentType.includes('text/html')) {
+        await cache.put(INDEX_URL, networkResponse.clone());
+      }
       console.debug('[SW] navigation network hit -> cache updated');
       return networkResponse;
     }
