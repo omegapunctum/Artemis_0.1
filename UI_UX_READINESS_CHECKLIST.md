@@ -33,7 +33,17 @@
 - [ ] Core UI states (default/hover/active/disabled/error) are visually coherent across map, list, and detail-view.
 
 ## Known gaps
-- [ ] Navigation / IA formalization is still partial and needs one unified UX pass.
+- [x] Navigation / overlay interaction pass completed for primary panels + UGC + moderation close behavior.
 - [ ] Design system depth is limited (tokens/components coverage needs broader normalization).
-- [ ] Search/filter UX refinement remains needed for clearer intent, feedback, and edge states.
+- [x] Search/filter feedback baseline unified (active counts, clear/reset actions, no-results guidance).
 - [ ] Full-product state consistency beyond current UI/UX block still requires wider alignment.
+
+## Targeted smoke additions (unified UI/UX pass)
+- Artifact: `docs/UI_UX_TARGETED_SMOKE_2026-04-02.md`
+- [ ] Open Filters/Layers/Bookmarks sequentially and verify only one primary panel is open at a time.
+- [ ] Open overflow menu, then open any primary panel; overflow menu should auto-close.
+- [ ] Enter search with zero matches and verify inline + dropdown empty states both provide clear action.
+- [ ] Apply combined filters (search + confidence + layers + timeline) and verify active count badges on top actions.
+- [ ] In Filters panel click `Reset` and verify timeline/search/layer/confidence return to defaults.
+- [ ] Open UGC unauthenticated and verify inline auth-required state uses same action/state block pattern.
+- [ ] In Moderation search use `Clear` and verify list returns with no stale queue state.

@@ -3,6 +3,13 @@ app/  (не api/)
 
 ---
 
+## Targeted unified UI/UX smoke
+
+- Artifact: `docs/UI_UX_TARGETED_SMOKE_2026-04-02.md`
+- Scope: post-patch manual verification only for unified UI/UX touched scenarios (overlay/search/filter/UGC/moderation interaction layer).
+
+---
+
 ## UI / UX Manual Smoke Checks
 
 ### 1. Map & Core Navigation

@@ -136,6 +136,7 @@ export async function initUI(map, features) {
     applyState: null,
     warnings: []
   };
+  state.yearBounds = years;
   initializeAnimatedPanels(elements);
   setupOnboardingOverlay(elements);
   if (!state.enabledLayerIds.size) {
@@ -167,6 +168,7 @@ export async function initUI(map, features) {
     updateSearchNoResultsState(elements, state);
     renderSearchDropdown(elements, state, map);
     renderTopPanels(elements, state, layers, confidenceValues, map);
+    updateFilterFeedback(elements, state);
     renderCards(elements, state, map);
     updateCounters(elements, state, map);
     updateStatus(elements, state, map);
@@ -219,6 +221,7 @@ export async function initUI(map, features) {
   elements.bookmarksBtn?.addEventListener('click', () => togglePrimaryPanel(elements, state, 'bookmarks', elements.bookmarksBtn));
   elements.overflowBtn?.addEventListener('click', () => {
     if (!elements.topActions) return;
+    if (state.overlay.activePrimary) closePrimaryPanel(elements, state, state.overlay.activePrimary);
     const expanded = elements.topActions.classList.toggle('is-expanded');
     elements.overflowBtn.setAttribute('aria-expanded', String(expanded));
   });
@@ -242,6 +245,13 @@ export async function initUI(map, features) {
   document.getElementById('detail-panel-expand')?.addEventListener('click', () => toggleDetailSheetState(state, elements));
   document.addEventListener('click', (event) => {
     const target = event.target;
+    if (elements.topActions?.classList.contains('is-expanded')) {
+      const inTopActions = elements.topActions.contains(target) || elements.overflowBtn?.contains(target);
+      if (!inTopActions) {
+        elements.topActions.classList.remove('is-expanded');
+        elements.overflowBtn?.setAttribute('aria-expanded', 'false');
+      }
+    }
     if (state.overlay.activePrimary) {
       const panel = getPanelByKey(elements, state.overlay.activePrimary);
       const button = getButtonByKey(elements, state.overlay.activePrimary);
@@ -253,13 +263,6 @@ export async function initUI(map, features) {
     const withinFloating = elements.detailPanel.contains(target);
     const withinCard = target.closest?.('.ribbon-card');
     if (!withinFloating && !withinCard) closeDetailView(state, elements);
-    if (elements.topActions?.classList.contains('is-expanded')) {
-      const inTopActions = elements.topActions.contains(target) || elements.overflowBtn?.contains(target);
-      if (!inTopActions) {
-        elements.topActions.classList.remove('is-expanded');
-        elements.overflowBtn?.setAttribute('aria-expanded', 'false');
-      }
-    }
   });
 
   document.addEventListener('keydown', (event) => {
@@ -338,6 +341,32 @@ function renderFiltersPanel(elements, state, layers, confidenceValues) {
   const summary = document.createElement('p');
   summary.className = 'status-summary';
   summary.textContent = `${activeCount} of ${totalCount} objects visible`;
+  const filterSummary = document.createElement('div');
+  filterSummary.className = 'panel-action-row';
+  const activeFiltersBadge = document.createElement('span');
+  activeFiltersBadge.className = 'ui-badge';
+  const activeFiltersTotal = getActiveFiltersCount(state);
+  activeFiltersBadge.textContent = activeFiltersTotal ? `${activeFiltersTotal} active` : 'No active filters';
+  const resetBtn = document.createElement('button');
+  resetBtn.type = 'button';
+  resetBtn.className = 'ui-button ui-button-secondary';
+  resetBtn.textContent = 'Reset';
+  resetBtn.disabled = activeFiltersTotal === 0;
+  resetBtn.addEventListener('click', () => {
+    state.search = '';
+    if (elements.searchInput) elements.searchInput.value = '';
+    state.confidenceFilter = 'all';
+    state.enabledLayerIds = new Set(state.layerLookup.keys());
+    state.currentStartYear = Number(elements.timelineStart?.min ?? state.currentStartYear);
+    state.currentEndYear = Number(elements.timelineEnd?.max ?? state.currentEndYear);
+    if (elements.timelineStart) elements.timelineStart.value = String(state.currentStartYear);
+    if (elements.timelineEnd) elements.timelineEnd.value = String(state.currentEndYear);
+    toggleSearchClear(elements, state);
+    updateTimelineLabel(elements, state);
+    updateTimelineViz(elements, state);
+    state.applyState?.();
+  });
+  filterSummary.append(activeFiltersBadge, resetBtn);
 
   const layerWrap = document.createElement('div');
   layerWrap.className = 'chips';
@@ -356,7 +385,7 @@ function renderFiltersPanel(elements, state, layers, confidenceValues) {
     layerWrap.appendChild(chip);
   });
 
-  elements.filtersPanel.append(title, summary, layerWrap);
+  elements.filtersPanel.append(title, summary, filterSummary, layerWrap);
   if (confidenceValues.length) {
     const group = document.createElement('div');
     group.className = 'chips';
@@ -479,8 +508,20 @@ function renderSearchDropdown(elements, state, map) {
   if (!state.searchResults.length) {
     const noResults = document.createElement('div');
     noResults.className = 'search-no-results';
-    noResults.textContent = 'No matches';
+    noResults.textContent = `No matches for “${state.search}”.`;
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'ui-button ui-button-secondary';
+    clearBtn.textContent = 'Clear search';
+    clearBtn.addEventListener('click', () => {
+      if (elements.searchInput) elements.searchInput.value = '';
+      state.search = '';
+      toggleSearchClear(elements, state);
+      closePrimaryPanel(elements, state, 'search');
+      state.applyState?.();
+    });
     elements.searchDropdown.appendChild(noResults);
+    elements.searchDropdown.appendChild(clearBtn);
     return;
   }
 
@@ -549,6 +590,10 @@ function togglePrimaryPanel(elements, state, key, trigger = null) {
 }
 
 function openPrimaryPanel(elements, state, key, trigger = null) {
+  if (elements.topActions?.classList.contains('is-expanded')) {
+    elements.topActions.classList.remove('is-expanded');
+    elements.overflowBtn?.setAttribute('aria-expanded', 'false');
+  }
   ['search', 'filters', 'layers', 'bookmarks'].forEach((name) => {
     const panel = getPanelByKey(elements, name);
     const button = getButtonByKey(elements, name);
@@ -607,7 +652,7 @@ function updateSearchEntryState(elements, hasSearch) {
   }
   if (!helper) return;
   helper.textContent = hasSearch
-    ? 'Идёт поиск по карте…'
+    ? 'Применён текстовый фильтр. Результаты обновлены.'
     : 'Ищите места, события и объекты.';
 }
 
@@ -634,6 +679,9 @@ function updateSearchNoResultsState(elements, state) {
   const isEmpty = canMeasureResults && state.searchResults.length === 0;
   const shouldShow = hasSearch && canMeasureResults && isEmpty;
   noResults.hidden = !shouldShow;
+  if (shouldShow) {
+    noResults.textContent = `Ничего не найдено для «${state.search}». Измените запрос или очистите поиск.`;
+  }
 }
 
 function renderCards(elements, state, map) {
@@ -900,10 +948,7 @@ function updateCounters(elements, state, map) {
   if (elements.mapCount) elements.mapCount.textContent = String(getMapFeatureCount(map));
   if (elements.sourceCount) elements.sourceCount.textContent = String(diagnostics.inputTotal);
   if (elements.pointValidCount) elements.pointValidCount.textContent = String(diagnostics.validPoints);
-  const activeFilters = Number(Boolean(state.search))
-    + Number(state.confidenceFilter !== 'all')
-    + Number(state.enabledLayerIds.size !== state.layerLookup.size)
-    + 1;
+  const activeFilters = getActiveFiltersCount(state);
   if (elements.activeFiltersCount) elements.activeFiltersCount.textContent = String(activeFilters);
 }
 
@@ -1277,4 +1322,23 @@ function syncDetailSheetState(state, elements) {
     expandBtn.textContent = state.detailSheetExpanded ? '⇩' : '⇧';
     expandBtn.setAttribute('aria-label', state.detailSheetExpanded ? 'Collapse detail panel' : 'Expand detail panel');
   }
+}
+
+function updateFilterFeedback(elements, state) {
+  const total = getActiveFiltersCount(state);
+  [elements.filtersBtn, elements.layersBtn].forEach((button) => {
+    if (!button) return;
+    button.dataset.activeCount = total > 0 ? String(total) : '';
+    button.classList.toggle('has-active-filters', total > 0);
+  });
+}
+
+function getActiveFiltersCount(state) {
+  const yearMin = Number(state.yearBounds?.min ?? state.currentStartYear);
+  const yearMax = Number(state.yearBounds?.max ?? state.currentEndYear);
+  const hasTimelineFilter = state.currentStartYear !== yearMin || state.currentEndYear !== yearMax;
+  return Number(Boolean(state.search))
+    + Number(state.confidenceFilter !== 'all')
+    + Number(state.enabledLayerIds.size !== state.layerLookup.size)
+    + Number(hasTimelineFilter);
 }

@@ -149,3 +149,17 @@ export function hideLoading() {
   loadingCounter = Math.max(0, loadingCounter - 1);
   indicator.hidden = loadingCounter > 0;
 }
+
+export function setButtonBusy(button, busy, labels = {}) {
+  if (!button) return;
+  const isBusy = Boolean(busy);
+  const idleLabel = labels.idle || button.dataset.idleLabel || button.textContent || '';
+  const busyLabel = labels.busy || button.dataset.busyLabel || `${idleLabel}…`;
+
+  if (!button.dataset.idleLabel) button.dataset.idleLabel = idleLabel;
+  if (!button.dataset.busyLabel) button.dataset.busyLabel = busyLabel;
+
+  button.disabled = isBusy;
+  button.classList.toggle('is-loading', isBusy);
+  button.textContent = isBusy ? button.dataset.busyLabel : button.dataset.idleLabel;
+}

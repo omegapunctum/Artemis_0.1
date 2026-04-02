@@ -1,6 +1,6 @@
 import { buildApiError, login, register, logout, getCurrentUser, fetchWithAuth } from './auth.js';
 import { loadLayers } from './data.js';
-import { clearError, showLoading, hideLoading, normalizeAppError, showSystemMessage, ensureOnlineAction } from './ux.js';
+import { clearError, showLoading, hideLoading, normalizeAppError, showSystemMessage, ensureOnlineAction, createInlineStateBlock, setButtonBusy } from './ux.js';
 import { setText, toSafeText } from './safe-dom.js';
 
 let ugcInitialized = false;
@@ -274,16 +274,17 @@ function openUgcPanel(els) {
 
   if (!loggedIn) {
     els.ugcAuthCta.replaceChildren();
-    const text = document.createElement('span');
-    setText(text, 'Please log in to create and manage drafts.');
-    const ctaBtn = document.createElement('button');
-    ctaBtn.type = 'button';
-    setText(ctaBtn, 'Login');
-    ctaBtn.addEventListener('click', () => {
+    const ctaBlock = createInlineStateBlock({
+      variant: 'info',
+      title: 'Authentication required',
+      message: 'Please log in to create and manage drafts.',
+      actionLabel: 'Login',
+      onAction: () => {
       uiState.pendingAfterLogin = 'open-ugc';
       openModal(els.loginModal);
+      }
     });
-    els.ugcAuthCta.append(text, ctaBtn);
+    els.ugcAuthCta.appendChild(ctaBlock);
     setFormState(els, 'pristine');
     return;
   }
@@ -422,7 +423,11 @@ function toggleDraftsEmptyState(els, visible, message = '') {
 
   emptyNode.hidden = !visible;
   if (!visible) return;
-  setText(emptyNode, message || 'No drafts yet.');
+  emptyNode.replaceChildren(createInlineStateBlock({
+    variant: 'info',
+    title: 'Empty state',
+    message: message || 'No drafts yet.'
+  }));
 }
 
 function renderStatusInfo(draft) {
@@ -820,11 +825,11 @@ function setUgcBusyState(els, busy, control = null) {
   uiState.ugcBusy = Boolean(busy);
   if (busy) {
     uiState.busyControl = control || null;
-    if (uiState.busyControl) uiState.busyControl.classList.add('is-loading');
+    if (uiState.busyControl) setButtonBusy(uiState.busyControl, true);
     els.form?.classList.add('ugc-form-busy');
     els.form?.setAttribute('aria-busy', 'true');
   } else {
-    if (uiState.busyControl) uiState.busyControl.classList.remove('is-loading');
+    if (uiState.busyControl) setButtonBusy(uiState.busyControl, false);
     uiState.busyControl = null;
     els.form?.classList.remove('ugc-form-busy');
     els.form?.removeAttribute('aria-busy');

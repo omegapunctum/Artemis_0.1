@@ -1,6 +1,6 @@
 import { buildApiError, canModerate, fetchWithAuth, getCurrentUser } from './auth.js';
 import { createTextElement, normalizeSafeUrl, setSafeLink, toSafeText } from './safe-dom.js';
-import { createInlineStateBlock, normalizeAppError, showSystemMessage, ensureOnlineAction } from './ux.js';
+import { createInlineStateBlock, normalizeAppError, showSystemMessage, ensureOnlineAction, setButtonBusy } from './ux.js';
 
 let moderationInitialized = false;
 
@@ -171,6 +171,7 @@ function bindModerationEvents() {
 
   const searchInput = document.getElementById('moderation-search');
   const sortSelect = document.getElementById('moderation-sort');
+  const clearSearchBtn = document.getElementById('moderation-clear-search');
 
   searchInput?.addEventListener('input', (event) => {
     moderationState.search = String(event.target?.value || '');
@@ -180,6 +181,13 @@ function bindModerationEvents() {
 
   sortSelect?.addEventListener('change', (event) => {
     moderationState.sort = String(event.target?.value || 'newest');
+    applyQueueFilters();
+    renderModerationWorkspace();
+  });
+
+  clearSearchBtn?.addEventListener('click', () => {
+    moderationState.search = '';
+    if (searchInput) searchInput.value = '';
     applyQueueFilters();
     renderModerationWorkspace();
   });
@@ -221,7 +229,12 @@ function onModerationClick(event) {
     moderationState.isOpen = !moderationState.isOpen;
     moderationState.activeModal = null;
     moderationState.mobileView = 'list';
-    if (moderationState.isOpen) document.dispatchEvent(new CustomEvent('artemis:overlay-open', { detail: { source: 'moderation' } }));
+    if (moderationState.isOpen) {
+      document.dispatchEvent(new CustomEvent('artemis:overlay-open', { detail: { source: 'moderation' } }));
+      if (moderationState.queueState === STATUS.IDLE) {
+        loadModerationQueue().catch(() => {});
+      }
+    }
     renderModerationWorkspace();
     return;
   }
@@ -381,6 +394,7 @@ function renderModerationWorkspace() {
   toggleButton.hidden = !moderationState.isAllowed;
   toggleButton.setAttribute('aria-expanded', moderationState.isOpen ? 'true' : 'false');
   toggleButton.classList.toggle('is-active', moderationState.isOpen);
+  toggleButton.dataset.activeCount = moderationState.search.trim() ? '1' : '';
 
   workspace.hidden = !moderationState.isAllowed;
   workspace.classList.toggle('is-open', moderationState.isAllowed && moderationState.isOpen);
@@ -431,7 +445,19 @@ function renderPendingList(listNode) {
 
   const data = moderationState.filteredQueue;
   if (!data.length) {
-    listNode.appendChild(createInlineState('No drafts match current search.'));
+    listNode.appendChild(createInlineStateBlock({
+      variant: 'warning',
+      title: 'No matches',
+      message: `No drafts match “${moderationState.search.trim()}”.`,
+      actionLabel: 'Clear search',
+      onAction: () => {
+        moderationState.search = '';
+        const input = document.getElementById('moderation-search');
+        if (input) input.value = '';
+        applyQueueFilters();
+        renderModerationWorkspace();
+      }
+    }));
     return;
   }
 
@@ -530,14 +556,16 @@ function renderReviewPanel(container) {
   approveButton.dataset.moderationAction = 'approve-draft';
   approveButton.className = 'moderation-approve-btn';
   approveButton.disabled = moderationState.actionState === STATUS.APPROVING || moderationState.actionState === STATUS.REJECTING;
-  approveButton.textContent = moderationState.actionState === STATUS.APPROVING ? 'Approving…' : 'Approve';
+  approveButton.textContent = 'Approve';
 
   const rejectButton = document.createElement('button');
   rejectButton.type = 'button';
   rejectButton.dataset.moderationAction = 'open-reject-modal';
   rejectButton.className = 'moderation-reject-btn';
   rejectButton.disabled = moderationState.actionState === STATUS.APPROVING || moderationState.actionState === STATUS.REJECTING;
-  rejectButton.textContent = moderationState.actionState === STATUS.REJECTING ? 'Rejecting…' : 'Reject';
+  rejectButton.textContent = 'Reject';
+  setButtonBusy(approveButton, moderationState.actionState === STATUS.APPROVING, { idle: 'Approve', busy: 'Approving…' });
+  setButtonBusy(rejectButton, moderationState.actionState === STATUS.REJECTING, { idle: 'Reject', busy: 'Rejecting…' });
 
   actions.append(approveButton, rejectButton);
 
@@ -575,8 +603,12 @@ function createInlineError(message, onRetry = null) {
 
 function createStatusBadge(status) {
   const badge = document.createElement('span');
-  badge.className = 'moderation-status-badge';
-  badge.textContent = toSafeText(status, 'pending');
+  const normalized = String(status || 'pending').toLowerCase();
+  badge.className = 'moderation-status-badge ui-badge';
+  badge.classList.toggle('is-success', normalized === 'approved');
+  badge.classList.toggle('is-error', normalized === 'rejected');
+  badge.classList.toggle('is-warning', normalized === 'pending');
+  badge.textContent = toSafeText(normalized, 'pending');
   return badge;
 }
 
