@@ -96,8 +96,14 @@ async function registerServiceWorker() {
       return;
     }
 
-    const registration = await navigator.serviceWorker.register(swUrl.href, { scope: basePath });
+    const registration = await navigator.serviceWorker.register(swUrl.href, {
+      scope: basePath,
+      updateViaCache: 'none'
+    });
     console.info('[PWA] Service worker registered', { swUrl: swUrl.href, scope: registration.scope, expectedScope });
+    registration.update().catch((error) => {
+      console.info('[PWA] Service worker update check skipped:', error?.message || error);
+    });
 
     if (registration.waiting) {
       markUpdateAvailable(registration);

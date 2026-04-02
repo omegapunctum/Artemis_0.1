@@ -1,4 +1,4 @@
-const CACHE_VERSION = '2026-03-30-v4';
+const CACHE_VERSION = '2026-04-02-v5';
 const STATIC_CACHE = `artemis-static-${CACHE_VERSION}`;
 const DATA_CACHE = `artemis-data-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `artemis-runtime-${CACHE_VERSION}`;
