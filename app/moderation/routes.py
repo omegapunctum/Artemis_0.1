@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.service import User, get_current_user, get_db
 from app.drafts.schemas import DraftResponse
+from app.drafts.routes import serialize_draft_for_ui
 from app.drafts.service import get_user_draft
 from app.moderation.service import (
     approve_draft,
@@ -33,7 +34,7 @@ def submit_draft_endpoint(
         draft = get_user_draft(db, draft_id, current_user)
         submitted = submit_draft_for_review(db, draft)
         log_event(logging.INFO, 'draft.submit_review', route=request.url.path, request_id=request.state.request_id, user_id=current_user.id, draft_id=submitted.id)
-        return submitted
+        return serialize_draft_for_ui(submitted)
     except HTTPException:
         raise
     except Exception as exc:
@@ -53,7 +54,7 @@ def moderation_queue(
         require_moderator(current_user)
         drafts = list_review_drafts(db)
         log_event(logging.INFO, 'moderation.queue.opened', route=request.url.path, request_id=request.state.request_id, user_id=current_user.id, queued_items=len(drafts))
-        return drafts
+        return [serialize_draft_for_ui(item) for item in drafts]
     except HTTPException:
         raise
     except Exception as exc:
@@ -78,7 +79,7 @@ def approve_draft_endpoint(
         approved = approve_draft(db, draft, request=request, moderator=current_user, result_context=result_context)
         if result_context.get("result"):
             response.headers["X-Moderation-Result"] = result_context["result"]
-        return approved
+        return serialize_draft_for_ui(approved)
     except HTTPException:
         raise
     except Exception as exc:
@@ -100,7 +101,7 @@ def reject_draft_endpoint(
         draft = get_draft_for_moderation(db, draft_id)
         rejected = reject_draft(db, draft)
         log_event(logging.INFO, 'moderation.reject', route=request.url.path, request_id=request.state.request_id, user_id=current_user.id, draft_id=rejected.id)
-        return rejected
+        return serialize_draft_for_ui(rejected)
     except HTTPException:
         raise
     except Exception as exc:

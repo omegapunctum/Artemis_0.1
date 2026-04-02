@@ -59,7 +59,7 @@ def require_moderator(user: User) -> User:
 
 
 def list_review_drafts(db: Session) -> list[Draft]:
-    return db.query(Draft).filter(Draft.status == "review").order_by(Draft.updated_at.asc()).all()
+    return db.query(Draft).filter(Draft.status.in_(["pending", "review"])).order_by(Draft.updated_at.asc()).all()
 
 
 def get_draft_for_moderation(db: Session, draft_id: int) -> Draft:
@@ -72,9 +72,9 @@ def get_draft_for_moderation(db: Session, draft_id: int) -> Draft:
 def submit_draft_for_review(db: Session, draft: Draft) -> Draft:
     if draft.status == "approved":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Approved draft cannot be resubmitted")
-    if draft.status == "review":
+    if draft.status in {"pending", "review"}:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Draft already in review")
-    return update_draft(db, draft, allow_system_fields=True, changes={"status": "review", "publish_status": PUBLISH_STATUS_PENDING})
+    return update_draft(db, draft, allow_system_fields=True, changes={"status": "pending", "publish_status": PUBLISH_STATUS_PENDING})
 
 
 def approve_draft(
@@ -109,8 +109,8 @@ def approve_draft(
             _set_approve_result(result_context, "approved_already_published")
             return draft
 
-        if draft.status not in {"review", "approved"}:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in review or approved can be published")
+        if draft.status not in {"pending", "review", "approved"}:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in pending or approved can be published")
 
         existing_record = find_existing_airtable_feature(draft)
         if existing_record:
@@ -154,8 +154,8 @@ def reject_draft(db: Session, draft: Draft) -> Draft:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Approved draft cannot be rejected")
     if draft.status == "rejected":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Draft already rejected")
-    if draft.status != "review":
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in review can be rejected")
+    if draft.status not in {"pending", "review"}:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in pending can be rejected")
     return update_draft(db, draft, allow_system_fields=True, changes={"status": "rejected"})
 
 

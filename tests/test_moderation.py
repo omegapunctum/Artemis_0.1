@@ -68,7 +68,7 @@ class ModerationFlowTests(unittest.TestCase):
         self.assertEqual(draft.status, 'draft')
 
         draft = submit_draft_for_review(self.db, get_user_draft(self.db, draft.id, user))
-        self.assertEqual(draft.status, 'review')
+        self.assertEqual(draft.status, 'pending')
         self.assertTrue(is_moderator(moderator))
 
         queue = list_review_drafts(self.db)
@@ -142,11 +142,11 @@ class ModerationFlowTests(unittest.TestCase):
                 approve_draft(self.db, draft)
 
         refreshed = self.db.query(Draft).filter(Draft.id == draft.id).first()
-        self.assertEqual(refreshed.status, 'review')
+        self.assertEqual(refreshed.status, 'pending')
         self.assertEqual(refreshed.publish_status, PUBLISH_STATUS_FAILED)
         self.assertIsNone(refreshed.airtable_record_id)
 
-    def test_reject_requires_review_status(self):
+    def test_reject_requires_pending_status(self):
         user = self.make_user('user2@example.com')
         moderator = self.make_user('moderator2@example.com')
         self.assertTrue(is_moderator(moderator))
@@ -169,7 +169,7 @@ class ModerationFlowTests(unittest.TestCase):
             description='Polygon draft',
             geometry={'type': 'Polygon', 'coordinates': []},
             image_url='/uploads/example.png',
-            status='review',
+            status='pending',
         )
         payload = build_airtable_fields(draft)
         self.assertIsNone(payload['longitude'])
