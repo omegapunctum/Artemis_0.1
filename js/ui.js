@@ -101,7 +101,9 @@ export async function initUI(map, features) {
     sourceCount: document.getElementById('source-count'),
     pointValidCount: document.getElementById('point-valid-count'),
     activeFiltersCount: document.getElementById('active-filters-count'),
-    statusMessage: document.getElementById('status-message')
+    statusMessage: document.getElementById('status-message'),
+    onboardingOverlay: document.getElementById('onboarding-overlay'),
+    onboardingDismissBtn: document.getElementById('onboarding-dismiss-btn')
   };
 
   const years = collectYearBounds(allFeatures);
@@ -128,6 +130,7 @@ export async function initUI(map, features) {
     warnings: []
   };
   initializeAnimatedPanels(elements);
+  setupOnboardingOverlay(elements);
   if (!state.enabledLayerIds.size) {
     allFeatures.forEach((feature) => {
       const layerId = String(normalizeProps(feature).layer_id || '').trim();
@@ -267,6 +270,24 @@ export async function initUI(map, features) {
       return { listCount: state.filteredFeatures.length, mapCount: getMapFeatureCount(map) };
     }
   };
+}
+
+function setupOnboardingOverlay(elements) {
+  const overlay = elements?.onboardingOverlay;
+  const dismissBtn = elements?.onboardingDismissBtn;
+  if (!overlay || !dismissBtn) return;
+
+  let dismissedInPageSession = false;
+  const closeOverlay = () => {
+    if (dismissedInPageSession) return;
+    dismissedInPageSession = true;
+    overlay.hidden = true;
+    overlay.setAttribute('aria-hidden', 'true');
+  };
+
+  overlay.hidden = false;
+  overlay.setAttribute('aria-hidden', 'false');
+  dismissBtn.addEventListener('click', closeOverlay);
 }
 
 function isFeatureVisible(feature, state) {

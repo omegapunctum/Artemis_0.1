@@ -153,6 +153,37 @@ body { overflow: hidden; }
   background: var(--panel-overlay-bg);
 }
 .global-data-loading[hidden] { display: none; }
+.onboarding-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-top-header);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: calc(80px + var(--safe-top)) 16px 16px;
+  pointer-events: none;
+}
+.onboarding-overlay[hidden] { display: none; }
+.onboarding-card {
+  width: min(420px, 100%);
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  pointer-events: auto;
+}
+.onboarding-title {
+  margin: 0 0 8px;
+  font: var(--font-panel-title);
+  color: var(--color-text-primary);
+}
+.onboarding-list {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  color: var(--color-text-secondary);
+  font: var(--font-body);
+}
+.onboarding-list li + li {
+  margin-top: 6px;
+}
 .global-data-loading-text {
   margin: 0;
   color: var(--color-text-primary);

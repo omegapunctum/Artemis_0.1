@@ -72,6 +72,18 @@
     <main id="map-container" aria-label="Карта объектов">
       <div id="map"></div>
     </main>
+    <section id="onboarding-overlay" class="onboarding-overlay" aria-live="polite">
+      <div class="onboarding-card glass-panel" role="note" aria-label="Подсказка для первого входа">
+        <h2 class="onboarding-title">Быстрый старт</h2>
+        <ul class="onboarding-list">
+          <li>Исследуйте карту и перемещайтесь по ней.</li>
+          <li>Используйте поиск для быстрого перехода к объектам.</li>
+          <li>Переключайте слои, чтобы сравнивать данные.</li>
+          <li>Меняйте период на таймлайне внизу экрана.</li>
+        </ul>
+        <button id="onboarding-dismiss-btn" class="ui-button ui-button-primary" type="button">Понятно</button>
+      </div>
+    </section>
     <section id="global-data-loading" class="global-data-loading glass-panel" aria-live="polite" aria-hidden="false">
       <p id="global-data-loading-text" class="global-data-loading-text">Загрузка карты…</p>
     </section>
