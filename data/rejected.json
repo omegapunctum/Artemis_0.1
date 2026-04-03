@@ -1,1 +1,135 @@
-[]
+[
+  {
+    "id": "rec0x9MvhXQFWErOy",
+    "name_ru": "Бурдж-Халифа",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "rec1GDGqssFGehzEx",
+    "name_ru": "Вилла Савой",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "rec7xto7TNSberKPg",
+    "name_ru": "Собор Святого Петра",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "rec8RKV55zHUCA4bc",
+    "name_ru": "Шартрский собор",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "rec9KIQPB9M377wgE",
+    "name_ru": "Центр Жоржа Помпиду",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "recAJJSQH0dvmnpp0",
+    "name_ru": "Пантеон (Париж)",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "recC9HLvvR9Xi1rKR",
+    "name_ru": "Пантеон (Рим)",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "recDQaBEVGxTRjCat",
+    "name_ru": "Собор в Сантьяго-де-Компостела",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "recHqE46e2W3EDBlO",
+    "name_ru": "Крайслер-билдинг",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "recIO5H5Vqw2xwfLq",
+    "name_ru": "Версальский дворец",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "recS69tE4CQPTy105",
+    "name_ru": "Альгамбра",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "recV3Kj5ounTF55mw",
+    "name_ru": "Еврейский музей в Берлине",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "recZbIE0P3vL62bPj",
+    "name_ru": "Парфенон",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "recZsGTVquE5d26YO",
+    "name_ru": "Стоунхендж",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "receHpSDGZ82Cx05k",
+    "name_ru": "Великая пирамида Гизы (Пирамида Хеопса)",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "recmLwS8nYaR2dYEF",
+    "name_ru": "Каса-Батльо",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "recr1NbkVTbJwP5Ia",
+    "name_ru": "Королевский национальный театр",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "recylJimofuhRUv49",
+    "name_ru": "Великий зиккурат в Уре",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  },
+  {
+    "id": "reczZVbBhaCDZx97j",
+    "name_ru": "Собор Святой Софии",
+    "reasons": [
+      "invalid_coordinates_source"
+    ]
+  }
+]
