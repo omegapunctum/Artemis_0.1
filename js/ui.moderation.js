@@ -1,5 +1,5 @@
 import { buildApiError, canModerate, fetchWithAuth, getCurrentUser } from './auth.js';
-import { createTextElement, normalizeSafeUrl, setSafeLink, toSafeText } from './safe-dom.js';
+import { createTextElement, normalizeSafeUrl, setSafeImageSource, setSafeLink, toSafeText } from './safe-dom.js';
 import { createInlineStateBlock, normalizeAppError, showSystemMessage, ensureOnlineAction, setButtonBusy } from './ux.js';
 
 let moderationInitialized = false;
@@ -507,7 +507,7 @@ function renderReviewPanel(container) {
   const imageUrl = normalizeSafeUrl(draft?.image_url, { allowRelative: true });
   if (imageUrl) {
     const img = document.createElement('img');
-    img.src = imageUrl;
+    setSafeImageSource(img, imageUrl, { allowRelative: true });
     img.alt = toSafeText(resolveDraftTitle(draft), 'Draft preview');
     hero.appendChild(img);
   } else {

@@ -50,11 +50,24 @@ export function normalizeSafeUrl(value, options = {}) {
 }
 
 export function setSafeLink(link, value, options = {}) {
+  if (!link) return null;
   const safeUrl = normalizeSafeUrl(value, options);
-  if (!link || !safeUrl) return null;
+  if (!safeUrl) {
+    link.removeAttribute('href');
+    link.removeAttribute('target');
+    link.removeAttribute('rel');
+    return null;
+  }
   link.href = safeUrl;
   link.rel = 'noopener noreferrer';
   if (options.newTab !== false) link.target = '_blank';
+  return safeUrl;
+}
+
+export function setSafeImageSource(image, value, options = {}) {
+  const safeUrl = normalizeSafeUrl(value, options);
+  if (!image || !safeUrl) return null;
+  image.src = safeUrl;
   return safeUrl;
 }
 

@@ -23,6 +23,7 @@ from app.moderation.service import (  # noqa: E402
     PUBLISH_STATUS_PUBLISHED,
     approve_draft,
     build_airtable_fields,
+    find_existing_airtable_feature,
     is_moderator,
     list_review_drafts,
     reject_draft,
@@ -85,7 +86,7 @@ class ModerationFlowTests(unittest.TestCase):
         self.assertEqual(draft.airtable_record_id, 'rec123')
         payload = build_airtable_fields(draft)
         self.assertEqual(payload['name_ru'], 'Test point')
-        self.assertEqual(payload['source_url'], 'UGC')
+        self.assertEqual(payload['source_url'], 'https://ugc.local/source')
         self.assertEqual(payload['source_license'], 'CC BY')
         self.assertEqual(payload['longitude'], 37.6173)
         self.assertEqual(payload['latitude'], 55.7558)
@@ -174,9 +175,56 @@ class ModerationFlowTests(unittest.TestCase):
         payload = build_airtable_fields(draft)
         self.assertIsNone(payload['longitude'])
         self.assertIsNone(payload['latitude'])
-        self.assertEqual(payload['image_url'], '/uploads/example.png')
+        self.assertIsNone(payload['image_url'])
         self.assertEqual(payload['layer_id'], 'ugc')
         self.assertEqual(payload['external_id'], 'draft:None')
+
+    def test_normalized_id_same_payload_same_hash_slight_change_new_hash(self):
+        user = self.make_user('hash@example.com')
+        payload = {
+            'name_ru': 'Same title',
+            'source_url': 'https://example.com/source',
+            'longitude': 37.6173,
+            'latitude': 55.7558,
+        }
+        draft_a = Draft(user_id=user.id, title='Same title', description='A', payload=payload)
+        draft_b = Draft(user_id=user.id, title='Same title', description='B', payload=payload)
+        draft_c = Draft(user_id=user.id, title='Same title changed', description='C', payload={**payload, 'name_ru': 'Same title changed'})
+
+        id_a = build_airtable_fields(draft_a)['normalized_id']
+        id_b = build_airtable_fields(draft_b)['normalized_id']
+        id_c = build_airtable_fields(draft_c)['normalized_id']
+
+        self.assertEqual(id_a, id_b)
+        self.assertNotEqual(id_a, id_c)
+
+    def test_find_existing_uses_normalized_id_after_external_id(self):
+        user = self.make_user('dedupe@example.com')
+        draft = create_draft(
+            self.db,
+            user,
+            'Dedup title',
+            'desc',
+            {'type': 'Point', 'coordinates': [37.6173, 55.7558]},
+            payload={
+                'name_ru': 'Dedup title',
+                'source_url': 'https://example.com/source',
+                'longitude': 37.6173,
+                'latitude': 55.7558,
+            },
+        )
+        fields = build_airtable_fields(draft)
+
+        with patch('app.moderation.service._get_airtable_config', return_value=('token', 'base', 'Features')), patch(
+            'app.moderation.service._find_airtable_record_by_formula',
+            side_effect=[None, {'id': 'rec-normalized', 'fields': {}}],
+        ) as find_formula:
+            record = find_existing_airtable_feature(draft, fields=fields)
+
+        self.assertIsNotNone(record)
+        self.assertEqual(record['id'], 'rec-normalized')
+        self.assertEqual(find_formula.call_count, 2)
+        self.assertIn('{normalized_id}', find_formula.call_args_list[1].args[2])
 
     def test_draft_response_schema_includes_status(self):
         payload = DraftResponse.model_validate(
@@ -223,6 +271,10 @@ class DraftValidationEdgeCasesTests(unittest.TestCase):
         self.assert_create_invalid({"name_ru": "Тест", "date_start": "2026/01/01", "source_url": "https://example.com/source"})
         self.assert_create_invalid({"name_ru": "Тест", "date_start": "2026-01-01"})
         self.assert_create_invalid({"name_ru": "Тест", "date_start": "2026-01-01", "source_url": "not-url"})
+        self.assert_create_invalid({"name_ru": "Тест", "date_start": "2026-01-01", "source_url": "javascript:alert(1)"})
+        self.assert_create_invalid({"name_ru": "Тест", "date_start": "2026-01-01", "source_url": "ftp://example.com/source"})
+        valid_http = DraftCreate.model_validate({**self.valid_create, "source_url": "http://example.com/source"})
+        self.assertEqual(str(valid_http.source_url), "http://example.com/source")
 
     def test_coordinates_validation(self):
         self.assert_create_invalid({**self.valid_create, "latitude": 55.7})
@@ -251,6 +303,8 @@ class DraftValidationEdgeCasesTests(unittest.TestCase):
         self.assert_update_invalid({"created_at": "2026-01-01T00:00:00"})
         self.assert_update_invalid({"status": "review"})
         self.assert_update_invalid({"source_license": "INVALID"})
+        self.assert_update_invalid({"image_url": "javascript:alert(1)"})
+        self.assert_update_invalid({"image_url": "ftp://example.com/image.png"})
         self.assert_update_invalid({"latitude": 55.7})
         self.assert_update_invalid({"latitude": 95.0, "longitude": 37.6})
         valid = DraftUpdate.model_validate({"description": "ok", "latitude": 55.7, "longitude": 37.6, "source_license": "PD"})

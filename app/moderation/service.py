@@ -1,4 +1,5 @@
 import json
+import hashlib
 import logging
 import os
 import threading
@@ -15,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.auth.service import User
 from app.observability import log_event, metrics
 from app.drafts.service import Draft, update_draft
+from app.url_validation import is_safe_url
 
 try:
     import requests  # type: ignore
@@ -28,7 +30,7 @@ DEFAULT_LAYER_ID = "ugc"
 DEFAULT_LAYER_TYPE = "point"
 DEFAULT_COORDINATES_CONFIDENCE = "exact"
 DEFAULT_COORDINATES_SOURCE = "ugc"
-DEFAULT_SOURCE_URL = "UGC"
+DEFAULT_SOURCE_URL = "https://ugc.local/source"
 DEFAULT_SOURCE_LICENSE = "CC BY"
 AIRTABLE_EXTERNAL_ID_FIELD = os.getenv("AIRTABLE_EXTERNAL_ID_FIELD", "external_id")
 PUBLISH_STATUS_PENDING = "pending"
@@ -112,19 +114,21 @@ def approve_draft(
         if draft.status not in {"pending", "review", "approved"}:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in pending or approved can be published")
 
-        existing_record = find_existing_airtable_feature(draft)
+        airtable_fields = build_airtable_fields(draft)
+        existing_record = find_existing_airtable_feature(draft, fields=airtable_fields)
         if existing_record:
             published = _mark_draft_as_published(db, draft, existing_record)
             logger.info("SKIP: duplicate publish for draft_id=%s", published.id)
             _set_approve_result(result_context, "published_skipped_duplicate")
             metrics.increment('publishes_success')
+            log_event(logging.INFO, 'moderation.publish.skipped_duplicate', route=request.url.path if request else None, request_id=getattr(getattr(request, 'state', None), 'request_id', None), user_id=getattr(moderator, 'id', None), draft_id=published.id)
             log_event(logging.INFO, 'moderation.approve', route=request.url.path if request else None, request_id=getattr(getattr(request, 'state', None), 'request_id', None), user_id=getattr(moderator, 'id', None), draft_id=published.id)
             log_event(logging.INFO, 'moderation.publish.success', route=request.url.path if request else None, request_id=getattr(getattr(request, 'state', None), 'request_id', None), user_id=getattr(moderator, 'id', None), draft_id=published.id)
             return published
 
         draft = update_draft(db, draft, allow_system_fields=True, changes={"publish_status": PUBLISH_STATUS_PENDING})
         try:
-            created_record = create_airtable_feature(draft)
+            created_record = create_airtable_feature(draft, fields=airtable_fields)
         except HTTPException as exc:
             logger.warning("Failed to publish draft %s to Airtable: %s", draft.id, exc.detail)
             metrics.increment('publishes_fail')
@@ -159,14 +163,14 @@ def reject_draft(db: Session, draft: Draft) -> Draft:
     return update_draft(db, draft, allow_system_fields=True, changes={"status": "rejected"})
 
 
-def create_airtable_feature(draft: Draft) -> dict[str, Any]:
+def create_airtable_feature(draft: Draft, fields: dict[str, Any] | None = None) -> dict[str, Any]:
     token, base_id, table_name = _get_airtable_config()
     url = _build_airtable_table_url(base_id, table_name)
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
-    payload = {"fields": build_airtable_fields(draft)}
+    payload = {"fields": fields or build_airtable_fields(draft)}
 
     if requests is not None:
         try:
@@ -201,14 +205,32 @@ def create_airtable_feature(draft: Draft) -> dict[str, Any]:
         ) from exc
 
 
-def find_existing_airtable_feature(draft: Draft) -> dict[str, Any] | None:
+def find_existing_airtable_feature(draft: Draft, fields: dict[str, Any] | None = None) -> dict[str, Any] | None:
     if draft.airtable_record_id:
         return {"id": draft.airtable_record_id, "fields": build_airtable_fields(draft)}
 
     token, base_id, table_name = _get_airtable_config()
     external_id = get_draft_external_id(draft)
-    formula = f"{{{AIRTABLE_EXTERNAL_ID_FIELD}}}='{_escape_airtable_formula_value(external_id)}'"
+    normalized_id = (fields or build_airtable_fields(draft)).get("normalized_id")
     url = _build_airtable_table_url(base_id, table_name)
+
+    external_formula = f"{{{AIRTABLE_EXTERNAL_ID_FIELD}}}='{_escape_airtable_formula_value(external_id)}'"
+    by_external_id = _find_airtable_record_by_formula(url, token, external_formula)
+    if by_external_id:
+        return by_external_id
+
+    if normalized_id:
+        normalized_formula = f"{{normalized_id}}='{_escape_airtable_formula_value(str(normalized_id))}'"
+        by_normalized_id = _find_airtable_record_by_formula(url, token, normalized_formula)
+        if by_normalized_id:
+            return by_normalized_id
+
+    return None
+
+
+def _find_airtable_record_by_formula(url: str, token: str, formula: str) -> dict[str, Any] | None:
+    if not formula:
+        return None
 
     if requests is not None:
         try:
@@ -254,12 +276,19 @@ def build_airtable_fields(draft: Draft) -> dict[str, Any]:
             longitude = longitude if longitude is not None else _to_float_or_none(coordinates[0])
             latitude = latitude if latitude is not None else _to_float_or_none(coordinates[1])
 
+    raw_image_url = draft_payload.get("image_url") if "image_url" in draft_payload else draft.image_url
+    image_url = raw_image_url if is_safe_url(raw_image_url) else None
+    raw_source_url = draft_payload.get("source_url")
+    source_url = raw_source_url if is_safe_url(raw_source_url) else DEFAULT_SOURCE_URL
+    normalized_id = build_normalized_id(source_url, draft_payload.get("name_ru") or draft.title, latitude, longitude)
+
     fields: dict[str, Any] = {
         AIRTABLE_EXTERNAL_ID_FIELD: get_draft_external_id(draft),
+        "normalized_id": normalized_id,
         "name_ru": draft_payload.get("name_ru") or draft.title,
         "description": draft_payload.get("description") if "description" in draft_payload else draft.description,
-        "image_url": draft_payload.get("image_url") if "image_url" in draft_payload else draft.image_url,
-        "source_url": draft_payload.get("source_url") or DEFAULT_SOURCE_URL,
+        "image_url": image_url,
+        "source_url": source_url,
         "source_license": draft_payload.get("source_license") or DEFAULT_SOURCE_LICENSE,
         "layer_id": DEFAULT_LAYER_ID,
         "layer_type": draft_payload.get("layer_type") or DEFAULT_LAYER_TYPE,
@@ -277,6 +306,11 @@ def build_airtable_fields(draft: Draft) -> dict[str, Any]:
         "longitude": longitude,
     }
     return fields
+
+
+def build_normalized_id(source_url: str | None, title: str | None, latitude: float | None, longitude: float | None) -> str:
+    raw = f"{source_url or ''}|{title or ''}|{latitude if latitude is not None else ''}|{longitude if longitude is not None else ''}"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
 def get_draft_external_id(draft: Draft) -> str:

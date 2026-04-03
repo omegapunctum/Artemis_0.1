@@ -4,6 +4,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator, model_validator
 
+from app.url_validation import is_safe_url
+
 FORBIDDEN_DRAFT_FIELDS = {
     "etl_status",
     "etl_error",
@@ -59,9 +61,14 @@ class DraftPayloadBase(BaseModel):
 
     @field_validator("source_url", "image_url", mode="before")
     @classmethod
-    def empty_url_to_none(cls, value: Any) -> Any:
+    def validate_safe_urls(cls, value: Any) -> Any:
         if isinstance(value, str) and not value.strip():
             return None
+        if value is None:
+            return None
+        candidate = str(value)
+        if not is_safe_url(candidate):
+            raise ValueError("invalid_url")
         return value
 
     @field_validator("latitude")

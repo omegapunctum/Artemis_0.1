@@ -1,7 +1,7 @@
 import { loadLayers } from './data.js';
 import { updateMapData, setLayerLookup, focusFeatureOnMap, getMapFeatureCount, getMapBuildDiagnostics, setMapFeatureClickHandler, setMapFeatureHoverHandler, setMapLayerFilter, setSelectedFeatureId, setHoveredFeatureId } from './map.js';
 import { debounce, createInlineStateBlock, showSystemMessage } from './ux.js';
-import { normalizeSafeUrl, setSafeLink } from './safe-dom.js';
+import { normalizeSafeUrl, setSafeImageSource, setSafeLink, toSafeText } from './safe-dom.js';
 
 let globalDataErrorRetryHandler = null;
 
@@ -1436,8 +1436,8 @@ function buildImageNode(props, fallbackAlt, large = false) {
   const safeImage = normalizeSafeUrl(String(props.image_url || '').trim(), { allowRelative: true });
   if (safeImage) {
     const image = document.createElement('img');
-    image.src = safeImage;
-    image.alt = String(props.name_ru || fallbackAlt);
+    setSafeImageSource(image, safeImage, { allowRelative: true });
+    image.alt = toSafeText(props.name_ru || fallbackAlt, 'Изображение объекта');
     image.loading = 'lazy';
     image.referrerPolicy = 'no-referrer';
     image.addEventListener('error', () => {

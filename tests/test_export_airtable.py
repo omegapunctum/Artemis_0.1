@@ -28,6 +28,8 @@ class ExportAirtableIdempotencyTests(unittest.TestCase):
             "date_start": "1348",
         }
         base.update(overrides)
+        if "_raw_date_start_present" not in base:
+            base["_raw_date_start_present"] = bool(base.get("date_start"))
         return base
 
     def test_coordinates_confidence_legacy_normalization(self):

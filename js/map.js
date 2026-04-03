@@ -1,4 +1,4 @@
-import { appendText, createTextElement, normalizeSafeUrl, setSafeLink, setText, toSafeText } from './safe-dom.js';
+import { appendText, createTextElement, normalizeSafeUrl, setSafeImageSource, setSafeLink, setText, toSafeText } from './safe-dom.js';
 
 const SOURCE_ID = 'artemis-features';
 const LAYER_ID = 'artemis-points';
@@ -407,7 +407,7 @@ function buildPopupContent(feature, layerLookup = new Map()) {
   if (safeImageUrl) {
     const image = document.createElement('img');
     image.className = 'popup-image';
-    image.src = safeImageUrl;
+    setSafeImageSource(image, safeImageUrl, { allowRelative: true });
     image.alt = toSafeText(props.name_ru, 'Без названия');
     image.loading = 'lazy';
     image.referrerPolicy = 'no-referrer';

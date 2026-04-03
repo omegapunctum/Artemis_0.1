@@ -64,6 +64,7 @@ class AuthIntegrationTests(unittest.TestCase):
         self.db.commit()
         active_refresh_tokens.clear()
         self.session = requests.Session()
+        self.session.headers.update({"x-forwarded-for": f"10.0.0.{int(uuid4().hex[:2], 16)}"})
 
     def tearDown(self):
         self.db.close()
