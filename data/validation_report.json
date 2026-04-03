@@ -463,117 +463,155 @@
     },
     {
       "id": "rec0x9MvhXQFWErOy",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "rec0x9MvhXQFWErOy",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "rec1GDGqssFGehzEx",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "rec1GDGqssFGehzEx",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "rec7xto7TNSberKPg",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "rec7xto7TNSberKPg",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "rec8RKV55zHUCA4bc",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "rec8RKV55zHUCA4bc",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "rec9KIQPB9M377wgE",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "rec9KIQPB9M377wgE",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "recAJJSQH0dvmnpp0",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "recAJJSQH0dvmnpp0",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "recC9HLvvR9Xi1rKR",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "recC9HLvvR9Xi1rKR",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "recDQaBEVGxTRjCat",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "recDQaBEVGxTRjCat",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "recHqE46e2W3EDBlO",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "recHqE46e2W3EDBlO",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "recIO5H5Vqw2xwfLq",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "recIO5H5Vqw2xwfLq",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "recS69tE4CQPTy105",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "recS69tE4CQPTy105",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "recV3Kj5ounTF55mw",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "recV3Kj5ounTF55mw",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "recZbIE0P3vL62bPj",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "recZbIE0P3vL62bPj",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "recZsGTVquE5d26YO",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "recZsGTVquE5d26YO",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "receHpSDGZ82Cx05k",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "receHpSDGZ82Cx05k",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "recmLwS8nYaR2dYEF",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "recmLwS8nYaR2dYEF",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "recr1NbkVTbJwP5Ia",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "recr1NbkVTbJwP5Ia",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "recylJimofuhRUv49",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "recylJimofuhRUv49",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     },
     {
       "id": "reczZVbBhaCDZx97j",
-      "reason": "coordinates_source_saved_as_is",
+      "record_id": "reczZVbBhaCDZx97j",
+      "reason": "invalid_coordinates_source",
       "severity": "warning",
-      "field": "coordinates_source"
+      "field": "coordinates_source",
+      "warning": "invalid_coordinates_source"
     }
   ],
   "errors": []
