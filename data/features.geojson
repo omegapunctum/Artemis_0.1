@@ -1,4 +1,257 @@
 {
   "type": "FeatureCollection",
-  "features": []
+  "features": [
+    {
+      "type": "Feature",
+      "id": "recmLwS8nYaR2dYEF",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1649,
+          41.3917
+        ]
+      },
+      "properties": {
+        "id": "recmLwS8nYaR2dYEF",
+        "normalized_id": null,
+        "canonical_publish_id": "recmLwS8nYaR2dYEF",
+        "airtable_record_id": "recmLwS8nYaR2dYEF",
+        "external_id": null,
+        "source_draft_id": null,
+        "origin_key": "recmLwS8nYaR2dYEF",
+        "layer_id": "art_nouveau",
+        "layer_type": "architecture",
+        "name_ru": "Каса-Батльо",
+        "name_en": "Casa Batlló",
+        "date_start": "1904",
+        "date_construction_end": null,
+        "date_end": "1906",
+        "longitude": 2.1649,
+        "latitude": 41.3917,
+        "influence_radius_km": 1,
+        "title_short": "Шедевр органического модернизма Антонио Гауди",
+        "description": "Реконструкция жилого дома с фасадом из мозаики и балконами-масками. Отсутствие прямых линий.",
+        "image_url": "https://commons.wikimedia.org/wiki/File:Casa_Batll%C3%B3_Barcelona_Main.jpg",
+        "source_url": "https://www.casabatllo.es/en/",
+        "source_license": "CC BY-SA",
+        "coordinates_confidence": "exact",
+        "coordinates_source": "Wikipedia",
+        "sequence_order": null,
+        "tags": [],
+        "validated": true,
+        "date_valid": true,
+        "has_geometry": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "recIO5H5Vqw2xwfLq",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1203,
+          48.8048
+        ]
+      },
+      "properties": {
+        "id": "recIO5H5Vqw2xwfLq",
+        "normalized_id": null,
+        "canonical_publish_id": "recIO5H5Vqw2xwfLq",
+        "airtable_record_id": "recIO5H5Vqw2xwfLq",
+        "external_id": null,
+        "source_draft_id": null,
+        "origin_key": "recIO5H5Vqw2xwfLq",
+        "layer_id": "baroque_monarchies",
+        "layer_type": "architecture",
+        "name_ru": "Версальский дворец",
+        "name_en": "Palace of Versailles",
+        "date_start": "1661",
+        "date_construction_end": null,
+        "date_end": "1715",
+        "longitude": 2.1203,
+        "latitude": 48.8048,
+        "influence_radius_km": 15,
+        "title_short": "Резиденция «Короля-Солнца» и символ абсолютизма",
+        "description": "Грандиозный ансамбль с Зеркальной галереей и регулярными садами Ленотра. Модель барокко.",
+        "image_url": "https://commons.wikimedia.org/wiki/File:Versailles_Palace_Garden_View.jpg",
+        "source_url": "https://en.wikipedia.org/wiki/Palace_of_Versailles",
+        "source_license": "CC BY-SA",
+        "coordinates_confidence": "exact",
+        "coordinates_source": "Wikipedia",
+        "sequence_order": null,
+        "tags": [],
+        "validated": true,
+        "date_valid": true,
+        "has_geometry": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "reczZVbBhaCDZx97j",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          28.9801,
+          41.0086
+        ]
+      },
+      "properties": {
+        "id": "reczZVbBhaCDZx97j",
+        "normalized_id": null,
+        "canonical_publish_id": "reczZVbBhaCDZx97j",
+        "airtable_record_id": "reczZVbBhaCDZx97j",
+        "external_id": null,
+        "source_draft_id": null,
+        "origin_key": "reczZVbBhaCDZx97j",
+        "layer_id": "byzantine_empire",
+        "layer_type": "architecture",
+        "name_ru": "Собор Святой Софии",
+        "name_en": "Hagia Sophia",
+        "date_start": "0532",
+        "date_construction_end": null,
+        "date_end": "0537",
+        "longitude": 28.9801,
+        "latitude": 41.0086,
+        "influence_radius_km": 1,
+        "title_short": "Шедевр «Золотого века» Византии",
+        "description": "Первая реализация купола на пандантивах. Символ слияния античной инженерии и восточного мистицизма.",
+        "image_url": "https://commons.wikimedia.org/wiki/File:Hagia_Sophia_Mars_2013.jpg",
+        "source_url": "https://en.wikipedia.org/wiki/Hagia_Sophia",
+        "source_license": "CC BY-SA",
+        "coordinates_confidence": "exact",
+        "coordinates_source": "Wikipedia",
+        "sequence_order": null,
+        "tags": [],
+        "validated": true,
+        "date_valid": true,
+        "has_geometry": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "rec8RKV55zHUCA4bc",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.4878,
+          48.4478
+        ]
+      },
+      "properties": {
+        "id": "rec8RKV55zHUCA4bc",
+        "normalized_id": null,
+        "canonical_publish_id": "rec8RKV55zHUCA4bc",
+        "airtable_record_id": "rec8RKV55zHUCA4bc",
+        "external_id": null,
+        "source_draft_id": null,
+        "origin_key": "rec8RKV55zHUCA4bc",
+        "layer_id": "gothic_europe",
+        "layer_type": "architecture",
+        "name_ru": "Шартрский собор",
+        "name_en": "Chartres Cathedral",
+        "date_start": "1194",
+        "date_construction_end": null,
+        "date_end": "1252",
+        "longitude": 1.4878,
+        "latitude": 48.4478,
+        "influence_radius_km": 2,
+        "title_short": "Совершенный образец высокой готики",
+        "description": "Храм с ансамблем витражей (2500 кв. м) и системным использованием аркбутанов.",
+        "image_url": "https://commons.wikimedia.org/wiki/File:Chartres_Cathedral_View_2023.jpg",
+        "source_url": "https://whc.unesco.org/en/list/81/",
+        "source_license": "CC BY-SA",
+        "coordinates_confidence": "exact",
+        "coordinates_source": "Wikipedia",
+        "sequence_order": null,
+        "tags": [],
+        "validated": true,
+        "date_valid": true,
+        "has_geometry": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "recS69tE4CQPTy105",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.59,
+          37.1775
+        ]
+      },
+      "properties": {
+        "id": "recS69tE4CQPTy105",
+        "normalized_id": null,
+        "canonical_publish_id": "recS69tE4CQPTy105",
+        "airtable_record_id": "recS69tE4CQPTy105",
+        "external_id": null,
+        "source_draft_id": null,
+        "origin_key": "recS69tE4CQPTy105",
+        "layer_id": "islamic_spain",
+        "layer_type": "architecture",
+        "name_ru": "Альгамбра",
+        "name_en": "Alhambra",
+        "date_start": "1238",
+        "date_construction_end": null,
+        "date_end": "1358",
+        "longitude": -3.59,
+        "latitude": 37.1775,
+        "influence_radius_km": 3,
+        "title_short": "Дворцовый комплекс мусульманской Испании",
+        "description": "Резиденция династии Насридов. Известна резьбой по стукко, мукарнами и Львиным двориком.",
+        "image_url": "https://commons.wikimedia.org/wiki/File:Alhambra_Granada_Spain.jpg",
+        "source_url": "https://en.wikipedia.org/wiki/Alhambra",
+        "source_license": "CC BY-SA",
+        "coordinates_confidence": "exact",
+        "coordinates_source": "Wikipedia",
+        "sequence_order": null,
+        "tags": [],
+        "validated": true,
+        "date_valid": true,
+        "has_geometry": true
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "recZsGTVquE5d26YO",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -1.8262,
+          51.1789
+        ]
+      },
+      "properties": {
+        "id": "recZsGTVquE5d26YO",
+        "normalized_id": null,
+        "canonical_publish_id": "recZsGTVquE5d26YO",
+        "airtable_record_id": "recZsGTVquE5d26YO",
+        "external_id": null,
+        "source_draft_id": null,
+        "origin_key": "recZsGTVquE5d26YO",
+        "layer_id": "neolithic_global",
+        "layer_type": "architecture",
+        "name_ru": "Стоунхендж",
+        "name_en": "Stonehenge",
+        "date_start": "-3100",
+        "date_construction_end": null,
+        "date_end": "-1600",
+        "longitude": -1.8262,
+        "latitude": 51.1789,
+        "influence_radius_km": 5,
+        "title_short": "Крупнейший мегалитический комплекс Европы",
+        "description": "Доисторический памятник из кольца камней весом до 50 тонн. Включает рвы и курганы, ориентированные на солнцестояние.",
+        "image_url": "https://commons.wikimedia.org/wiki/File:Stonehenge_2017_01.jpg",
+        "source_url": "https://whc.unesco.org/en/list/373/",
+        "source_license": "PD",
+        "coordinates_confidence": "exact",
+        "coordinates_source": "Wikipedia",
+        "sequence_order": null,
+        "tags": [],
+        "validated": true,
+        "date_valid": true,
+        "has_geometry": true
+      }
+    }
+  ]
 }

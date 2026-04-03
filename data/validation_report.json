@@ -1,9 +1,9 @@
 {
   "total_records": 19,
-  "valid_records": 0,
-  "skipped_records": 19,
+  "valid_records": 6,
+  "skipped_records": 13,
   "warnings_count": 76,
-  "errors_count": 19,
+  "errors_count": 13,
   "warnings": [
     {
       "id": "rec0x9MvhXQFWErOy",
@@ -716,14 +716,6 @@
       "error": "invalid_coordinates_source"
     },
     {
-      "id": "rec8RKV55zHUCA4bc",
-      "record_id": "rec8RKV55zHUCA4bc",
-      "reason": "invalid_coordinates_source",
-      "severity": "critical",
-      "field": "coordinates_source",
-      "error": "invalid_coordinates_source"
-    },
-    {
       "id": "rec9KIQPB9M377wgE",
       "record_id": "rec9KIQPB9M377wgE",
       "reason": "invalid_coordinates_source",
@@ -764,22 +756,6 @@
       "error": "invalid_coordinates_source"
     },
     {
-      "id": "recIO5H5Vqw2xwfLq",
-      "record_id": "recIO5H5Vqw2xwfLq",
-      "reason": "invalid_coordinates_source",
-      "severity": "critical",
-      "field": "coordinates_source",
-      "error": "invalid_coordinates_source"
-    },
-    {
-      "id": "recS69tE4CQPTy105",
-      "record_id": "recS69tE4CQPTy105",
-      "reason": "invalid_coordinates_source",
-      "severity": "critical",
-      "field": "coordinates_source",
-      "error": "invalid_coordinates_source"
-    },
-    {
       "id": "recV3Kj5ounTF55mw",
       "record_id": "recV3Kj5ounTF55mw",
       "reason": "invalid_coordinates_source",
@@ -796,24 +772,8 @@
       "error": "invalid_coordinates_source"
     },
     {
-      "id": "recZsGTVquE5d26YO",
-      "record_id": "recZsGTVquE5d26YO",
-      "reason": "invalid_coordinates_source",
-      "severity": "critical",
-      "field": "coordinates_source",
-      "error": "invalid_coordinates_source"
-    },
-    {
       "id": "receHpSDGZ82Cx05k",
       "record_id": "receHpSDGZ82Cx05k",
-      "reason": "invalid_coordinates_source",
-      "severity": "critical",
-      "field": "coordinates_source",
-      "error": "invalid_coordinates_source"
-    },
-    {
-      "id": "recmLwS8nYaR2dYEF",
-      "record_id": "recmLwS8nYaR2dYEF",
       "reason": "invalid_coordinates_source",
       "severity": "critical",
       "field": "coordinates_source",
@@ -830,14 +790,6 @@
     {
       "id": "recylJimofuhRUv49",
       "record_id": "recylJimofuhRUv49",
-      "reason": "invalid_coordinates_source",
-      "severity": "critical",
-      "field": "coordinates_source",
-      "error": "invalid_coordinates_source"
-    },
-    {
-      "id": "reczZVbBhaCDZx97j",
-      "record_id": "reczZVbBhaCDZx97j",
       "reason": "invalid_coordinates_source",
       "severity": "critical",
       "field": "coordinates_source",

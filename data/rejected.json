@@ -21,13 +21,6 @@
     ]
   },
   {
-    "id": "rec8RKV55zHUCA4bc",
-    "name_ru": "Шартрский собор",
-    "reasons": [
-      "invalid_coordinates_source"
-    ]
-  },
-  {
     "id": "rec9KIQPB9M377wgE",
     "name_ru": "Центр Жоржа Помпиду",
     "reasons": [
@@ -63,20 +56,6 @@
     ]
   },
   {
-    "id": "recIO5H5Vqw2xwfLq",
-    "name_ru": "Версальский дворец",
-    "reasons": [
-      "invalid_coordinates_source"
-    ]
-  },
-  {
-    "id": "recS69tE4CQPTy105",
-    "name_ru": "Альгамбра",
-    "reasons": [
-      "invalid_coordinates_source"
-    ]
-  },
-  {
     "id": "recV3Kj5ounTF55mw",
     "name_ru": "Еврейский музей в Берлине",
     "reasons": [
@@ -91,22 +70,8 @@
     ]
   },
   {
-    "id": "recZsGTVquE5d26YO",
-    "name_ru": "Стоунхендж",
-    "reasons": [
-      "invalid_coordinates_source"
-    ]
-  },
-  {
     "id": "receHpSDGZ82Cx05k",
     "name_ru": "Великая пирамида Гизы (Пирамида Хеопса)",
-    "reasons": [
-      "invalid_coordinates_source"
-    ]
-  },
-  {
-    "id": "recmLwS8nYaR2dYEF",
-    "name_ru": "Каса-Батльо",
     "reasons": [
       "invalid_coordinates_source"
     ]
@@ -121,13 +86,6 @@
   {
     "id": "recylJimofuhRUv49",
     "name_ru": "Великий зиккурат в Уре",
-    "reasons": [
-      "invalid_coordinates_source"
-    ]
-  },
-  {
-    "id": "reczZVbBhaCDZx97j",
-    "name_ru": "Собор Святой Софии",
     "reasons": [
       "invalid_coordinates_source"
     ]
