@@ -120,35 +120,24 @@ class MvpContractStaticTests(unittest.TestCase):
         self.assertIn("aggregateFeaturesByDecade(nextFilteredFeatures)", ui_source)
         self.assertIn("export function aggregateFeaturesByDecade(features = [])", state_source)
 
-    def test_courses_mvp_hooks_present(self):
-        index_source = Path("index.html").read_text(encoding="utf-8")
-        data_source = Path("js/data.js").read_text(encoding="utf-8")
-        ui_source = Path("js/ui.js").read_text(encoding="utf-8")
-        state_source = Path("js/state.js").read_text(encoding="utf-8")
-        courses_payload = json.loads(Path("data/courses.json").read_text(encoding="utf-8"))
+    def test_courses_live_behavioral_tests_exist(self):
+        behavior_test = Path("tests/test_courses_live_behavior.py")
+        self.assertTrue(behavior_test.exists(), "Behavioral coverage for Courses/LIVE must exist")
+        source = behavior_test.read_text(encoding="utf-8")
 
-        self.assertIn('id="courses-btn"', index_source)
-        self.assertIn('id="courses-panel"', index_source)
-        self.assertIn("export async function loadCourses()", data_source)
-        self.assertIn("createCoursesState(coursesPayload?.courses || [])", ui_source)
-        self.assertIn("renderCoursesPanel(elements, state, map);", ui_source)
-        self.assertIn("function applyCourseStepMapContext(state, map)", ui_source)
-        self.assertIn("export function createCoursesState(courses = [])", state_source)
-        self.assertIsInstance(courses_payload.get("courses"), list)
+        self.assertIn("test_load_courses_returns_courses_and_uses_cache", source)
+        self.assertIn("test_courses_state_select_and_step_boundaries", source)
+        self.assertIn("test_live_recent_features_order_and_limit", source)
 
-    def test_live_layer_hooks_present(self):
-        index_source = Path("index.html").read_text(encoding="utf-8")
-        data_source = Path("js/data.js").read_text(encoding="utf-8")
-        ui_source = Path("js/ui.js").read_text(encoding="utf-8")
-        state_source = Path("js/state.js").read_text(encoding="utf-8")
-
-        self.assertIn('id="live-btn"', index_source)
-        self.assertIn('id="live-panel"', index_source)
-        self.assertIn("export function getRecentFeatures(limit = 12, featureCollection = null)", data_source)
-        self.assertIn("createLiveState(getRecentFeatures(18", ui_source)
-        self.assertIn("function renderLivePanel(elements, state, map)", ui_source)
-        self.assertIn("selectFeature(state, elements, map, feature, { centerOnMap: true, openDetail: true, scrollCard: true });", ui_source)
-        self.assertIn("export function createLiveState(features = [])", state_source)
+    def test_ugc_uses_only_canonical_api_drafts_paths(self):
+        ugc_source = Path("js/ui.ugc.js").read_text(encoding="utf-8")
+        self.assertIn("'/api/drafts/my'", ugc_source)
+        self.assertIn("'/api/drafts'", ugc_source)
+        self.assertIn("`/api/drafts/${id}`", ugc_source)
+        self.assertIn("`/api/drafts/${id}/submit`", ugc_source)
+        self.assertNotIn("'/drafts'", ugc_source)
+        self.assertNotIn("`/drafts/${id}`", ugc_source)
+        self.assertNotIn("`/drafts/${id}/submit`", ugc_source)
 
 
 if __name__ == '__main__':
