@@ -1,57 +1,54 @@
 # Priorities_04_04_26_v3_5.md
 status: canonical
 version: v3.5
-source: reconstructed
+source: repository-state
 last_updated: 2026-04-04
 
 ## Purpose
-Фиксирует приоритеты работ и порядок исполнения задач после аудита.
+Фиксирует реальный backlog и порядок выполнения задач после завершённого cleanup-cycle.
 
 ## Scope
-Backlog-приоритеты, критические зоны, последовательность исправлений и ограничители scope.
+Актуальные приоритеты по governance, coverage и стабильности контуров без повторной постановки уже закрытых дефектов.
 
 ## Contract
-Правила приоритизации задач, критерии срочности и обязательные условия перехода между этапами.
+- Закрытые задачи не должны оставаться в active high-priority списке.
+- Backlog должен соответствовать текущей фазе C (`Governance & Coverage maturity`).
+- Приоритеты формируются от фактического состояния кода/тестов/документов в репозитории.
 
-## Priority status (synced with current repo)
+## Closed and removed from active backlog
+Следующие задачи считаются закрытыми и **не являются активными приоритетами**:
+- ✅ Reference docs layer restoration.
+- ✅ SYSTEM_CONTRACT_AUDIT sync with current code.
+- ✅ Courses/LIVE behavioral baseline tests.
+- ✅ Reject reason contract fix (UI↔backend).
+- ✅ Legacy `/drafts/*` fallback removal in UGC client.
 
-### Closed in the latest cleanup cycle
-- ✅ Reference docs layer восстановлен в `docs/reference/*`.
-- ✅ `SYSTEM_CONTRACT_AUDIT` синхронизирован с текущим кодом.
-- ✅ Courses/LIVE behavioral tests добавлены.
-- ✅ Reject reason contract UI↔backend закрыт.
-- ✅ Legacy fallback `/drafts/*` удалён из UGC-клиента (оставлен canonical `/api/drafts/*`).
+## Active priorities (Phase C aligned)
 
-### Active backlog (actual)
+### P1 — Semantic docs fill / source-of-truth completion
+- Довести ключевые reference docs до semantic canonical уровня (минимум stubs, максимум фактических контрактов).
+- Поддерживать непрерывную синхронизацию planning/audit docs после каждого patch-цикла.
 
-#### P1 — High
-1. **Doc sync continuation (non-critical, high impact on governance)**
-   - Синхронизировать остальные reference docs с фактическим кодом (не только stubs), чтобы исключить повторный doc drift при следующих audit/patch циклах.
+### P2 — Behavioral coverage expansion (UGC/moderation critical flows)
+- Расширить поведенческие тесты для edge-case сценариев UGC/moderation (error handling, status transitions, reject reason visibility consistency).
+- Сохранить быстрый unit-level подход без e2e усложнения.
 
-2. **Behavioral coverage expansion for frontend critical flows**
-   - Укрепить поведенческие тесты для UGC/moderation edge-cases (ошибки API, статусные переходы, reject reason отображение), без перехода в e2e.
+### P3 — Governance/process hardening against future doc drift
+- Зафиксировать процесс обязательного обновления load-bearing docs сразу после закрытия runtime-фиксов.
+- Контролировать соответствие `audit -> priorities -> phases` единому состоянию.
 
-#### P2 — Medium
-3. **Moderation traceability hardening**
-   - Уточнить и стабилизировать контракт по полям moderation metadata (например, единый naming для причины отклонения на всем UI/API-пути).
-
-4. **Operational observability alignment**
-   - Проверить, что ключевые UX-critical ошибки (UGC save/submit/reject) consistently отражаются в логах и документации по инцидентам.
-
-#### P3 — Low
-5. **Residual legacy naming cleanup (docs/planning level)**
-   - Планово убрать остаточные legacy naming references из roadmap-слоя и согласовать терминологию.
-
-## De-prioritized / removed from active high list
-- ❌ Coordinates contract mismatch (закрыто).
-- ❌ `pending/review` CRITICAL mismatch (закрыто на UI boundary normalization).
-- ❌ Payload flatten mismatch как CRITICAL (закрыто).
-- ❌ Legacy `/drafts/*` fallback как runtime workaround (удалён).
+### P4 — Low-priority cleanup / residue
+- Планово убирать оставшийся low-impact legacy residue (терминология/naming/docs consistency), не расширяя scope.
 
 ## Execution order
-1. Завершить doc sync (reference + planning docs).
-2. Расширить поведенческое покрытие наиболее рискованных frontend сценариев.
-3. Доработать moderation traceability и observability consistency.
+1. Закрыть P1 (semantic canonical completion для load-bearing docs).
+2. Выполнить P2 (targeted behavioral coverage expansion).
+3. Закрепить P3 как операционный стандарт.
+4. Выполнять P4 только при отсутствии конфликтов с P1–P3.
 
-## Notes
-Этот backlog отражает состояние после cleanup-цикла и должен обновляться после каждого цикла `audit → patch → verification`.
+## Out-of-priority (explicit)
+Не возвращать в urgent/high:
+- координатные CRITICAL mismatch,
+- pending/review CRITICAL mismatch,
+- payload flatten CRITICAL mismatch,
+- legacy `/drafts/*` fallback workaround.
