@@ -117,6 +117,7 @@ def serialize_draft_for_ui(draft: Draft) -> dict[str, Any]:
         "title_short": payload.get("title_short"),
         "source_url": payload.get("source_url"),
         "tags": payload.get("tags"),
+        "rejection_reason": payload.get("rejection_reason"),
     }
 
 

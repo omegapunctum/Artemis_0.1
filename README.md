@@ -127,3 +127,8 @@ Optional raw export (if `data/features.json` exists):
 ```bash
 python scripts/import_features.py export --geojson-in data/features.geojson --raw-json-in data/features.json --include-raw --out-dir data/export
 ```
+
+## Reference Documentation
+
+Canonical reference docs for audit/patch validation are located in [`docs/reference/`](docs/reference/README.md).
+
