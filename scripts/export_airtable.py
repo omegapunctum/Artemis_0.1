@@ -578,26 +578,7 @@ def get_canonical_publish_id(mapped: Dict[str, Any]) -> Optional[str]:
 
 
 def get_dedupe_key(mapped: Dict[str, Any]) -> Tuple[Any, ...]:
-    raw_name = safe_str(mapped.get("name_ru")) or ""
-    normalized_name = " ".join(raw_name.split()).casefold()
-
-    def normalize_coord(value: Any) -> Any:
-        if value is None:
-            return None
-        try:
-            numeric = round(float(value), 7)
-        except (TypeError, ValueError):
-            return value
-        if numeric == 0:
-            return 0.0
-        return numeric
-
-    return (
-        mapped.get("layer_id") or "",
-        normalized_name,
-        normalize_coord(mapped.get("latitude")),
-        normalize_coord(mapped.get("longitude")),
-    )
+    return (mapped.get("name_ru") or "", mapped.get("latitude"), mapped.get("longitude"))
 
 
 def airtable_get_with_retry(
@@ -788,8 +769,6 @@ def get_etl_error(mapped: Dict[str, Any]) -> Optional[str]:
     record_id = safe_str(mapped.get("id"))
     if not record_id:
         return "missing_id"
-    if not is_uuid_v4(record_id):
-        return "invalid_id"
     if "name_ru" in mapped and not safe_str(mapped.get("name_ru")):
         return "missing_name_ru"
     if "layer_type" in mapped and mapped.get("layer_type") not in ALLOWED_LAYER_TYPES:
@@ -884,8 +863,6 @@ def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List
 
     if not mapped.get("id"):
         critical("id", "missing_id")
-    elif not is_uuid_v4(mapped.get("id")):
-        critical("id", "invalid_id")
     if not mapped.get("name_ru"):
         critical("name_ru", "missing_name_ru")
     has_start = bool(mapped.get("_raw_date_start_present"))
@@ -1137,8 +1114,6 @@ def run_self_test() -> int:
     assert get_etl_error({"id": "550e8400-e29b-41d4-a716-446655440000", "source_url": "https://example.com", "source_license": "CC BY", "latitude": 55.0, "longitude": 37.0, "layer_id": None}) == "missing_layer_id"
     assert get_etl_error({"id": "550e8400-e29b-41d4-a716-446655440000", "source_url": "https://example.com", "source_license": "CC BY", "latitude": 55.0, "longitude": 37.0, "layer_id": "history", "_unknown_layer_link": True}) == "unknown_layer_link"
     assert get_etl_error({"id": "", "source_url": "https://example.com"}) == "missing_id"
-    assert get_etl_error({"id": "not-a-uuid", "source_url": "https://example.com"}) == "invalid_id"
-    assert get_etl_error({"id": "550e8400-e29b-11d4-a716-446655440000", "source_url": "https://example.com"}) == "invalid_id"
     name_ru_fixture = {
         "id": "550e8400-e29b-41d4-a716-446655440000",
         "name_ru": "Корректное имя",
