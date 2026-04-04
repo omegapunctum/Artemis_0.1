@@ -361,7 +361,7 @@ async function refreshDrafts(els) {
     message: 'Fetching your latest drafts…'
   });
   try {
-    const data = await requestDraftApi(['/api/drafts/my', '/drafts/my', '/drafts'], { method: 'GET' }, 'Failed to load drafts.');
+    const data = await requestDraftApi('/api/drafts/my', { method: 'GET' }, 'Failed to load drafts.');
     uiState.drafts = Array.isArray(data) ? data : [];
     renderDraftList(els);
     clearError();
@@ -557,11 +557,11 @@ async function saveDraft(els) {
 
   try {
     const method = uiState.activeDraftId ? 'PUT' : 'POST';
-    const paths = uiState.activeDraftId
-      ? [`/api/drafts/${uiState.activeDraftId}`, `/drafts/${uiState.activeDraftId}`]
-      : ['/api/drafts', '/drafts'];
+    const path = uiState.activeDraftId
+      ? `/api/drafts/${uiState.activeDraftId}`
+      : '/api/drafts';
 
-    const saved = await requestDraftApi(paths, {
+    const saved = await requestDraftApi(path, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validation.data)
@@ -607,12 +607,12 @@ async function submitDraft(els) {
   showLoading();
 
   const id = uiState.activeDraftId;
-  const submitPaths = [`/api/drafts/${id}/submit`, `/drafts/${id}/submit`];
+  const submitPath = `/api/drafts/${id}/submit`;
 
   try {
     let submitted;
     try {
-      submitted = await requestDraftApi(submitPaths, {
+      submitted = await requestDraftApi(submitPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'pending' })
@@ -620,7 +620,7 @@ async function submitDraft(els) {
     } catch (error) {
       const patchPayload = { ...collectDraftPayload(els.form), status: 'pending' };
       const fallback = validateClientPayload(patchPayload);
-      submitted = await requestDraftApi([`/api/drafts/${id}`, `/drafts/${id}`], {
+      submitted = await requestDraftApi(`/api/drafts/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fallback.data)
@@ -657,7 +657,7 @@ async function deleteActiveDraft(els) {
   setGlobalError(els, '');
   showLoading();
   try {
-    await requestDraftApi([`/api/drafts/${id}`, `/drafts/${id}`], { method: 'DELETE' }, 'Failed to delete draft.');
+    await requestDraftApi(`/api/drafts/${id}`, { method: 'DELETE' }, 'Failed to delete draft.');
     uiState.drafts = uiState.drafts.filter((draft) => String(draft.id) !== String(id));
     openCreateMode(els);
     renderDraftList(els);
@@ -673,32 +673,13 @@ async function deleteActiveDraft(els) {
   }
 }
 
-async function requestDraftApi(paths, options, fallbackMessage) {
-  let lastError;
-
-  for (const path of paths) {
-    try {
-      const response = await fetchWithAuth(path, options);
-
-      if (response.ok) {
-        if (response.status === 204) return { ok: true };
-        return await response.json();
-      }
-
-      if (response.status === 404 || response.status === 405) {
-        lastError = await buildApiError(response, fallbackMessage);
-        continue;
-      }
-
-      throw await buildApiError(response, fallbackMessage);
-    } catch (error) {
-      lastError = error;
-      if (error?.status === 404 || error?.status === 405) continue;
-      throw error;
-    }
+async function requestDraftApi(path, options, fallbackMessage) {
+  const response = await fetchWithAuth(path, options);
+  if (response.ok) {
+    if (response.status === 204) return { ok: true };
+    return await response.json();
   }
-
-  throw lastError || new Error(fallbackMessage);
+  throw await buildApiError(response, fallbackMessage);
 }
 
 function requireAuthForUgc(els) {

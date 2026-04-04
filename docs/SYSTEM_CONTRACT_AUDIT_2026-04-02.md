@@ -1,4 +1,4 @@
-# SYSTEM CONTRACT AUDIT — 2026-04-02
+# SYSTEM CONTRACT AUDIT — 2026-04-02 (updated snapshot: 2026-04-04)
 
 ## Scope and method
 
@@ -8,6 +8,8 @@
 - Frontend: `js/data.js`, `js/ui.js`, `js/ui.ugc.js`, `js/ui.moderation.js`, `js/auth.js`
 - Backend/API: `app/main.py`, `app/drafts/routes.py`, `app/drafts/schemas.py`, `app/drafts/service.py`, `app/moderation/routes.py`, `app/moderation/service.py`
 - ETL/data shape: `scripts/export_airtable.py`, `data/features.geojson`, `data/layers.json`
+
+> Update note (2026-04-04): документ сохранён как исторический срез от 2026-04-02, но ниже статусы зон обновлены под текущее состояние репозитория. Ряд ранее помеченных CRITICAL пунктов переведён в resolved.
 
 ---
 
@@ -66,25 +68,25 @@
 
 ### Что гарантирует API
 - `DraftCreate/DraftUpdate` имеют `extra="forbid"`: лишние поля отклоняются (422).
-- Разрешённые статусные значения в ответе: `draft/review/approved/rejected`.
-- В backend editable только `draft` и `rejected`; `review` не редактируется (`409`).
-- В `DraftResponse` доменные поля пользователя хранятся преимущественно в `payload`, а не обязательно как top-level (`name_ru`, `layer_id`, `date_start` и др. top-level не гарантированы).
+- `coords` поддерживается и синхронизируется с `latitude/longitude`.
+- Разрешённые статусные значения в UI-ответе: `draft/pending/approved/rejected`.
+- В `DraftResponse` ключевые доменные поля отдаются и в top-level (flatten), и в `payload`.
 
 ### Расхождения
-1. **CRITICAL: `coords` в UI vs `extra=forbid` в API**  
-   UI всегда отправляет `coords`; schema его не принимает → риск 422 на create/update.
-2. **CRITICAL: статус `pending` в UI vs `review` в API**  
-   UI нормализует только `draft/pending/approved/rejected`; `review` превращается в `unknown`.
-3. **CRITICAL: read-only mismatch**  
-   UI блокирует редактирование для `pending/approved`, но backend блокирует для `review/approved` (редактируемы только `draft/rejected`). Возможны попытки редактирования с последующим `409`.
-4. **MAJOR: shape mismatch draft details**  
-   UI заполняет форму из top-level полей draft, тогда как backend возвращает значимые поля внутри `payload`; при reopen draft возможна пустая/частично пустая форма.
+1. **RESOLVED: `coords` в UI и API синхронизированы**  
+   `coords` принимается schema, валидируется и синхронизируется с `latitude/longitude`; риск 422 из-за этого конфликта снят.
+2. **RESOLVED: статусная модель выровнена под `pending` для UI**  
+   Backend нормализует legacy `review` в `pending` на UI-границе.
+3. **RESOLVED: read-only policy согласована по `pending/approved`**  
+   UI и API согласованы для текущей pending-based модели.
+4. **RESOLVED: flatten shape для draft details реализован**  
+   Backend сериализует ключевые поля в top-level для UI, сохраняя `payload`.
 
 ### Риск
-- **high**
+- **low**
 
 ### Требуется ли фикс
-- **yes**
+- **no**
 
 ---
 
@@ -98,22 +100,22 @@
 ### Что гарантирует API
 - `GET /api/moderation/queue` возвращает `list[DraftResponse]`.
 - `DraftResponse` гарантирует: `id`, `title`, `description`, `geometry`, `image_url`, `payload`, `status`, `publish_status`, `airtable_record_id`, `published_at`, timestamps.
-- Модерационная очередь backend отбирает `status == "review"`.
+- Модерационная очередь backend отбирает `status in {"pending", "review"}` с UI-нормализацией к pending-модели.
 - `POST /api/moderation/{id}/reject` не использует тело `reason` (причина от UI не сохраняется).
 
 ### Расхождения
-1. **MAJOR: payload flatten mismatch**  
-   UI читает много полей top-level, но API гарантирует их в `payload`. В результате в moderation review возможны массовые `n/a`/пустые блоки.
-2. **MAJOR: status semantic mismatch (`review` vs `pending`)**  
-   Очередь backend живёт в `review`, UI визуально/логически ориентирован на `pending`.
-3. **MEDIUM: reject reason mismatch**  
-   UI отправляет `reason`, backend его не сохраняет и не возвращает.
+1. **RESOLVED: payload flatten mismatch**  
+   Для UI есть top-level сериализация ключевых полей, при сохранении payload-centric хранения.
+2. **RESOLVED: status semantic mismatch (`review` vs `pending`)**  
+   На UI-границе статусы нормализованы в pending-модель.
+3. **ACTIVE (MEDIUM): reject reason mismatch**  
+   UI отправляет `reason`, backend его не сохраняет и не возвращает (операционный UX-gap модерации).
 
 ### Риск
-- **high** (из-за потери контекста модератором и неоднозначных статусов)
+- **medium** (точечно: reject reason не персистится)
 
 ### Требуется ли фикс
-- **yes**
+- **yes** (для улучшения модерационного контекста)
 
 ---
 
@@ -154,19 +156,45 @@
 
 ---
 
+## Runtime & delivery invariants (updated)
+
+- **Canonical backend runtime:** `app.main:app` (`app/*`), API публикуется под `/api`.
+- **Legacy runtime path removed from canonical role:** `api/main.py` отсутствует; `api/` оставлен как legacy package marker.
+- **Canonical map data source:** `data/features.geojson` остаётся основным validated источником для карты.
+- **Service Worker privacy guard:** private/auth `/api/*` запросы не кэшируются SW.
+- **Courses/LIVE:** архитектурно интегрированы в current app shell; основной residual risk — не архитектура, а достаточность поведенческого test coverage.
+
+---
+
+## Resolved since previous audit
+
+1. `coords` contract UI↔API синхронизирован.
+2. Pending-based status normalization введён и выровнен для UI.
+3. Draft/moderation flatten serialization реализован для top-level полей UI.
+4. Canonical runtime закреплён в `app/*`, legacy `api/` выведен из runtime-роли.
+
+---
+
+## Current active risks
+
+1. **Moderation reject reason gap (MEDIUM):** причина отклонения не сохраняется backend'ом.
+2. **Test strategy risk for Courses/LIVE (MEDIUM):** нужен акцент на поведенческие тесты, а не только hook/static presence проверки.
+3. **Doc drift risk (MEDIUM):** при дальнейших patch-циклах важно поддерживать синхронность этого snapshot-документа с кодом.
+
+---
+
 ## Null / empty handling summary
 
 - **Map/Search/Layers:** в целом устойчиво (много fallback-веток в UI).
-- **UGC/Moderation:** логика в целом устойчивa к null, но есть структурный контрактный разрыв (top-level vs payload), который fallback-ами не закрывается.
+- **UGC/Moderation:** логика в целом устойчивa к null; ранее критичный структурный разрыв (top-level vs payload) закрыт сериализацией для UI.
 
 ---
 
 ## Итог
 
-Найдены существенные system-level несогласованности между UI и backend в UGC/moderation контрактах (статусы, shape, поля запроса), при этом map/search/layers контракт между UI и ETL в текущем состоянии согласован.
+На 2026-04-04 ранее зафиксированные критические UGC/moderation рассинхроны (coords/status/shape) считаются устранёнными. Текущее состояние: map/search/layers и UGC базовый контракт согласованы; активные риски смещены в область moderation UX-gap (`reject reason`) и качества test coverage для новых UI-блоков.
 
-### Приоритетные риски
-1. `coords` field vs `extra=forbid` (save/update могут падать 422).
-2. `pending` (UI) vs `review` (backend) + read-only policy mismatch.
-3. Moderation/UI ожидает плоские поля, а API гарантирует payload-centric форму.
-
+### Приоритетные риски (актуализировано)
+1. Moderation `reject reason` не персистится (операционный контекст теряется).
+2. Courses/LIVE требуют стабильного поведенческого тестового контура.
+3. Поддержание doc↔code синхронности для предотвращения ложных patch-команд.

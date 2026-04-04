@@ -166,14 +166,21 @@ def approve_draft(
         return published
 
 
-def reject_draft(db: Session, draft: Draft) -> Draft:
+def reject_draft(db: Session, draft: Draft, reason: str | None = None) -> Draft:
     if draft.status == "approved":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Approved draft cannot be rejected")
     if draft.status == "rejected":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Draft already rejected")
     if draft.status not in {"pending", "review"}:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in pending can be rejected")
-    return update_draft(db, draft, allow_system_fields=True, changes={"status": "rejected"})
+    normalized_reason = str(reason).strip() if reason is not None else None
+    payload = dict(draft.payload or {})
+    if normalized_reason:
+        payload["rejection_reason"] = normalized_reason
+    changes: dict[str, Any] = {"status": "rejected"}
+    if normalized_reason:
+        changes["payload"] = payload
+    return update_draft(db, draft, allow_system_fields=True, changes=changes)
 
 
 def create_airtable_feature(draft: Draft, fields: dict[str, Any] | None = None) -> dict[str, Any]:

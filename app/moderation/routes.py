@@ -1,5 +1,6 @@
 import logging
 
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.orm import Session
 
@@ -19,6 +20,10 @@ from app.observability import internal_error_response, log_event
 from app.security.rate_limit import rate_limit
 
 router = APIRouter(tags=["moderation"])
+
+
+class RejectPayload(BaseModel):
+    reason: str | None = None
 
 
 @router.post("/drafts/{draft_id}/submit", response_model=DraftResponse)
@@ -91,6 +96,7 @@ def approve_draft_endpoint(
 def reject_draft_endpoint(
     draft_id: int,
     request: Request,
+    payload: RejectPayload | None = None,
     _: None = Depends(rate_limit(20, 60, prefix="moderation-reject", include_path=True)),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -99,7 +105,7 @@ def reject_draft_endpoint(
     try:
         require_moderator(current_user)
         draft = get_draft_for_moderation(db, draft_id)
-        rejected = reject_draft(db, draft)
+        rejected = reject_draft(db, draft, reason=payload.reason if payload else None)
         log_event(logging.INFO, 'moderation.reject', route=request.url.path, request_id=request.state.request_id, user_id=current_user.id, draft_id=rejected.id)
         return serialize_draft_for_ui(rejected)
     except HTTPException:

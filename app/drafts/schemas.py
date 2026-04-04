@@ -211,6 +211,7 @@ class DraftResponse(BaseModel):
     title_short: str | None = None
     source_url: str | None = None
     tags: list[str] | str | None = None
+    rejection_reason: str | None = None
 
 
 GeoJson = dict[str, Any]
