@@ -30,6 +30,7 @@ import datetime as dt
 import importlib.util
 import json
 import os
+import uuid
 
 AIRTABLE_TOKEN = os.getenv("AIRTABLE_TOKEN")
 AIRTABLE_BASE = os.getenv("AIRTABLE_BASE")
@@ -218,6 +219,23 @@ def is_valid_url(value: Optional[str]) -> bool:
     return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
 
 
+def is_uuid_v4(value: Any) -> bool:
+    """Target-contract helper: Airtable governance expects UUID v4 for Features.id.
+
+    Runtime ETL currently keeps compatibility with legacy non-empty ids
+    (see get_etl_error / validate_feature), so this helper is intentionally
+    not a hard gate in active export path yet.
+    """
+    candidate = safe_str(value)
+    if not candidate:
+        return False
+    try:
+        parsed = uuid.UUID(candidate)
+    except (ValueError, TypeError, AttributeError):
+        return False
+    return parsed.version == 4 and parsed.variant == uuid.RFC_4122
+
+
 def normalize_coordinates_source(value: Any) -> Optional[str]:
     if isinstance(value, list):
         raw = safe_str(value[0]) if value else None
@@ -257,26 +275,23 @@ def normalize_source_license(value: Any) -> Optional[str]:
         "PD": "PD",
         "PUBLIC DOMAIN": "PD",
     }
-    return aliases.get(compact, normalized)
+    return aliases.get(compact)
 
 
 def normalize_coordinates_confidence(value: Any) -> Optional[str]:
     raw = normalize_single_select(value)
     if raw is None:
         return None
-    normalized = raw
-    upper_normalized = normalized.upper()
-    if upper_normalized == "EXACT":
+    normalized = " ".join(raw.strip().lower().split())
+    if normalized == "exact":
         return "exact"
-    if upper_normalized == "CONDITIONAL":
+    if normalized == "conditional":
         return "conditional"
-    if upper_normalized.startswith("APPROXIMATE"):
+    if normalized.startswith("approx"):
         return "approximate"
-
-    normalized = normalized.lower()
-    if normalized == "approximately±nkm":
-        normalized = "approximate"
-    return normalized
+    if normalized in {"estimated", "estimate", "unknown"}:
+        return "conditional"
+    return None
 
 
 def normalize_layer_type(value: Any) -> Optional[str]:
@@ -290,7 +305,7 @@ def normalize_layer_type(value: Any) -> Optional[str]:
         "biogeography": "biogeography",
         "biography": "biography",
     }
-    return aliases.get(normalized.strip().lower(), normalized.strip().lower())
+    return aliases.get(normalized.strip().lower())
 
 
 def validate_coordinate_range(
@@ -694,17 +709,23 @@ def generate_mock_layers_records() -> List[Dict[str, Any]]:
 def build_geojson_features(mapped_records: Iterable[Dict[str, Any]], warnings: List[Dict[str, Any]], errors: List[Dict[str, Any]]) -> Dict[str, Any]:
     features = []
     for m in mapped_records:
+        record_id = m.get("id") or "<missing>"
+        if parse_bool(m.get("validated")) is not True:
+            add_issue(errors, "critical", record_id, "not_validated", "validated")
+            continue
+        etl_error = get_etl_error(m)
+        if etl_error is not None:
+            add_issue(errors, "critical", record_id, etl_error, "etl_error")
+            continue
         lon = m.get("longitude")
         lat = m.get("latitude")
-        geometry = None
-        if lat is not None or lon is not None:
-            if lat is None or lon is None:
-                add_issue(warnings, "warning", m.get("id") or "<missing>", "missing one coordinate", "geometry")
-            elif not (-90 <= lat <= 90 and -180 <= lon <= 180):
-                add_issue(errors, "critical", m.get("id") or "<missing>", "invalid coordinates, skipped in geojson", "geometry")
-                continue
-            else:
-                geometry = {"type": "Point", "coordinates": [lon, lat]}
+        if lat is None or lon is None:
+            add_issue(errors, "critical", record_id, "missing_geometry", "geometry")
+            continue
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+            add_issue(errors, "critical", record_id, "invalid_coordinates", "geometry")
+            continue
+        geometry = {"type": "Point", "coordinates": [lon, lat]}
                 
         features.append(
             {
@@ -748,9 +769,59 @@ def build_geojson_features(mapped_records: Iterable[Dict[str, Any]], warnings: L
 
 
 def get_etl_error(mapped: Dict[str, Any]) -> Optional[str]:
-    source_url = mapped.get("source_url")
+    existing_error = safe_str(mapped.get("etl_error"))
+    if existing_error:
+        return existing_error
+    record_id = safe_str(mapped.get("id"))
+    if not record_id:
+        return "missing_id"
+    # Compatibility mode: legacy non-empty ids are still tolerated at runtime.
+    # Target UUID v4 contract is tracked via is_uuid_v4() helper/self-checks.
+    if "name_ru" in mapped and not safe_str(mapped.get("name_ru")):
+        return "missing_name_ru"
+    if "layer_type" in mapped and mapped.get("layer_type") not in ALLOWED_LAYER_TYPES:
+        return "invalid_layer_type"
+    source_url = safe_str(mapped.get("source_url"))
     if not source_url:
         return "missing_source_url"
+    parsed_source_url = urlparse(source_url.strip())
+    if parsed_source_url.scheme not in ("http", "https") or parsed_source_url.netloc == "":
+        return "invalid_source_url"
+    image_url = safe_str(mapped.get("image_url"))
+    if image_url and not is_valid_url(image_url):
+        return "invalid_image_url"
+    if not is_valid_license(mapped.get("source_license")):
+        return "invalid_license"
+    if mapped.get("_invalid_coordinates"):
+        return "invalid_coordinates"
+    latitude = parse_float(mapped.get("latitude"))
+    longitude = parse_float(mapped.get("longitude"))
+    if latitude is None or longitude is None:
+        return "missing_geometry"
+    if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+        return "invalid_coordinates"
+    if "_raw_date_start_present" in mapped:
+        if not mapped.get("_raw_date_start_present"):
+            return "missing_date_start"
+        if mapped.get("_invalid_date_start") or not is_valid_iso_date(mapped.get("date_start")):
+            return "invalid_date_start"
+    elif mapped.get("date_start") not in (None, "") and not is_valid_iso_date(mapped.get("date_start")):
+        return "invalid_date_start"
+
+    if "_raw_date_end_present" in mapped:
+        if mapped.get("_raw_date_end_present") and (
+            mapped.get("_invalid_date_end") or not is_valid_iso_date(mapped.get("date_end"))
+        ):
+            return "invalid_date_end"
+    elif mapped.get("date_end") not in (None, "") and not is_valid_iso_date(mapped.get("date_end")):
+        return "invalid_date_end"
+    if mapped.get("_invalid_layer_link"):
+        return "invalid_layer_link_format"
+    layer_id = mapped.get("layer_id")
+    if not layer_id:
+        return "unknown_layer_link" if mapped.get("_unknown_layer_link") else "missing_layer_id"
+    if mapped.get("_unknown_layer_link"):
+        return "unknown_layer_link"
     return None
 
 
@@ -802,8 +873,15 @@ def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List
         critical("id", "missing_id")
     if not mapped.get("name_ru"):
         critical("name_ru", "missing_name_ru")
-    if not mapped.get("_raw_date_start_present"):
+    has_start = bool(mapped.get("_raw_date_start_present"))
+    if not has_start:
         critical("date_start", "missing_date_start")
+    elif mapped.get("_invalid_date_start") or not is_valid_iso_date(mapped.get("date_start")):
+        critical("date_start", "invalid_date_start")
+    if mapped.get("_raw_date_end_present") and (
+        mapped.get("_invalid_date_end") or not is_valid_iso_date(mapped.get("date_end"))
+    ):
+        critical("date_end", "invalid_date_end")
     validated_value = parse_bool(mapped.get("validated"))
     if validated_value is not True:
         critical("validated", "not_validated")
@@ -847,6 +925,12 @@ def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List
         critical("coordinates_source", "invalid_coordinates_source")
     if mapped.get("image_url") and not is_valid_url(mapped.get("image_url")):
         critical("image_url", "invalid_image_url")
+    title_short = mapped.get("title_short")
+    if title_short is not None and len(title_short) > 120:
+        critical("title_short", "title_short_too_long")
+    description = mapped.get("description")
+    if description is not None and len(description) > 2000:
+        critical("description", "description_too_long")
     layer_id = mapped.get("layer_id")
     if mapped.get("_invalid_layer_link"):
         critical("layer_id", "invalid_layer_link_format")
@@ -938,7 +1022,7 @@ def maybe_commit(paths: List[Path], records_count: int) -> None:
 def run_self_test() -> int:
     errors: List[Dict[str, Any]] = []
     sample = {
-        "id": "recTEST",
+        "id": "550e8400-e29b-41d4-a716-446655440000",
         "fields": {
             "layer_id": "history",
             "layer_type_enum": "architecture",
@@ -967,6 +1051,141 @@ def run_self_test() -> int:
     assert not any(e.get("error") for e in errors if "error" in e)
     assert is_valid_iso_date(m["date_start"])
     assert is_valid_license(m["source_license"])
+    assert normalize_source_license("cc by-sa") == "CC BY-SA"
+    assert normalize_source_license("unsupported-license") is None
+    assert normalize_layer_type("Route Point") == "route_point"
+    assert normalize_layer_type("unsupported-layer") is None
+    assert normalize_coordinates_confidence("EXACT") == "exact"
+    assert normalize_coordinates_confidence("approximate±3km") == "approximate"
+    assert normalize_coordinates_confidence("unknown") == "conditional"
+    m_limit_ok = dict(m)
+    m_limit_ok["title_short"] = "t" * 120
+    m_limit_ok["description"] = "d" * 2000
+    assert validate_feature(m_limit_ok, {"history"}, [], [])
+    m_limit_fail = dict(m)
+    m_limit_fail["title_short"] = "t" * 121
+    m_limit_fail["description"] = "d" * 2001
+    limit_errors: List[Dict[str, Any]] = []
+    assert not validate_feature(m_limit_fail, {"history"}, [], limit_errors)
+    assert any(issue.get("reason") == "title_short_too_long" for issue in limit_errors)
+    assert any(issue.get("reason") == "description_too_long" for issue in limit_errors)
+    assert get_etl_error(
+        {
+            "id": "550e8400-e29b-41d4-a716-446655440000",
+            "source_url": "https://example.com",
+            "source_license": "CC BY",
+            "latitude": 55.0,
+            "longitude": 37.0,
+            "layer_id": "history",
+        }
+    ) is None
+    assert get_etl_error(
+        {
+            "id": "recLEGACY",
+            "source_url": "https://example.com",
+            "source_license": "CC BY",
+            "latitude": 55.0,
+            "longitude": 37.0,
+            "layer_id": "history",
+        }
+    ) is None
+    assert is_uuid_v4("550e8400-e29b-41d4-a716-446655440000")
+    assert not is_uuid_v4("recLEGACY")
+    assert (
+        get_etl_error(
+            {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "source_url": "https://example.com",
+                "source_license": "bad",
+                "latitude": 55.0,
+                "longitude": 37.0,
+                "layer_id": "history",
+            }
+        )
+        == "invalid_license"
+    )
+    assert get_etl_error({"id": "550e8400-e29b-41d4-a716-446655440000", "source_url": "javascript:alert(1)"}) == "invalid_source_url"
+    assert (
+        get_etl_error(
+            {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "source_url": "https://example.com",
+                "source_license": "CC BY",
+                "latitude": None,
+                "longitude": 37.0,
+                "layer_id": "history",
+            }
+        )
+        == "missing_geometry"
+    )
+    assert (
+        get_etl_error(
+            {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "source_url": "https://example.com",
+                "source_license": "CC BY",
+                "latitude": 95.0,
+                "longitude": 37.0,
+                "layer_id": "history",
+            }
+        )
+        == "invalid_coordinates"
+    )
+    assert get_etl_error({"id": "550e8400-e29b-41d4-a716-446655440000", "source_url": "https://example.com", "source_license": "CC BY", "latitude": 55.0, "longitude": 37.0, "layer_id": None}) == "missing_layer_id"
+    assert get_etl_error({"id": "550e8400-e29b-41d4-a716-446655440000", "source_url": "https://example.com", "source_license": "CC BY", "latitude": 55.0, "longitude": 37.0, "layer_id": "history", "_unknown_layer_link": True}) == "unknown_layer_link"
+    assert get_etl_error({"id": "", "source_url": "https://example.com"}) == "missing_id"
+    name_ru_fixture = {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "name_ru": "Корректное имя",
+        "source_url": "https://example.com",
+        "source_license": "CC BY",
+        "latitude": 55.0,
+        "longitude": 37.0,
+        "layer_id": "history",
+        "layer_type": "architecture",
+        "_raw_date_start_present": True,
+        "date_start": "2020",
+    }
+    assert get_etl_error(name_ru_fixture) is None
+    assert get_etl_error({**name_ru_fixture, "image_url": ""}) is None
+    assert get_etl_error({**name_ru_fixture, "image_url": "https://example.com/image.jpg"}) is None
+    assert get_etl_error({**name_ru_fixture, "image_url": "javascript:alert(1)"}) == "invalid_image_url"
+    assert get_etl_error({**name_ru_fixture, "layer_type": "bad_layer"}) == "invalid_layer_type"
+    assert get_etl_error({**name_ru_fixture, "name_ru": "   "}) == "missing_name_ru"
+    assert get_etl_error({**name_ru_fixture, "name_ru": None}) == "missing_name_ru"
+    bad_start = map_record(
+        {"id": "550e8400-e29b-41d4-a716-446655440001", "fields": {**sample["fields"], "date_start": "2024-13-01"}},
+        [],
+        {"history": "history"},
+    )
+    assert not validate_feature(bad_start, {"history"}, [], [])
+    bad_end = map_record(
+        {"id": "550e8400-e29b-41d4-a716-446655440002", "fields": {**sample["fields"], "date_end": "2024-99-01"}},
+        [],
+        {"history": "history"},
+    )
+    assert not validate_feature(bad_end, {"history"}, [], [])
+    missing_start = map_record(
+        {"id": "550e8400-e29b-41d4-a716-446655440003", "fields": {k: v for k, v in sample["fields"].items() if k != "date_start"}},
+        [],
+        {"history": "history"},
+    )
+    missing_start_errors: List[Dict[str, Any]] = []
+    assert not validate_feature(missing_start, {"history"}, [], missing_start_errors)
+    start_reasons = [issue.get("reason") for issue in missing_start_errors if issue.get("field") == "date_start"]
+    assert start_reasons.count("missing_date_start") == 1
+    assert "invalid_date_start" not in start_reasons
+    assert get_etl_error(missing_start) == "missing_date_start"
+
+    no_end = map_record(
+        {"id": "550e8400-e29b-41d4-a716-446655440004", "fields": {**sample["fields"], "date_end": ""}},
+        [],
+        {"history": "history"},
+    )
+    assert validate_feature(no_end, {"history"}, [], [])
+    assert get_etl_error(no_end) is None
+    assert get_etl_error(bad_start) == "invalid_date_start"
+    assert get_etl_error(bad_end) == "invalid_date_end"
     print("Self-test OK")
     return 0
 
@@ -1059,7 +1278,12 @@ def main() -> int:
     rejected_features: List[Dict[str, Any]] = []
     seen_dedupe_keys: set[Tuple[Any, ...]] = set()
     for mapped in candidate_records:
+        mapped["etl_status"] = "pending"
+        mapped["etl_error"] = None
+
         if parse_bool(mapped.get("validated")) is not True:
+            mapped["etl_status"] = "rejected"
+            mapped["etl_error"] = "not_validated"
             rejected_features.append(
                 {
                     "id": mapped.get("id") or "<missing>",
@@ -1070,6 +1294,8 @@ def main() -> int:
             continue
 
         if not args.include_inactive and mapped.get("is_active") is False:
+            mapped["etl_status"] = "rejected"
+            mapped["etl_error"] = "inactive"
             rejected_features.append(
                 {
                     "id": mapped.get("id") or "<missing>",
@@ -1089,6 +1315,8 @@ def main() -> int:
             ]
             if not critical_reasons:
                 critical_reasons = ["validation_failed"]
+            mapped["etl_status"] = "rejected"
+            mapped["etl_error"] = critical_reasons[0]
             rejected_features.append(
                 {
                     "id": mapped.get("id") or "<missing>",
@@ -1100,6 +1328,8 @@ def main() -> int:
 
         etl_error = get_etl_error(mapped)
         if etl_error is not None:
+            mapped["etl_status"] = "rejected"
+            mapped["etl_error"] = etl_error
             rejected_features.append(
                 {
                     "id": mapped.get("id") or "<missing>",
@@ -1112,6 +1342,8 @@ def main() -> int:
         longitude = mapped.get("longitude")
         latitude = mapped.get("latitude")
         if longitude is None or latitude is None:
+            mapped["etl_status"] = "rejected"
+            mapped["etl_error"] = "missing_geometry"
             rejected_features.append(
                 {
                     "id": mapped.get("id") or "<missing>",
@@ -1123,6 +1355,8 @@ def main() -> int:
 
         dedupe_key = get_dedupe_key(mapped)
         if dedupe_key in seen_dedupe_keys:
+            mapped["etl_status"] = "rejected"
+            mapped["etl_error"] = "duplicate"
             rejected_features.append(
                 {
                     "id": mapped.get("id") or "<missing>",
@@ -1132,6 +1366,8 @@ def main() -> int:
             )
             continue
         seen_dedupe_keys.add(dedupe_key)
+        mapped["etl_status"] = "ok"
+        mapped["etl_error"] = None
         valid_features.append(mapped)
 
     valid_features = sort_mapped_records(valid_features)

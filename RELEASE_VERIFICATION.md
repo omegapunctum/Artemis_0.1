@@ -1,22 +1,16 @@
-# MVP Release Verification
+# Release Verification
 
-## Checked blocks
-- [x] Canonical backend entrypoint: `app.main:app`
-- [x] Auth flow: login/refresh/logout + single 401 retry path
-- [x] Moderation/publish identity: `normalized_id` as canonical key, source ids as references
-- [x] Export pipeline: `features.geojson`, `rejected.json`, `validation_report.json` generation
-- [x] UI critical paths: map load, search, detail panel, filters/layers, UGC panel open/save/submit
+## Canonical backend entrypoint
+- `app.main:app`
 
-## Smoke tests
-- [x] Backend smoke: `/api/health`, `/api/me`, `/api/auth/*` базовые маршруты отвечают
-- [x] Export smoke: `python scripts/export_airtable.py --self-test` проходит
-- [x] Contract smoke: `pytest -q tests/test_mvp_contract_static.py` проходит
-- [x] Targeted auth/export checks: `pytest -q tests/test_export_airtable.py tests/test_moderation.py` проходит
+## Manual smoke checks
+- ✅ ETL self-check executed in current verification cycle: `python scripts/export_airtable.py --self-test`.
+- ⚠️ Full backend/API smoke (`/api/health`, `/api/me`, auth маршруты) **not re-verified in this update**.
+- ⚠️ Full UI/manual browser smoke **not re-verified in this update**.
 
 ## Known risks
-- Airtable external dependency: сетевые/квотные сбои могут влиять на publish/export
-- UI manual smoke не покрывает все мобильные браузеры и long-session сценарии
-- Производительность на больших датасетах требует отдельного post-release мониторинга
+- Airtable remains an external dependency: network/rate-limit failures can still affect export/publish runs.
+- Current verification confirms ETL contract checks covered by `scripts/export_airtable.py --self-test`, but does not replace full end-to-end API/UI smoke before production release.
 
-## Release verdict
-**GO (MVP)** — release разрешён при наличии стандартного мониторинга после выката.
+## Legacy parts
+- Historical MVP verification notes are kept in `RELEASE_VERIFICATION_MVP_2026-03-30.md` and may contain checks that were not re-run in the current cycle.
