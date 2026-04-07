@@ -113,7 +113,7 @@
       <button id="global-data-error-retry" type="button" class="ui-button ui-button-primary">Повторить</button>
     </section>
 
-    <section id="bottom-panel" class="glass-panel" aria-label="Timeline and cards">
+    <section id="bottom-panel" class="glass-panel" aria-label="Timeline">
       <div id="timeline" class="timeline-row">
         <div class="timeline-head">
           <div id="timeline-range-label">Selected range</div>
@@ -129,8 +129,6 @@
           <input id="timeline-end" type="range" min="-3000" max="2026" value="1650" step="1" />
         </div>
       </div>
-      <div id="cards-state" class="cards-state is-loading">Loading events…</div>
-      <ul id="cards-ribbon" aria-label="Лента карточек"></ul>
     </section>
 
     <aside id="detail-panel" class="glass-panel detail-panel" hidden aria-label="Object details" aria-hidden="true">
@@ -249,6 +247,12 @@
         </div>
       </div>
     </div>
+    <div id="status" class="status-panel" role="status" aria-live="polite">
+      <div id="loading-indicator" class="status-inline-loading" hidden>Loading...</div>
+      <div id="status-loading" class="status-loading">Инициализация приложения…</div>
+      <div id="status-message">Ожидание загрузки…</div>
+      <div id="status-error" class="status-error" hidden></div>
+    </div>
   </div>
 
   <div id="offline-status" class="offline-status" role="status" aria-live="polite" hidden>
@@ -258,13 +262,6 @@
   <div id="app-status-host" class="app-status-host" aria-live="polite" aria-atomic="false"></div>
 
 <div id="error-banner" hidden></div>
-
-  <div id="status" class="status-panel" role="status" aria-live="polite">
-    <div id="loading-indicator" class="status-inline-loading" hidden>Loading...</div>
-    <div id="status-loading" class="status-loading">Инициализация приложения…</div>
-    <div id="status-message">Ожидание загрузки…</div>
-    <div id="status-error" class="status-error" hidden></div>
-  </div>
 
   <div id="login-modal" class="modal" hidden>
     <div class="modal-content">
