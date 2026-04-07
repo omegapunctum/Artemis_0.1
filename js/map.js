@@ -8,6 +8,18 @@ const CLUSTER_LAYER_ID = 'artemis-clusters';
 const CLUSTER_COUNT_LAYER_ID = 'artemis-cluster-count';
 const HEATMAP_LAYER_ID = 'artemis-heatmap';
 const POPUP_CLASS_NAME = 'artemis-popup';
+const TOP_HEADER_SELECTOR = '#top-header';
+
+function syncTopHeaderLayoutMetrics() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  const root = document.documentElement;
+  const header = document.querySelector(TOP_HEADER_SELECTOR);
+  if (!root || !header) return;
+  const measuredHeight = Math.max(0, Math.ceil(header.getBoundingClientRect().height));
+  if (measuredHeight > 0) {
+    root.style.setProperty('--top-header-height', `${measuredHeight}px`);
+  }
+}
 
 // Нормализует FeatureCollection и исключает битые объекты из карты.
 function buildMapFeatureCollection(features) {
@@ -64,6 +76,7 @@ function hasPointGeometry(feature) {
 
 // Инициализация карты и подготовка единого источника данных.
 export function initMap(containerId, features) {
+  syncTopHeaderLayoutMetrics();
   const map = new maplibregl.Map({
     container: containerId,
     style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
@@ -92,12 +105,15 @@ export function initMap(containerId, features) {
   };
 
   map.on('load', () => {
+    syncTopHeaderLayoutMetrics();
     const mapData = map.__artemis.pendingFeatureCollection;
     loadGeoJSON(map, mapData);
     bindPopupHandlers(map);
     map.__artemis.lastMapFeatureCount = mapData.features.length;
     fitToFeatures(map, mapData);
   });
+
+  window.addEventListener('resize', syncTopHeaderLayoutMetrics, { passive: true });
 
   return map;
 }
