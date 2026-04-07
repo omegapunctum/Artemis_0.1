@@ -12,6 +12,10 @@
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
+  --top-header-offset-top: calc(8px + var(--safe-top));
+  --top-header-height: 52px;
+  --map-controls-gap: 8px;
+  --map-controls-safe-top: calc(var(--top-header-offset-top) + var(--top-header-height) + var(--map-controls-gap));
   /* Color tokens */
   --color-bg: #0b0f14;
   --color-surface: #101826;
@@ -214,7 +218,7 @@ body { overflow: hidden; }
 
 #top-header {
   position: fixed;
-  top: calc(8px + var(--safe-top));
+  top: var(--top-header-offset-top);
   left: calc(12px + var(--safe-left));
   right: calc(12px + var(--safe-right));
   z-index: var(--z-top-header);
@@ -571,12 +575,11 @@ button:focus-visible {
   right: calc(12px + var(--safe-right));
   bottom: calc(12px + var(--safe-bottom));
   z-index: var(--z-bottom-panel);
-  min-height: 164px;
-  max-height: 186px;
+  min-height: 88px;
   padding: 12px 14px;
   display: grid;
-  grid-template-rows: auto auto 1fr;
-  gap: 8px;
+  grid-template-rows: auto;
+  gap: 0;
   background: rgba(16, 24, 38, 0.56);
 }
 .timeline-row { display: grid; gap: 8px; }
@@ -1347,7 +1350,7 @@ button:focus-visible {
   #global-search { height: 38px; padding: 8px 38px 8px 12px; }
   .top-actions { gap: 6px; }
   .top-actions > button, .top-actions-cluster > button, .icon-btn { height: 34px; }
-  #bottom-panel { min-height: 194px; left: 8px; right: 8px; bottom: 8px; max-height: 180px; }
+  #bottom-panel { min-height: 84px; left: 8px; right: 8px; bottom: 8px; padding: 8px 10px; }
   .ribbon-card { min-width: 168px; max-width: 182px; }
   .detail-panel { left: 8px; right: 8px; width: auto; top: 72px; bottom: 194px; }
   .ugc-panel { left: 8px; right: 8px; width: auto; top: 72px; bottom: 194px; }
@@ -1393,7 +1396,13 @@ button:focus-visible {
   padding: 0;
 }
 
-.maplibregl-ctrl-top-right { top: calc(72px + var(--safe-top)); right: calc(10px + var(--safe-right)); z-index: var(--z-map-controls); }
+.maplibregl-ctrl-top-right,
+.maplibregl-ctrl-top-left {
+  top: var(--map-controls-safe-top);
+  z-index: var(--z-map-controls);
+}
+.maplibregl-ctrl-top-right { right: calc(10px + var(--safe-right)); }
+.maplibregl-ctrl-top-left { left: calc(10px + var(--safe-left)); }
 
 @media (max-width: 1080px) {
   #top-header { grid-template-columns: 86px minmax(140px, 1fr) auto; min-height: 52px; }
@@ -1411,7 +1420,7 @@ button:focus-visible {
   #top-header { left: calc(8px + var(--safe-left)); right: calc(8px + var(--safe-right)); top: calc(8px + var(--safe-top)); min-height: 50px; padding: 6px 8px; }
   #top-header { grid-template-columns: 72px minmax(120px, 1fr) auto; }
   .brand { font-size: 12px; }
-  #bottom-panel { left: calc(8px + var(--safe-left)); right: calc(8px + var(--safe-right)); bottom: calc(8px + var(--safe-bottom)); min-height: 128px; max-height: 148px; padding: 8px; gap: 6px; }
+  #bottom-panel { left: calc(8px + var(--safe-left)); right: calc(8px + var(--safe-right)); bottom: calc(8px + var(--safe-bottom)); min-height: 84px; padding: 8px 10px; gap: 0; }
   .timeline-track-wrap { height: 34px; }
   .timeline-track-base, .timeline-active-range { top: 12px; }
   .timeline-axis { top: 22px; font-size: 9px; }

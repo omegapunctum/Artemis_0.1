@@ -1552,7 +1552,7 @@ function updateStatus(elements, state, map) {
   if (!elements.statusMessage) return;
   const diagnostics = getMapBuildDiagnostics(map);
   const bucketCount = Object.keys(state.timeAggregation || {}).length;
-  elements.statusMessage.textContent = `Карта готова. Загружено ${diagnostics.inputTotal}, отображается ${getMapFeatureCount(map)}, в ленте ${state.filteredFeatures.length}, временных бакетов: ${bucketCount}.`;
+  elements.statusMessage.textContent = `Карта готова. Загружено ${diagnostics.inputTotal}, отображается ${getMapFeatureCount(map)}, в выборке ${state.filteredFeatures.length}, временных бакетов: ${bucketCount}.`;
 }
 
 function selectFeature(state, elements, map, feature, options = {}) {
