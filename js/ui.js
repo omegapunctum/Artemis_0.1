@@ -147,6 +147,7 @@ export async function initUI(map, features) {
     overlay: { activePrimary: null, activeModal: null },
     viewport: { mode: 'desktop', isMobile: false, isTablet: false },
     detailSheetExpanded: false,
+    detailViewMode: 'preview',
     detailOpenFeatureId: null,
     detailRenderFrameId: null,
     searchResults: [],
@@ -1169,7 +1170,7 @@ function syncMapHoveredCardState(elements, hoveredFeatureId) {
   });
 }
 
-function showDetailPanel(state, elements, map, feature) {
+function showDetailPanel(state, elements, map, feature, options = {}) {
   if (!elements.detailPanel || !elements.detailPanelBody) return;
   if (!feature) {
     hideDetailPanel(elements, state);
@@ -1180,108 +1181,24 @@ function showDetailPanel(state, elements, map, feature) {
     hideDetailPanel(elements, state);
     return;
   }
-  if (!elements.detailPanel.hidden && state.detailOpenFeatureId === featureId) return;
+  const viewMode = options.mode === 'full' ? 'full' : 'preview';
+  const shouldSkipRerender = !options.force
+    && !elements.detailPanel.hidden
+    && state.detailOpenFeatureId === featureId
+    && state.detailViewMode === viewMode;
+  if (shouldSkipRerender) return;
+  state.detailViewMode = viewMode;
 
   const props = normalizeProps(feature);
-  const layerLabel = state.layerLookup.get(String(props.layer_id || '').trim()) || String(props.layer_id || '').trim();
-  const dateLabel = formatRangeLabel(props.date_start, props.date_end);
-  const title = getPrimaryTitle(props);
-  const secondaryTitle = String(props.name_en || '').trim();
-  const description = String(props.description || props.title_short || '').trim();
-  const sourceUrl = normalizeSafeUrl(String(props.source_url || '').trim());
-  const sourceDomain = extractDomain(sourceUrl);
-  const confidenceLabel = getConfidenceLabel(props.coordinates_confidence);
-  const coordinatesLabel = formatCoordinates(feature?.geometry?.coordinates);
-
-  const detail = document.createElement('article');
-  detail.className = 'detail-content';
-
-  const mediaSection = document.createElement('section');
-  mediaSection.className = 'detail-media-block';
-  const mediaNode = buildImageNode(props, title, true);
-  mediaNode.classList.add('detail-hero-media');
-  mediaSection.appendChild(mediaNode);
-  const mediaCaption = document.createElement('p');
-  mediaCaption.className = 'detail-media-caption';
-  mediaCaption.textContent = mediaNode.classList.contains('img-placeholder')
-    ? 'Изображение отсутствует'
-    : 'Изображение объекта';
-  mediaSection.appendChild(mediaCaption);
-  detail.appendChild(mediaSection);
-
-  const titleSection = document.createElement('section');
-  titleSection.className = 'detail-section detail-title-block';
-  const titleNode = document.createElement('h3');
-  titleNode.className = 'detail-title';
-  titleNode.textContent = title;
-  titleSection.appendChild(titleNode);
-  if (secondaryTitle && secondaryTitle !== title) {
-    const subtitleNode = document.createElement('p');
-    subtitleNode.className = 'detail-subtitle';
-    subtitleNode.textContent = secondaryTitle;
-    titleSection.appendChild(subtitleNode);
-  }
-  const metaChips = document.createElement('div');
-  metaChips.className = 'detail-badges';
-  if (layerLabel) metaChips.appendChild(buildBadge(layerLabel));
-  if (dateLabel && dateLabel !== 'Дата не указана') metaChips.appendChild(buildBadge(dateLabel, 'accent'));
-  if (confidenceLabel) metaChips.appendChild(buildBadge(confidenceLabel));
-  if (metaChips.childElementCount) titleSection.appendChild(metaChips);
-  detail.appendChild(titleSection);
-
-  const metaSection = document.createElement('section');
-  metaSection.className = 'detail-section detail-meta-block';
-  metaSection.appendChild(createSectionTitle('Сводка'));
-  appendMetaRow(metaSection, 'Период', dateLabel);
-  if (layerLabel) appendMetaRow(metaSection, 'Слой / тип', layerLabel);
-  if (coordinatesLabel) appendMetaRow(metaSection, 'Координаты', coordinatesLabel);
-  if (metaSection.querySelector('.detail-meta-row')) detail.appendChild(metaSection);
-
-  const descriptionSection = document.createElement('section');
-  descriptionSection.className = 'detail-section';
-  descriptionSection.appendChild(createSectionTitle('Описание'));
-  const descriptionNode = document.createElement('p');
-  descriptionNode.className = 'detail-description';
-  descriptionNode.textContent = description || 'Описание пока отсутствует.';
-  if (!description) descriptionNode.classList.add('is-empty');
-  descriptionSection.appendChild(descriptionNode);
-  detail.appendChild(descriptionSection);
-
-  if (sourceUrl || sourceDomain) {
-    const sourceSection = document.createElement('section');
-    sourceSection.className = 'detail-section detail-source-block';
-    sourceSection.appendChild(createSectionTitle('Источник'));
-    if (sourceDomain) appendMetaRow(sourceSection, 'Платформа', sourceDomain);
-    if (sourceUrl) {
-      const sourceRow = document.createElement('div');
-      sourceRow.className = 'detail-meta-row detail-source-link-row';
-      const sourceLabel = document.createElement('span');
-      sourceLabel.className = 'detail-meta-label';
-      sourceLabel.textContent = 'External link';
-      const sourceValue = document.createElement('span');
-      sourceValue.className = 'detail-meta-value';
-      const link = document.createElement('a');
-      link.className = 'detail-action-link';
-      link.textContent = 'Открыть источник';
-      setSafeLink(link, sourceUrl);
-      sourceValue.appendChild(link);
-      sourceRow.append(sourceLabel, sourceValue);
-      sourceSection.appendChild(sourceRow);
-    }
-    detail.appendChild(sourceSection);
-  }
-
-  const technicalSection = document.createElement('section');
-  technicalSection.className = 'detail-section detail-technical-block';
-  technicalSection.appendChild(createSectionTitle('Техническая информация'));
-  if (props.name_ru && props.name_en && props.name_ru !== props.name_en) {
-    appendMetaRow(technicalSection, 'Название (EN)', props.name_en);
-  }
-  if (props.layer_id) appendMetaRow(technicalSection, 'Layer ID', props.layer_id);
-  if (props.coordinates_confidence) appendMetaRow(technicalSection, 'Coordinates confidence', props.coordinates_confidence);
-  if (technicalSection.querySelector('.detail-meta-row')) detail.appendChild(technicalSection);
+  const detail = viewMode === 'full'
+    ? buildFullDetailContent(state, props, feature)
+    : buildPreviewDetailContent(state, elements, map, feature, props);
 
   elements.detailPanelBody.replaceChildren();
+  elements.detailPanel.dataset.mode = viewMode;
+  elements.detailPanel.classList.toggle('is-preview-mode', viewMode === 'preview');
+  elements.detailPanel.classList.toggle('is-full-mode', viewMode === 'full');
+  updateDetailPanelHeading(elements, viewMode);
   setPanelOpenState(elements.detailPanel, true);
   elements.detailPanel.classList.add('is-selected');
   if (state.viewport.isMobile) {
@@ -1310,6 +1227,13 @@ function hideDetailPanel(elements, state = null) {
     state.detailRenderFrameId = null;
   }
   if (state) state.detailOpenFeatureId = null;
+  if (state) state.detailViewMode = 'preview';
+  if (elements.detailPanel) {
+    elements.detailPanel.dataset.mode = 'preview';
+    elements.detailPanel.classList.add('is-preview-mode');
+    elements.detailPanel.classList.remove('is-full-mode');
+  }
+  updateDetailPanelHeading(elements, 'preview');
   elements.detailPanel.classList.remove('is-selected');
   setPanelOpenState(elements.detailPanel, false);
   syncDetailDockLayout(elements, state);
@@ -1790,6 +1714,13 @@ function formatYearLabel(year) {
   if (value === 0) return '1 BCE/1 CE';
   return `${value} CE`;
 }
+function getPreviewDescription(props) {
+  const shortDescription = String(props.short_description || props.description_short || '').trim();
+  if (shortDescription) return truncateText(shortDescription, 240);
+  const fallbackDescription = String(props.description || props.title_short || '').trim();
+  if (!fallbackDescription) return '';
+  return truncateText(fallbackDescription.replace(/\s+/g, ' '), 280);
+}
 function truncateText(value, limit) {
   if (value.length <= limit) return value;
   return `${value.slice(0, limit - 1).trimEnd()}…`;
@@ -1948,7 +1879,10 @@ function syncDetailDockLayout(elements, state) {
   const shell = elements?.appShell;
   const panel = elements?.detailPanel;
   if (!shell || !panel) return;
-  const isDesktopDock = !state?.viewport?.isMobile && !panel.hidden && panel.classList.contains('is-open');
+  const isDesktopDock = !state?.viewport?.isMobile
+    && !panel.hidden
+    && panel.classList.contains('is-open')
+    && (panel.dataset.mode || state?.detailViewMode) === 'full';
   shell.classList.toggle('has-right-detail', isDesktopDock);
 }
 
@@ -1968,6 +1902,186 @@ function syncDetailSheetState(state, elements) {
     expandBtn.textContent = state.detailSheetExpanded ? '⇩' : '⇧';
     expandBtn.setAttribute('aria-label', state.detailSheetExpanded ? 'Collapse detail panel' : 'Expand detail panel');
   }
+}
+
+function updateDetailPanelHeading(elements, mode = 'preview') {
+  const heading = elements?.detailPanel?.querySelector('.detail-panel-heading');
+  if (!heading) return;
+  heading.textContent = mode === 'full' ? 'Детали объекта' : 'Быстрый просмотр';
+}
+
+function buildPreviewDetailContent(state, elements, map, feature, props) {
+  const featureId = getFeatureUiId(feature);
+  const layerLabel = state.layerLookup.get(String(props.layer_id || '').trim()) || String(props.layer_id || '').trim();
+  const dateLabel = formatRangeLabel(props.date_start, props.date_end);
+  const title = getPrimaryTitle(props);
+  const secondaryTitle = String(props.name_en || '').trim();
+  const description = getPreviewDescription(props);
+
+  const detail = document.createElement('article');
+  detail.className = 'detail-content detail-content-preview';
+
+  const titleSection = document.createElement('section');
+  titleSection.className = 'detail-section detail-title-block';
+  const titleNode = document.createElement('h3');
+  titleNode.className = 'detail-title';
+  titleNode.textContent = title;
+  titleSection.appendChild(titleNode);
+  if (secondaryTitle && secondaryTitle !== title) {
+    const subtitleNode = document.createElement('p');
+    subtitleNode.className = 'detail-subtitle';
+    subtitleNode.textContent = secondaryTitle;
+    titleSection.appendChild(subtitleNode);
+  }
+  detail.appendChild(titleSection);
+
+  const metaSection = document.createElement('section');
+  metaSection.className = 'detail-section detail-meta-block';
+  metaSection.appendChild(createSectionTitle('Краткая сводка'));
+  appendMetaRow(metaSection, 'Период', dateLabel);
+  if (layerLabel) appendMetaRow(metaSection, 'Слой / тип', layerLabel);
+  detail.appendChild(metaSection);
+
+  const descriptionSection = document.createElement('section');
+  descriptionSection.className = 'detail-section';
+  descriptionSection.appendChild(createSectionTitle('Описание'));
+  const descriptionNode = document.createElement('p');
+  descriptionNode.className = 'detail-description detail-description-preview';
+  descriptionNode.textContent = description || 'Описание пока отсутствует.';
+  if (!description) descriptionNode.classList.add('is-empty');
+  descriptionSection.appendChild(descriptionNode);
+  detail.appendChild(descriptionSection);
+
+  const actionsSection = document.createElement('section');
+  actionsSection.className = 'detail-section detail-preview-actions';
+  const actionsWrap = document.createElement('div');
+  actionsWrap.className = 'detail-actions';
+  const moreBtn = document.createElement('button');
+  moreBtn.type = 'button';
+  moreBtn.className = 'ui-button ui-button-primary';
+  moreBtn.textContent = 'Подробнее';
+  moreBtn.dataset.action = 'open-full-detail';
+  moreBtn.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('artemis:detail-expand-request', {
+      detail: { featureId, feature }
+    }));
+    showDetailPanel(state, elements, map, feature, { mode: 'full', force: true });
+  });
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'ui-button';
+  closeBtn.textContent = 'Закрыть';
+  closeBtn.dataset.action = 'close-preview';
+  closeBtn.addEventListener('click', () => closeDetailView(state, elements));
+  actionsWrap.append(moreBtn, closeBtn);
+  actionsSection.appendChild(actionsWrap);
+  detail.appendChild(actionsSection);
+
+  return detail;
+}
+
+function buildFullDetailContent(state, props, feature) {
+  const layerLabel = state.layerLookup.get(String(props.layer_id || '').trim()) || String(props.layer_id || '').trim();
+  const dateLabel = formatRangeLabel(props.date_start, props.date_end);
+  const title = getPrimaryTitle(props);
+  const secondaryTitle = String(props.name_en || '').trim();
+  const description = String(props.description || props.title_short || '').trim();
+  const sourceUrl = normalizeSafeUrl(String(props.source_url || '').trim());
+  const sourceDomain = extractDomain(sourceUrl);
+  const confidenceLabel = getConfidenceLabel(props.coordinates_confidence);
+  const coordinatesLabel = formatCoordinates(feature?.geometry?.coordinates);
+  const licenseLabel = String(props.license || props.licence || props.rights || '').trim();
+
+  const detail = document.createElement('article');
+  detail.className = 'detail-content detail-content-full';
+
+  const mediaSection = document.createElement('section');
+  mediaSection.className = 'detail-media-block';
+  const mediaNode = buildImageNode(props, title, true);
+  mediaNode.classList.add('detail-hero-media');
+  mediaSection.appendChild(mediaNode);
+  const mediaCaption = document.createElement('p');
+  mediaCaption.className = 'detail-media-caption';
+  mediaCaption.textContent = mediaNode.classList.contains('img-placeholder')
+    ? 'Изображение отсутствует'
+    : 'Изображение объекта';
+  mediaSection.appendChild(mediaCaption);
+  detail.appendChild(mediaSection);
+
+  const titleSection = document.createElement('section');
+  titleSection.className = 'detail-section detail-title-block';
+  const titleNode = document.createElement('h3');
+  titleNode.className = 'detail-title';
+  titleNode.textContent = title;
+  titleSection.appendChild(titleNode);
+  if (secondaryTitle && secondaryTitle !== title) {
+    const subtitleNode = document.createElement('p');
+    subtitleNode.className = 'detail-subtitle';
+    subtitleNode.textContent = secondaryTitle;
+    titleSection.appendChild(subtitleNode);
+  }
+  const metaChips = document.createElement('div');
+  metaChips.className = 'detail-badges';
+  if (layerLabel) metaChips.appendChild(buildBadge(layerLabel));
+  if (dateLabel && dateLabel !== 'Дата не указана') metaChips.appendChild(buildBadge(dateLabel, 'accent'));
+  if (confidenceLabel) metaChips.appendChild(buildBadge(confidenceLabel));
+  if (metaChips.childElementCount) titleSection.appendChild(metaChips);
+  detail.appendChild(titleSection);
+
+  const metaSection = document.createElement('section');
+  metaSection.className = 'detail-section detail-meta-block';
+  metaSection.appendChild(createSectionTitle('Сводка'));
+  appendMetaRow(metaSection, 'Период', dateLabel);
+  if (layerLabel) appendMetaRow(metaSection, 'Слой / тип', layerLabel);
+  if (coordinatesLabel) appendMetaRow(metaSection, 'Координаты', coordinatesLabel);
+  if (metaSection.querySelector('.detail-meta-row')) detail.appendChild(metaSection);
+
+  const descriptionSection = document.createElement('section');
+  descriptionSection.className = 'detail-section';
+  descriptionSection.appendChild(createSectionTitle('Описание'));
+  const descriptionNode = document.createElement('p');
+  descriptionNode.className = 'detail-description';
+  descriptionNode.textContent = description || 'Описание пока отсутствует.';
+  if (!description) descriptionNode.classList.add('is-empty');
+  descriptionSection.appendChild(descriptionNode);
+  detail.appendChild(descriptionSection);
+
+  if (sourceUrl || sourceDomain || licenseLabel) {
+    const sourceSection = document.createElement('section');
+    sourceSection.className = 'detail-section detail-source-block';
+    sourceSection.appendChild(createSectionTitle('Источник и лицензия'));
+    if (sourceDomain) appendMetaRow(sourceSection, 'Платформа', sourceDomain);
+    if (licenseLabel) appendMetaRow(sourceSection, 'Лицензия', licenseLabel);
+    if (sourceUrl) {
+      const sourceRow = document.createElement('div');
+      sourceRow.className = 'detail-meta-row detail-source-link-row';
+      const sourceLabel = document.createElement('span');
+      sourceLabel.className = 'detail-meta-label';
+      sourceLabel.textContent = 'External link';
+      const sourceValue = document.createElement('span');
+      sourceValue.className = 'detail-meta-value';
+      const link = document.createElement('a');
+      link.className = 'detail-action-link';
+      link.textContent = 'Открыть источник';
+      setSafeLink(link, sourceUrl);
+      sourceValue.appendChild(link);
+      sourceRow.append(sourceLabel, sourceValue);
+      sourceSection.appendChild(sourceRow);
+    }
+    detail.appendChild(sourceSection);
+  }
+
+  const technicalSection = document.createElement('section');
+  technicalSection.className = 'detail-section detail-technical-block';
+  technicalSection.appendChild(createSectionTitle('Техническая информация'));
+  if (props.name_ru && props.name_en && props.name_ru !== props.name_en) {
+    appendMetaRow(technicalSection, 'Название (EN)', props.name_en);
+  }
+  if (props.layer_id) appendMetaRow(technicalSection, 'Layer ID', props.layer_id);
+  if (props.coordinates_confidence) appendMetaRow(technicalSection, 'Coordinates confidence', props.coordinates_confidence);
+  if (technicalSection.querySelector('.detail-meta-row')) detail.appendChild(technicalSection);
+
+  return detail;
 }
 
 function updateFilterFeedback(elements, state) {
