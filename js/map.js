@@ -9,6 +9,36 @@ const CLUSTER_COUNT_LAYER_ID = 'artemis-cluster-count';
 const HEATMAP_LAYER_ID = 'artemis-heatmap';
 const POPUP_CLASS_NAME = 'artemis-popup';
 const TOP_HEADER_SELECTOR = '#top-header';
+const MARKER_THEME = {
+  point: {
+    color: '#22d3ee',
+    strokeColor: '#0f172a',
+    radius: 7,
+    strokeWidth: 2.1,
+    opacity: 0.94
+  },
+  hover: {
+    color: 'rgba(56, 189, 248, 0.34)',
+    strokeColor: '#7dd3fc',
+    radius: 10.5,
+    strokeWidth: 2.4,
+    opacity: 1
+  },
+  selected: {
+    color: 'rgba(125, 211, 252, 0.30)',
+    strokeColor: '#bae6fd',
+    radius: 12.8,
+    strokeWidth: 3.2,
+    opacity: 1
+  },
+  cluster: {
+    color: '#0369a1',
+    strokeColor: '#67e8f9',
+    opacity: 0.92,
+    strokeWidth: 1.6,
+    textColor: '#e0f2fe'
+  }
+};
 
 function syncTopHeaderLayoutMetrics() {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -241,11 +271,11 @@ function loadGeoJSON(map, featureCollection) {
       source: SOURCE_ID,
       filter: ['has', 'point_count'],
       paint: {
-        'circle-color': '#60a5fa',
+        'circle-color': MARKER_THEME.cluster.color,
         'circle-radius': ['step', ['get', 'point_count'], 14, 25, 20, 100, 26],
-        'circle-opacity': 0.9,
-        'circle-stroke-color': '#dbeafe',
-        'circle-stroke-width': 1.5
+        'circle-opacity': MARKER_THEME.cluster.opacity,
+        'circle-stroke-color': MARKER_THEME.cluster.strokeColor,
+        'circle-stroke-width': MARKER_THEME.cluster.strokeWidth
       }
     });
 
@@ -259,7 +289,7 @@ function loadGeoJSON(map, featureCollection) {
         'text-size': 12
       },
       paint: {
-        'text-color': '#e2e8f0'
+        'text-color': MARKER_THEME.cluster.textColor
       }
     });
   }
@@ -302,11 +332,11 @@ function loadGeoJSON(map, featureCollection) {
     type: 'circle',
     source: SOURCE_ID,
     paint: {
-      'circle-radius': 8,
-      'circle-color': '#f59e0b',
-      'circle-stroke-color': '#0f172a',
-      'circle-stroke-width': 2.2,
-      'circle-opacity': 0.96
+      'circle-radius': MARKER_THEME.point.radius,
+      'circle-color': MARKER_THEME.point.color,
+      'circle-stroke-color': MARKER_THEME.point.strokeColor,
+      'circle-stroke-width': MARKER_THEME.point.strokeWidth,
+      'circle-opacity': MARKER_THEME.point.opacity
     }
   };
 
@@ -321,11 +351,11 @@ function loadGeoJSON(map, featureCollection) {
     type: 'circle',
     source: SOURCE_ID,
     paint: {
-      'circle-radius': 13,
-      'circle-color': 'rgba(56, 189, 248, 0.28)',
-      'circle-stroke-color': '#38bdf8',
-      'circle-stroke-width': 2.8,
-      'circle-opacity': 1
+      'circle-radius': MARKER_THEME.selected.radius,
+      'circle-color': MARKER_THEME.selected.color,
+      'circle-stroke-color': MARKER_THEME.selected.strokeColor,
+      'circle-stroke-width': MARKER_THEME.selected.strokeWidth,
+      'circle-opacity': MARKER_THEME.selected.opacity
     },
     filter: ['==', ['get', '_ui_id'], '__none__']
   });
@@ -334,11 +364,11 @@ function loadGeoJSON(map, featureCollection) {
     type: 'circle',
     source: SOURCE_ID,
     paint: {
-      'circle-radius': 11,
-      'circle-color': 'rgba(147, 197, 253, 0.25)',
-      'circle-stroke-color': '#93c5fd',
-      'circle-stroke-width': 2,
-      'circle-opacity': 1
+      'circle-radius': MARKER_THEME.hover.radius,
+      'circle-color': MARKER_THEME.hover.color,
+      'circle-stroke-color': MARKER_THEME.hover.strokeColor,
+      'circle-stroke-width': MARKER_THEME.hover.strokeWidth,
+      'circle-opacity': MARKER_THEME.hover.opacity
     },
     filter: ['==', ['get', '_ui_id'], '__none__']
   });
