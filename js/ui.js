@@ -311,13 +311,14 @@ export async function initUI(map, features) {
     setProfileMenuOpen(elements, nextOpen);
   });
 
-  setMapFeatureClickHandler(map, (feature, coordinates) => {
+  const featureClickHandler = (feature, coordinates) => {
     selectFeature(state, elements, map, feature, {
       coordinates,
       openDetail: true,
       scrollCard: true
     });
-  });
+  };
+  setMapFeatureClickHandler(map, featureClickHandler);
   setMapFeatureHoverHandler(map, (featureId) => {
     if (featureId) {
       setHoveredFeature(state, map, featureId);
@@ -349,6 +350,9 @@ export async function initUI(map, features) {
       if (!inProfileMenu) setProfileMenuOpen(elements, false);
     }
     if (elements.detailPanel?.hidden) return;
+    const mapContainer = typeof map?.getContainer === 'function' ? map.getContainer() : null;
+    const withinMap = Boolean(mapContainer && target instanceof Node && mapContainer.contains(target));
+    if (withinMap) return;
     const withinFloating = elements.detailPanel.contains(target);
     const withinCard = target.closest?.('.ribbon-card');
     if (!withinFloating && !withinCard) closeDetailView(state, elements);

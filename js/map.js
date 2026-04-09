@@ -463,6 +463,8 @@ function bindPopupHandlers(map) {
         Array.isArray(coordinates) ? coordinates : [event.lngLat.lng, event.lngLat.lat],
         event
       );
+    } else {
+      console.warn('[ARTEMIS:map] Feature click captured, but UI featureClickHandler is not set. Detail panel flow was not triggered.');
     }
   });
 
