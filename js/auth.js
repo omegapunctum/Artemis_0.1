@@ -303,7 +303,11 @@ export async function initAuth() {
 
   initPromise = (async () => {
     try {
-      await refreshToken({ reason: 'session-restore' });
+      await withTimeout(
+        refreshToken({ reason: 'session-restore' }),
+        4500,
+        'Session restore timed out.'
+      );
       return getCurrentUser();
     } catch (_error) {
       return null;
@@ -313,6 +317,17 @@ export async function initAuth() {
   })();
 
   return initPromise;
+}
+
+function withTimeout(promise, timeoutMs, timeoutMessage) {
+  let timeoutId = null;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = window.setTimeout(() => reject(new Error(timeoutMessage || 'Operation timed out.')), timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timeoutId !== null) window.clearTimeout(timeoutId);
+  });
 }
 
 export async function fetchWithAuth(input, options = {}) {

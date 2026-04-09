@@ -6,6 +6,7 @@ const CLUSTER_LAYER_ID = 'artemis-clusters';
 const CLUSTER_COUNT_LAYER_ID = 'artemis-cluster-count';
 const HEATMAP_LAYER_ID = 'artemis-heatmap';
 const TOP_HEADER_SELECTOR = '#top-header';
+const REQUIRED_BASE_LAYERS = [LAYER_ID, SELECTED_LAYER_ID, HOVER_LAYER_ID, HEATMAP_LAYER_ID];
 const MARKER_THEME = {
   point: {
     color: '#22d3ee',
@@ -127,21 +128,106 @@ export function initMap(containerId, features) {
     currentYearFilter: null,
     displayMode: 'points',
     lastFeatureSetSignature: '',
-    lastLayerFiltersSerialized: new Map()
+    lastLayerFiltersSerialized: new Map(),
+    bootstrap: {
+      ready: false,
+      failed: false,
+      error: null
+    }
   };
 
   map.on('load', () => {
-    syncTopHeaderLayoutMetrics();
-    const mapData = map.__artemis.pendingFeatureCollection;
-    loadGeoJSON(map, mapData);
-    bindPopupHandlers(map);
-    map.__artemis.lastMapFeatureCount = mapData.features.length;
-    fitToFeatures(map, mapData);
+    try {
+      syncTopHeaderLayoutMetrics();
+      const mapData = map.__artemis.pendingFeatureCollection;
+      loadGeoJSON(map, mapData);
+      ensureMapBindingsReady(map);
+      bindPopupHandlers(map);
+      map.__artemis.lastMapFeatureCount = mapData.features.length;
+      fitToFeatures(map, mapData);
+      markMapBootstrapReady(map);
+    } catch (error) {
+      markMapBootstrapFailed(map, error);
+      throw error;
+    }
+  });
+  map.on('error', (event) => {
+    if (map?.__artemis?.bootstrap?.ready || map?.__artemis?.bootstrap?.failed) return;
+    if (!event?.error) return;
+    markMapBootstrapFailed(map, event.error);
   });
 
   window.addEventListener('resize', syncTopHeaderLayoutMetrics, { passive: true });
 
   return map;
+}
+
+export function waitForMapBootstrap(map, { timeoutMs = 12000 } = {}) {
+  if (!map?.__artemis?.bootstrap) {
+    return Promise.reject(new Error('Map bootstrap state missing.'));
+  }
+  if (map.__artemis.bootstrap.ready) {
+    return Promise.resolve();
+  }
+  if (map.__artemis.bootstrap.failed) {
+    return Promise.reject(map.__artemis.bootstrap.error || new Error('Map bootstrap failed.'));
+  }
+
+  return new Promise((resolve, reject) => {
+    let timeoutId = null;
+    const cleanup = () => {
+      map.off('artemis:bootstrap-ready', onReady);
+      map.off('artemis:bootstrap-failed', onFailed);
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+    const onReady = () => {
+      cleanup();
+      resolve();
+    };
+    const onFailed = (event) => {
+      cleanup();
+      reject(event?.error || map.__artemis.bootstrap.error || new Error('Map bootstrap failed.'));
+    };
+
+    map.on('artemis:bootstrap-ready', onReady);
+    map.on('artemis:bootstrap-failed', onFailed);
+    timeoutId = window.setTimeout(() => {
+      cleanup();
+      reject(new Error('Map bootstrap timed out.'));
+    }, Math.max(1000, Number(timeoutMs) || 12000));
+  });
+}
+
+function markMapBootstrapReady(map) {
+  map.__artemis = map.__artemis || {};
+  map.__artemis.bootstrap = map.__artemis.bootstrap || { ready: false, failed: false, error: null };
+  if (map.__artemis.bootstrap.ready) return;
+  map.__artemis.bootstrap.ready = true;
+  map.__artemis.bootstrap.failed = false;
+  map.__artemis.bootstrap.error = null;
+  map.fire('artemis:bootstrap-ready');
+}
+
+function markMapBootstrapFailed(map, error) {
+  map.__artemis = map.__artemis || {};
+  map.__artemis.bootstrap = map.__artemis.bootstrap || { ready: false, failed: false, error: null };
+  if (map.__artemis.bootstrap.ready || map.__artemis.bootstrap.failed) return;
+  map.__artemis.bootstrap.failed = true;
+  map.__artemis.bootstrap.error = error instanceof Error ? error : new Error(String(error || 'Map bootstrap failed.'));
+  map.fire('artemis:bootstrap-failed', { error: map.__artemis.bootstrap.error });
+}
+
+function ensureMapBindingsReady(map) {
+  const source = map.getSource(SOURCE_ID);
+  if (!source) {
+    throw new Error('Map source initialization failed.');
+  }
+
+  for (const layerId of REQUIRED_BASE_LAYERS) {
+    if (!map.getLayer(layerId)) {
+      throw new Error(`Map layer initialization failed: ${layerId}.`);
+    }
+  }
 }
 
 // Обновляет данные source без пересоздания карты.
