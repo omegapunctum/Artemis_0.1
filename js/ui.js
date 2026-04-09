@@ -8,6 +8,20 @@ let globalDataErrorRetryHandler = null;
 let activeUiToastTimerId = null;
 let activeUiToastEl = null;
 
+function isDebugTelemetryMode() {
+  if (typeof window === 'undefined') return false;
+  const debugParam = new URLSearchParams(window.location.search).get('debug');
+  if (typeof debugParam === 'string' && ['1', 'true', 'on'].includes(debugParam.trim().toLowerCase())) {
+    return true;
+  }
+  const host = String(window.location.hostname || '').toLowerCase();
+  return host === 'localhost'
+    || host === '127.0.0.1'
+    || host === '::1'
+    || host.endsWith('.local')
+    || host.endsWith('.test');
+}
+
 export function showGlobalDataLoading(message = 'Загрузка карты…') {
   const host = document.getElementById('global-data-loading');
   const text = document.getElementById('global-data-loading-text');
@@ -1750,6 +1764,10 @@ function updateCounters(elements, state, map) {
 
 function updateStatus(elements, state, map) {
   if (!elements.statusMessage) return;
+  if (!isDebugTelemetryMode()) {
+    elements.statusMessage.textContent = 'Карта готова.';
+    return;
+  }
   const diagnostics = getMapBuildDiagnostics(map);
   const bucketCount = Object.keys(state.timeAggregation || {}).length;
   elements.statusMessage.textContent = `Карта готова. Загружено ${diagnostics.inputTotal}, отображается ${getMapFeatureCount(map)}, в выборке ${state.filteredFeatures.length}, временных бакетов: ${bucketCount}.`;

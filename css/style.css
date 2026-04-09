@@ -790,21 +790,35 @@ button:focus-visible {
   border-color: rgba(148, 163, 184, 0.28);
   box-shadow: 0 8px 20px rgba(2, 6, 23, 0.22);
 }
-.timeline-row { display: grid; gap: 8px; }
-.timeline-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-#timeline-range-label { font-size: 12px; color: #bfdbfe; text-transform: uppercase; letter-spacing: 0.06em; }
+.timeline-row { display: grid; gap: 10px; }
+.timeline-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+#timeline-range-label {
+  font-size: 11px;
+  color: #bfdbfe;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  opacity: 0.9;
+}
 .timeline-mode-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   padding: 3px;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.34);
-  background: rgba(15, 23, 42, 0.48);
+  background: rgba(15, 23, 42, 0.58);
+  min-height: 32px;
+  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.14);
 }
 .timeline-mode-btn {
-  min-height: 26px;
-  padding: 0 10px;
+  min-height: 24px;
+  padding: 0 11px;
   border-radius: 999px;
   border: 1px solid transparent;
   background: transparent;
@@ -829,18 +843,27 @@ button:focus-visible {
   color: #e0f2fe;
 }
 .timeline-capsule {
-  padding: 4px 10px;
+  margin-left: auto;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
   border-radius: 999px;
   font-size: 12px;
   color: #e0f2fe;
   border: 1px solid rgba(125, 211, 252, 0.62);
-  background: rgba(14, 116, 144, 0.34);
+  background: rgba(14, 116, 144, 0.3);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.015em;
+  line-height: 1;
 }
 .timeline-track-wrap {
   position: relative;
-  height: 44px;
+  height: 46px;
+  --timeline-track-center: 18px;
+  --timeline-track-thickness: 4px;
+  --timeline-track-inactive-thickness: 6px;
+  --timeline-knob-size: 18px;
   --timeline-left: 0%;
   --timeline-right: 100%;
   touch-action: none;
@@ -849,10 +872,10 @@ button:focus-visible {
 .timeline-track-wrap::after {
   content: "";
   position: absolute;
-  top: 16px;
-  height: 8px;
+  top: calc(var(--timeline-track-center) - (var(--timeline-track-inactive-thickness) / 2));
+  height: var(--timeline-track-inactive-thickness);
   border-radius: var(--radius-pill);
-  background: rgba(15, 23, 42, 0.65);
+  background: rgba(15, 23, 42, 0.62);
   pointer-events: none;
 }
 .timeline-track-wrap::before {
@@ -865,46 +888,46 @@ button:focus-visible {
 }
 .timeline-track-base, .timeline-active-range {
   position: absolute;
-  top: 18px;
+  top: calc(var(--timeline-track-center) - (var(--timeline-track-thickness) / 2));
   left: 0;
   right: 0;
-  height: 4px;
+  height: var(--timeline-track-thickness);
   border-radius: 999px;
   pointer-events: none;
 }
-.timeline-track-base { background: rgba(148, 163, 184, 0.35); }
+.timeline-track-base { background: rgba(148, 163, 184, 0.44); }
 .timeline-active-range { background: linear-gradient(90deg, #38bdf8, #818cf8); left: 0; right: 100%; }
 .timeline-knob {
   position: absolute;
-  top: 10px;
-  width: 18px;
-  height: 18px;
+  top: calc(var(--timeline-track-center) - (var(--timeline-knob-size) / 2));
+  width: var(--timeline-knob-size);
+  height: var(--timeline-knob-size);
   border-radius: 50%;
-  border: 2px solid rgba(191, 219, 254, 0.96);
-  background: rgba(15, 23, 42, 0.95);
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.22);
+  border: 2px solid rgba(191, 219, 254, 0.92);
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.26), rgba(15, 23, 42, 0.95) 64%);
+  box-shadow: 0 2px 8px rgba(2, 6, 23, 0.42), 0 0 0 2px rgba(56, 189, 248, 0.16);
   transform: translateX(-50%);
   pointer-events: auto;
   cursor: ew-resize;
-  transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
+  transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
 }
 .timeline-knob::before {
   content: "";
   position: absolute;
-  inset: -12px;
+  inset: -9px;
   border-radius: 50%;
 }
-.timeline-track-wrap:hover .timeline-knob { box-shadow: 0 0 0 5px rgba(56, 189, 248, 0.26); }
+.timeline-track-wrap:hover .timeline-knob { box-shadow: 0 3px 10px rgba(2, 6, 23, 0.46), 0 0 0 2px rgba(56, 189, 248, 0.24); }
 .timeline-track-wrap.is-dragging .timeline-knob {
-  box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.24);
+  box-shadow: 0 3px 12px rgba(2, 6, 23, 0.5), 0 0 0 3px rgba(56, 189, 248, 0.24);
 }
 .timeline-knob.is-active {
-  transform: translateX(-50%) scale(1.06);
+  transform: translateX(-50%) scale(1.04);
   border-color: rgba(186, 230, 253, 1);
 }
 .timeline-knob:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 6px rgba(56, 189, 248, 0.28);
+  box-shadow: 0 3px 12px rgba(2, 6, 23, 0.5), 0 0 0 3px rgba(56, 189, 248, 0.34);
 }
 .timeline-track-wrap input[type='range']:focus-visible ~ .timeline-knob,
 .timeline-track-wrap input[type='range']:active ~ .timeline-knob { border-color: rgba(125, 211, 252, 1); }
@@ -912,7 +935,7 @@ button:focus-visible {
   position: absolute;
   left: 0;
   right: 0;
-  top: 28px;
+  top: 29px;
   display: flex;
   justify-content: space-between;
   gap: 8px;
@@ -923,7 +946,7 @@ button:focus-visible {
 .timeline-track-wrap input[type='range'] {
   position: absolute;
   inset: 0 0 auto 0;
-  top: 8px;
+  top: calc(var(--timeline-track-center) - 12px);
   width: 100%;
   margin: 0;
   opacity: 0;
@@ -939,7 +962,14 @@ button:focus-visible {
 }
 .timeline-row.is-point-mode .timeline-track-wrap::before,
 .timeline-row.is-point-mode .timeline-track-wrap::after {
-  background: rgba(15, 23, 42, 0.58);
+  background: rgba(15, 23, 42, 0.56);
+}
+.timeline-row.is-point-mode .timeline-capsule {
+  border-color: rgba(125, 211, 252, 0.74);
+}
+.timeline-row.is-range-mode .timeline-capsule {
+  border-color: rgba(129, 140, 248, 0.72);
+  background: rgba(79, 70, 229, 0.22);
 }
 
 #cards-state {
@@ -1518,21 +1548,22 @@ button:focus-visible {
   position: fixed;
   left: calc(12px + var(--safe-left));
   right: auto;
-  bottom: calc(var(--bottom-panel-height) + 16px + var(--safe-bottom));
+  bottom: var(--status-panel-bottom-offset);
   width: min(340px, calc(100vw - 24px - var(--safe-right) - var(--safe-left)));
-  background: rgba(16, 24, 38, 0.58);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  color: #fff;
-  padding: 9px 12px;
+  background: rgba(16, 24, 38, 0.44);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  color: rgba(229, 231, 235, 0.88);
+  padding: 8px 11px;
   border-radius: 12px;
-  font: var(--font-body);
+  font: var(--font-meta);
   z-index: calc(var(--z-bottom-panel) + 1);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
 }
 #app-shell.has-right-detail #status {
   left: calc(12px + var(--safe-left));
 }
-.status-loading { font-size: 12px; color: #bfdbfe; margin-bottom: 6px; }
+.status-loading { font-size: 11px; color: rgba(191, 219, 254, 0.92); margin-bottom: 4px; }
 .status-error { margin-top: 6px; color: #fecaca; }
 
 /* modal and form legacy styles for auth/ugc */
@@ -1919,7 +1950,7 @@ button:focus-visible {
   .brand { font-size: 13px; letter-spacing: 0.05em; }
   .project-nav-link:nth-last-child(-n+1) { display: none; }
   .top-actions > button, .icon-btn, .floating-card-close, .chip { min-height: 40px; }
-  .timeline-knob { width: 18px; height: 18px; top: 10px; }
+  .timeline-head { row-gap: 8px; }
 }
 
 @media (max-width: 1280px) {
@@ -1950,8 +1981,13 @@ button:focus-visible {
     gap: 0;
   }
   .timeline-track-wrap { height: 34px; }
-  .timeline-track-base, .timeline-active-range { top: 12px; }
-  .timeline-axis { top: 22px; font-size: 9px; }
+  .timeline-track-wrap {
+    --timeline-track-center: 12px;
+    --timeline-track-thickness: 3px;
+    --timeline-track-inactive-thickness: 5px;
+    --timeline-knob-size: 16px;
+  }
+  .timeline-axis { top: 20px; font-size: 9px; }
   .timeline-mode-toggle { margin-left: auto; }
   .ribbon-card { min-width: 148px; max-width: 160px; }
   .ribbon-card img { height: 76px; }

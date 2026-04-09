@@ -315,6 +315,18 @@
     const statusError = document.getElementById('status-error');
     const statusLoading = document.getElementById('status-loading');
     const USE_MAP_FEED = false;
+    const DEBUG_TELEMETRY_STATUS = (() => {
+      const debugParam = new URLSearchParams(window.location.search).get('debug');
+      if (typeof debugParam === 'string' && ['1', 'true', 'on'].includes(debugParam.trim().toLowerCase())) {
+        return true;
+      }
+      const host = String(window.location.hostname || '').toLowerCase();
+      return host === 'localhost'
+        || host === '127.0.0.1'
+        || host === '::1'
+        || host.endsWith('.local')
+        || host.endsWith('.test');
+    })();
 
     // Обновляет строку состояния приложения без лишнего шума.
     function setStatus(message, { error = false, loading = true } = {}) {
@@ -345,7 +357,12 @@
           : await loadFeatures();
         const sourceCount = Array.isArray(features?.features) ? features.features.length : 0;
         const sourceLabel = USE_MAP_FEED ? '/api/map/feed' : 'data/features.geojson';
-        setStatus(`Данные загружены: ${sourceCount} из источника ${sourceLabel}.`, { loading: true });
+        setStatus(
+          DEBUG_TELEMETRY_STATUS
+            ? `Данные загружены: ${sourceCount} из источника ${sourceLabel}.`
+            : 'Данные загружены.',
+          { loading: true }
+        );
 
         setStatus('Инициализация карты…', { loading: true });
         const map = initMap('map', features);
@@ -361,7 +378,12 @@
         const mapCount = uiState?.getVisibleCounts?.().mapCount ?? 0;
         clearError();
         hideGlobalDataError();
-        setStatus(`Карта готова. Найдено: ${foundCount}, на карте: ${mapCount}.`, { loading: false });
+        setStatus(
+          DEBUG_TELEMETRY_STATUS
+            ? `Карта готова. Найдено: ${foundCount}, на карте: ${mapCount}.`
+            : 'Карта готова.',
+          { loading: false }
+        );
       } catch (error) {
         console.error('Ошибка инициализации:', error);
         hideGlobalDataLoading();
