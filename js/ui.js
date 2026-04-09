@@ -160,6 +160,7 @@ export async function initUI(map, features) {
     detailViewMode: 'preview',
     detailOpenFeatureId: null,
     detailRenderFrameId: null,
+    detailFocusReturnEl: null,
     searchResults: [],
     bookmarks: [],
     applyState: null,
@@ -308,7 +309,14 @@ export async function initUI(map, features) {
   elements.profileMenuTrigger?.addEventListener('click', () => {
     const nextOpen = elements.profileMenu?.hidden !== false;
     if (state.overlay.activePrimary) closePrimaryPanel(elements, state, state.overlay.activePrimary);
-    setProfileMenuOpen(elements, nextOpen);
+    setProfileMenuOpen(elements, nextOpen, {
+      focusFirstItem: nextOpen && document.activeElement === elements.profileMenuTrigger
+    });
+  });
+  elements.profileMenu?.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    setProfileMenuOpen(elements, false, { returnFocus: true });
   });
 
   const featureClickHandler = (feature, coordinates) => {
@@ -362,15 +370,15 @@ export async function initUI(map, features) {
     if (event.defaultPrevented) return;
     if (event.key !== 'Escape') return;
     if (!elements.profileMenu?.hidden) {
-      setProfileMenuOpen(elements, false);
-      elements.profileMenuTrigger?.focus();
+      setProfileMenuOpen(elements, false, { returnFocus: true });
       event.preventDefault();
       return;
     }
+    const hadOpenDetail = !elements.detailPanel?.hidden;
     const closed = closeTopOverlay(elements, state, map);
     if (closed) {
       event.preventDefault();
-      restoreOverlayFocus(state.overlay.lastPrimaryTrigger, elements);
+      if (!hadOpenDetail) restoreOverlayFocus(state.overlay.lastPrimaryTrigger, elements);
     }
   });
 
@@ -403,11 +411,19 @@ function setupOnboardingOverlay(elements) {
   dismissBtn.addEventListener('click', closeOverlay);
 }
 
-function setProfileMenuOpen(elements, nextOpen = false) {
+function setProfileMenuOpen(elements, nextOpen = false, { returnFocus = false, focusFirstItem = false } = {}) {
   if (!elements?.profileMenu || !elements?.profileMenuTrigger) return;
   elements.profileMenu.hidden = !nextOpen;
   elements.profileMenu.classList.toggle('is-open', nextOpen);
+  elements.profileMenu.setAttribute('aria-hidden', String(!nextOpen));
   elements.profileMenuTrigger.setAttribute('aria-expanded', String(Boolean(nextOpen)));
+  if (nextOpen && focusFirstItem) {
+    const firstItem = elements.profileMenu.querySelector('.profile-menu-item');
+    firstItem?.focus?.({ preventScroll: true });
+  }
+  if (!nextOpen && returnFocus) {
+    elements.profileMenuTrigger.focus({ preventScroll: true });
+  }
 }
 
 function ensureDisplayModeToggle(elements) {
@@ -1279,6 +1295,10 @@ function showDetailPanel(state, elements, map, feature, options = {}) {
     && state.detailOpenFeatureId === featureId
     && state.detailViewMode === viewMode;
   if (shouldSkipRerender) return;
+  const activeElement = document.activeElement;
+  if (activeElement instanceof HTMLElement && !elements.detailPanel.contains(activeElement)) {
+    state.detailFocusReturnEl = activeElement;
+  }
   state.detailViewMode = viewMode;
 
   const props = normalizeProps(feature);
@@ -1309,6 +1329,7 @@ function showDetailPanel(state, elements, map, feature, options = {}) {
   state.detailOpenFeatureId = featureId;
   state.detailRenderFrameId = window.requestAnimationFrame(() => {
     elements.detailPanelBody.replaceChildren(detail);
+    focusDetailPanelEntry(elements, viewMode);
     state.detailRenderFrameId = null;
   });
 }
@@ -1331,6 +1352,7 @@ function hideDetailPanel(elements, state = null) {
   elements.detailPanel.classList.remove('is-selected');
   setPanelOpenState(elements.detailPanel, false);
   syncDetailDockLayout(elements, state);
+  if (state) restoreDetailFocus(elements, state);
 }
 
 function renderCardsState(elements, state) {
@@ -1503,6 +1525,8 @@ function applyTimelineModeUi(elements, state) {
   elements.timelineModeRangeBtn?.classList.toggle('is-active', !isPointMode);
   elements.timelineModePointBtn?.setAttribute('aria-pressed', String(isPointMode));
   elements.timelineModeRangeBtn?.setAttribute('aria-pressed', String(!isPointMode));
+  elements.timelineKnobEnd?.setAttribute('aria-hidden', String(isPointMode));
+  if (elements.timelineEnd) elements.timelineEnd.disabled = isPointMode;
 }
 
 function setupTimelinePointerInteractions(elements, state) {
@@ -1716,6 +1740,32 @@ function clearHoveredFeature(state, map) {
 
 function closeDetailView(state, elements) {
   hideDetailPanel(elements, state);
+}
+
+function focusDetailPanelEntry(elements, mode = 'preview') {
+  if (!elements?.detailPanel || elements.detailPanel.hidden) return;
+  const preferredTarget = mode === 'preview'
+    ? elements.detailPanel.querySelector('[data-action="open-full-detail"]')
+    : null;
+  const fallbackTarget = preferredTarget
+    || elements.detailPanel.querySelector('#detail-panel-close')
+    || elements.detailPanel.querySelector('button, [href], [tabindex]:not([tabindex="-1"])');
+  if (fallbackTarget instanceof HTMLElement) {
+    fallbackTarget.focus({ preventScroll: true });
+    return;
+  }
+  elements.detailPanel.focus?.({ preventScroll: true });
+}
+
+function restoreDetailFocus(elements, state) {
+  const returnTarget = state?.detailFocusReturnEl;
+  if (returnTarget instanceof HTMLElement && returnTarget.isConnected && !returnTarget.hasAttribute('disabled')) {
+    returnTarget.focus({ preventScroll: true });
+  } else {
+    const fallback = elements?.searchInput || elements?.filtersBtn || elements?.layersBtn || elements?.bookmarksBtn;
+    fallback?.focus?.({ preventScroll: true });
+  }
+  if (state) state.detailFocusReturnEl = null;
 }
 
 function getSelectedFeature(state) {

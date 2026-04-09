@@ -291,6 +291,16 @@ body { overflow: hidden; }
   border-color: rgba(148, 163, 184, 0.45);
   background: rgba(30, 41, 59, 0.42);
 }
+.project-nav-link:focus-visible,
+.profile-trigger:focus-visible,
+.profile-menu-item:focus-visible,
+.top-actions-cluster > button:focus-visible,
+#global-search:focus-visible,
+.timeline-mode-btn:focus-visible {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.86);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.24);
+}
 .search-shell {
   position: relative;
   padding: 2px 0;
@@ -824,6 +834,11 @@ button:focus-visible {
   border-color: rgba(125, 211, 252, 0.36);
   background: rgba(30, 41, 59, 0.55);
   color: var(--color-text-primary);
+}
+.timeline-mode-btn:focus-visible {
+  transform: none;
+  background: rgba(30, 41, 59, 0.55);
+  color: #e0f2fe;
 }
 .timeline-mode-btn.is-active {
   background: rgba(14, 116, 144, 0.42);
@@ -1410,6 +1425,12 @@ button:focus-visible {
   position: sticky;
   top: 4px;
   z-index: 3;
+}
+#detail-panel-close:focus-visible,
+.detail-panel :is(button, [href]):focus-visible {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.86);
+  box-shadow: var(--accent-glow);
 }
 .floating-card-close:hover { background: rgba(248, 113, 113, 0.2); border-color: rgba(248, 113, 113, 0.5); }
 .floating-card-close:focus-visible { box-shadow: var(--accent-glow); }

@@ -88,12 +88,12 @@
               <span class="profile-trigger-icon" aria-hidden="true">👤</span>
               <span class="profile-trigger-label">Профиль</span>
             </button>
-            <div id="profile-menu" class="top-panel profile-menu" hidden>
-              <button type="button" class="profile-menu-item">Профиль</button>
-              <button type="button" class="profile-menu-item">Мои черновики</button>
-              <button type="button" class="profile-menu-item">Закладки</button>
-              <button type="button" class="profile-menu-item">Настройки</button>
-              <button type="button" class="profile-menu-item profile-menu-item-danger">Выйти</button>
+            <div id="profile-menu" class="top-panel profile-menu" hidden role="menu" aria-label="Меню профиля">
+              <button type="button" class="profile-menu-item" role="menuitem">Профиль</button>
+              <button type="button" class="profile-menu-item" role="menuitem">Мои черновики</button>
+              <button type="button" class="profile-menu-item" role="menuitem">Закладки</button>
+              <button type="button" class="profile-menu-item" role="menuitem">Настройки</button>
+              <button type="button" class="profile-menu-item profile-menu-item-danger" role="menuitem">Выйти</button>
             </div>
           </div>
         </div>
@@ -161,9 +161,9 @@
       </div>
     </section>
 
-    <aside id="detail-panel" class="glass-panel detail-panel is-preview-mode" data-mode="preview" hidden aria-label="Object preview" aria-hidden="true">
+    <aside id="detail-panel" class="glass-panel detail-panel is-preview-mode" data-mode="preview" hidden aria-label="Object preview" aria-labelledby="detail-panel-heading" aria-hidden="true" role="dialog" aria-modal="false" tabindex="-1">
       <header class="detail-panel-head panel-header">
-        <h2 class="detail-panel-heading">Быстрый просмотр</h2>
+        <h2 id="detail-panel-heading" class="detail-panel-heading">Быстрый просмотр</h2>
         <div class="detail-panel-actions">
           <button id="detail-panel-close" class="floating-card-close" type="button" aria-label="Закрыть карточку предпросмотра">×</button>
         </div>
