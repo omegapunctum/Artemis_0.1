@@ -66,7 +66,6 @@
       <div class="search-shell">
         <input id="global-search" type="search" placeholder="Search events, people, places, dates..." autocomplete="off" />
         <button id="search-clear-btn" class="icon-btn search-clear-btn" type="button" aria-label="Clear search" hidden>×</button>
-        <p id="search-helper-state" class="search-helper-state" aria-live="polite">Ищите места, события и объекты.</p>
         <div id="search-suggestions" class="search-suggestions" aria-label="Примеры поисковых запросов">
           <button type="button" class="search-suggestion-chip" data-query="место">место</button>
           <button type="button" class="search-suggestion-chip" data-query="событие">событие</button>
@@ -86,7 +85,6 @@
           <div class="profile-shell">
             <button id="profile-menu-trigger" class="profile-trigger" type="button" aria-label="Открыть меню профиля" aria-expanded="false" aria-controls="profile-menu">
               <span class="profile-trigger-icon" aria-hidden="true">👤</span>
-              <span class="profile-trigger-label">Профиль</span>
             </button>
             <div id="profile-menu" class="top-panel profile-menu" hidden role="menu" aria-label="Меню профиля">
               <button type="button" class="profile-menu-item" role="menuitem">Профиль</button>
@@ -103,8 +101,9 @@
             <button id="layers-btn" type="button" aria-label="Toggle layers" aria-expanded="false">Layers</button>
             <button id="bookmarks-btn" type="button" aria-label="Toggle bookmarks" aria-expanded="false">Bookmarks</button>
             <button id="courses-btn" type="button" aria-label="Toggle courses" aria-expanded="false">Courses</button>
+            <button id="map-theme-toggle" type="button" aria-label="Сменить тему карты">Серая</button>
             <button id="live-btn" type="button" aria-label="Toggle live feed" aria-expanded="false">LIVE</button>
-            <p id="layers-entry-helper" class="layers-entry-helper">Выберите, что показывать на карте.</p>
+            <p id="layers-entry-helper" class="layers-entry-helper">Слои карты</p>
           </div>
         </div>
         <button id="overflow-btn" class="icon-btn" type="button" aria-label="More actions">⋯</button>
@@ -308,7 +307,7 @@
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script type="module">
     import { loadFeatures, loadMapFeed } from './js/data.js';
-    import { initMap } from './js/map.js';
+    import { initMap, waitForMapBootstrap } from './js/map.js';
     import { initUI, showGlobalDataError, hideGlobalDataError, showGlobalDataLoading, hideGlobalDataLoading } from './js/ui.js';
     import { initAuth } from './js/auth.js';
     import { initUGCUI } from './js/ui.ugc.js';
@@ -356,6 +355,8 @@
 
         setStatus('Инициализация карты…', { loading: true });
         const map = initMap('map', features);
+        await waitForMapBootstrap(map);
+        hideGlobalDataLoading();
 
         setStatus('Инициализация интерфейса…', { loading: true });
         const uiState = await initUI(map, features);
@@ -366,7 +367,6 @@
         const mapCount = uiState?.getVisibleCounts?.().mapCount ?? 0;
         clearError();
         hideGlobalDataError();
-        hideGlobalDataLoading();
         setStatus(`Карта готова. Найдено: ${foundCount}, на карте: ${mapCount}.`, { loading: false });
       } catch (error) {
         console.error('Ошибка инициализации:', error);

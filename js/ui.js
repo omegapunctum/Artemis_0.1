@@ -1,10 +1,12 @@
 import { loadLayers, loadCourses, getRecentFeatures } from './data.js';
-import { updateMapData, setLayerLookup, focusFeatureOnMap, getMapFeatureCount, getMapBuildDiagnostics, setMapFeatureClickHandler, setMapFeatureHoverHandler, setMapLayerFilter, setSelectedFeatureId, setHoveredFeatureId, setMapDisplayMode } from './map.js';
-import { debounce, createInlineStateBlock, showSystemMessage } from './ux.js';
+import { updateMapData, setLayerLookup, focusFeatureOnMap, getMapFeatureCount, getMapBuildDiagnostics, setMapFeatureClickHandler, setMapFeatureHoverHandler, setMapLayerFilter, setSelectedFeatureId, setHoveredFeatureId, setMapDisplayMode, getMapThemeOptions, getMapTheme, setMapTheme } from './map.js';
+import { debounce, createInlineStateBlock } from './ux.js';
 import { normalizeSafeUrl, setSafeImageSource, setSafeLink, toSafeText } from './safe-dom.js';
 import { DEFAULT_DISPLAY_MODE, aggregateFeaturesByDecade, createCoursesState, createLiveState, getSelectedCourse, moveCourseStep, selectCourse } from './state.js';
 
 let globalDataErrorRetryHandler = null;
+let activeUiToastTimerId = null;
+let activeUiToastEl = null;
 
 export function showGlobalDataLoading(message = 'Загрузка карты…') {
   const host = document.getElementById('global-data-loading');
@@ -52,6 +54,35 @@ export function hideGlobalDataError() {
     retryBtn.removeEventListener('click', globalDataErrorRetryHandler);
     globalDataErrorRetryHandler = null;
   }
+}
+
+function showUiSystemMessage(message, { variant = 'success', timeout = 2600 } = {}) {
+  const host = document.getElementById('app-status-host');
+  if (!host || !message) return;
+
+  if (activeUiToastTimerId !== null) {
+    window.clearTimeout(activeUiToastTimerId);
+    activeUiToastTimerId = null;
+  }
+  if (activeUiToastEl && activeUiToastEl.isConnected) {
+    activeUiToastEl.remove();
+  }
+  host.querySelectorAll('[data-artemis-ui-toast="true"]').forEach((node) => node.remove());
+
+  const item = document.createElement('div');
+  item.className = `app-system-message app-system-${variant}`;
+  item.setAttribute('role', 'status');
+  item.setAttribute('aria-live', 'polite');
+  item.dataset.artemisUiToast = 'true';
+  item.textContent = message;
+  host.appendChild(item);
+  activeUiToastEl = item;
+
+  activeUiToastTimerId = window.setTimeout(() => {
+    if (activeUiToastEl && activeUiToastEl.isConnected) activeUiToastEl.remove();
+    activeUiToastEl = null;
+    activeUiToastTimerId = null;
+  }, Math.max(800, Number(timeout) || 2600));
 }
 
 export async function initUI(map, features) {
@@ -103,6 +134,7 @@ export async function initUI(map, features) {
     topUtilityGroup: document.querySelector('#top-header .top-utility-group'),
     displayModeToggle: document.getElementById('display-mode-toggle'),
     overflowBtn: document.getElementById('overflow-btn'),
+    mapThemeToggle: document.getElementById('map-theme-toggle'),
     profileMenuTrigger: document.getElementById('profile-menu-trigger'),
     profileMenu: document.getElementById('profile-menu'),
     timelineStart: document.getElementById('timeline-start'),
@@ -193,6 +225,7 @@ export async function initUI(map, features) {
   setupLayerEntryHint(elements);
   setupResponsiveUi(elements, state, map);
   ensureDisplayModeToggle(elements);
+  setupMapThemeToggle(elements, map);
   setupDisplayModeToggle(elements, state, map);
   setMapDisplayMode(map, state.displayMode);
   renderTopPanels(elements, state, layers, confidenceValues, map);
@@ -453,10 +486,35 @@ function setupDisplayModeToggle(elements, state, map) {
     state.displayMode = state.displayMode === 'points' ? 'heatmap' : 'points';
     setMapDisplayMode(map, state.displayMode);
     syncLabel();
-    showSystemMessage(state.displayMode === 'heatmap' ? 'Heatmap mode enabled' : 'Points mode enabled', {
+    showUiSystemMessage(state.displayMode === 'heatmap' ? 'Heatmap mode enabled' : 'Points mode enabled', {
       variant: 'success',
       timeout: 1600
     });
+  });
+}
+
+function setupMapThemeToggle(elements, map) {
+  const button = elements.mapThemeToggle;
+  if (!button) return;
+  const themes = getMapThemeOptions();
+  if (!themes.length) return;
+  const syncLabel = () => {
+    const activeTheme = getMapTheme(map);
+    const activeMeta = themes.find((theme) => theme.id === activeTheme) || themes[0];
+    button.textContent = activeMeta.label;
+    button.setAttribute('aria-label', `Тема карты: ${activeMeta.label}. Нажмите для смены.`);
+    button.dataset.theme = activeMeta.id;
+  };
+  syncLabel();
+
+  button.addEventListener('click', () => {
+    const activeTheme = getMapTheme(map);
+    const currentIndex = themes.findIndex((theme) => theme.id === activeTheme);
+    const nextTheme = themes[(currentIndex + 1 + themes.length) % themes.length];
+    const appliedTheme = setMapTheme(map, nextTheme.id);
+    syncLabel();
+    const appliedMeta = themes.find((theme) => theme.id === appliedTheme) || nextTheme;
+    showUiSystemMessage(`Тема карты: ${appliedMeta.label}`, { variant: 'success', timeout: 1700 });
   });
 }
 
@@ -516,7 +574,7 @@ function renderFiltersPanel(elements, state, layers, confidenceValues) {
   resetBtn.addEventListener('click', () => {
     resetExploreConstraints(elements, state);
     state.applyState?.();
-    showSystemMessage('Фильтры сброшены', { variant: 'success', timeout: 2200 });
+    showUiSystemMessage('Фильтры сброшены', { variant: 'success', timeout: 2200 });
   });
   filterSummary.append(activeFiltersBadge, resetBtn);
 
@@ -576,7 +634,7 @@ function renderLayersPanel(elements, state, layers) {
   restoreBtn.addEventListener('click', () => {
     restoreDefaultLayers(state);
     state.applyState?.();
-    showSystemMessage('Слои восстановлены по умолчанию', { variant: 'success', timeout: 2200 });
+    showUiSystemMessage('Слои восстановлены по умолчанию', { variant: 'success', timeout: 2200 });
   });
   const actionRow = document.createElement('div');
   actionRow.className = 'layers-panel-toolbar';
@@ -1095,7 +1153,7 @@ function clearSearchState(elements, state, { closePanel = false, notify = false 
   state.search = '';
   toggleSearchClear(elements, state);
   if (closePanel) closePrimaryPanel(elements, state, 'search');
-  if (notify) showSystemMessage('Поиск очищен', { variant: 'success', timeout: 2000 });
+  if (notify) showUiSystemMessage('Поиск очищен', { variant: 'success', timeout: 2000 });
 }
 
 function restoreDefaultLayers(state) {
@@ -2392,7 +2450,7 @@ function buildEmptyStateContext(state, elements) {
       onAction: () => {
         restoreDefaultLayers(state);
         state.applyState?.();
-        showSystemMessage('Слои восстановлены по умолчанию', { variant: 'success', timeout: 2200 });
+        showUiSystemMessage('Слои восстановлены по умолчанию', { variant: 'success', timeout: 2200 });
       }
     };
   }
@@ -2404,7 +2462,7 @@ function buildEmptyStateContext(state, elements) {
       onAction: () => {
         clearSearchState(elements, state, { closePanel: false, notify: false });
         state.applyState?.();
-        showSystemMessage('Поиск очищен', { variant: 'success', timeout: 2000 });
+        showUiSystemMessage('Поиск очищен', { variant: 'success', timeout: 2000 });
       }
     };
   }
@@ -2415,7 +2473,7 @@ function buildEmptyStateContext(state, elements) {
     onAction: () => {
       resetExploreConstraints(elements, state);
       state.applyState?.();
-      showSystemMessage('Ограничения сброшены', { variant: 'success', timeout: 2200 });
+      showUiSystemMessage('Ограничения сброшены', { variant: 'success', timeout: 2200 });
     }
   };
 }
