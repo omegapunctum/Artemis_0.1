@@ -1824,6 +1824,9 @@ button:focus-visible {
 }
 .maplibregl-ctrl-top-right { right: calc(10px + var(--safe-right)); }
 .maplibregl-ctrl-top-left { left: calc(10px + var(--safe-left)); }
+.maplibregl-popup.artemis-popup {
+  display: none !important;
+}
 
 @media (max-width: 1080px) {
   #top-header { grid-template-columns: minmax(190px, 1fr) minmax(140px, 1fr) auto; min-height: 52px; }
