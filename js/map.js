@@ -1,5 +1,3 @@
-import { appendText, createTextElement, normalizeSafeUrl, setSafeImageSource, setSafeLink, setText, toSafeText } from './safe-dom.js';
-
 const SOURCE_ID = 'artemis-features';
 const LAYER_ID = 'artemis-points';
 const SELECTED_LAYER_ID = 'artemis-points-selected';
@@ -7,7 +5,6 @@ const HOVER_LAYER_ID = 'artemis-points-hover';
 const CLUSTER_LAYER_ID = 'artemis-clusters';
 const CLUSTER_COUNT_LAYER_ID = 'artemis-cluster-count';
 const HEATMAP_LAYER_ID = 'artemis-heatmap';
-const POPUP_CLASS_NAME = 'artemis-popup';
 const TOP_HEADER_SELECTOR = '#top-header';
 const MARKER_THEME = {
   point: {
@@ -120,7 +117,6 @@ export function initMap(containerId, features) {
   map.addControl(new maplibregl.NavigationControl(), 'top-right');
   const initialBuild = buildMapFeatureCollection(features);
   map.__artemis = {
-    popup: null,
     layerLookup: new Map(),
     lastMapFeatureCount: 0,
     lastBuildDiagnostics: initialBuild.diagnostics,
@@ -454,21 +450,19 @@ function combineFilters(filters) {
 }
 
 function bindPopupHandlers(map) {
+  dismissLegacyFeaturePopup(map);
   map.on('click', LAYER_ID, (event) => {
     const feature = event.features?.[0];
     if (!feature) return;
+    dismissLegacyFeaturePopup(map);
     const coordinates = feature?.geometry?.coordinates;
     const onFeatureClick = map?.__artemis?.featureClickHandler;
-    let handledByExternal = false;
     if (typeof onFeatureClick === 'function') {
-      handledByExternal = onFeatureClick(
+      onFeatureClick(
         feature,
         Array.isArray(coordinates) ? coordinates : [event.lngLat.lng, event.lngLat.lat],
         event
-      ) === true;
-    }
-    if (!handledByExternal) {
-      openFeaturePopup(map, feature, Array.isArray(coordinates) ? coordinates : event.lngLat);
+      );
     }
   });
 
@@ -506,6 +500,7 @@ function bindPopupHandlers(map) {
   });
   map.on('mouseleave', LAYER_ID, () => {
     map.getCanvas().style.cursor = '';
+    dismissLegacyFeaturePopup(map);
     const onFeatureHover = map?.__artemis?.featureHoverHandler;
     if (typeof onFeatureHover === 'function') {
       onFeatureHover(null, null, null);
@@ -520,89 +515,14 @@ function bindPopupHandlers(map) {
   });
 }
 
-// Безопасно открывает popup даже при неполных данных.
-function openFeaturePopup(map, feature, lngLat) {
-  try {
-    const content = buildPopupContent(feature, map?.__artemis?.layerLookup);
-    if (map.__artemis?.popup) {
-      map.__artemis.popup.remove();
-    }
-    map.__artemis.popup = new maplibregl.Popup({ closeButton: true, maxWidth: '320px', className: POPUP_CLASS_NAME })
-      .setLngLat(lngLat)
-      .setDOMContent(content)
-      .addTo(map);
-  } catch (error) {
-    console.debug('Popup fallback:', error);
-    new maplibregl.Popup({ closeButton: true, maxWidth: '280px', className: POPUP_CLASS_NAME })
-      .setLngLat(lngLat)
-      .setText('Не удалось отобразить карточку объекта.')
-      .addTo(map);
+function dismissLegacyFeaturePopup(map) {
+  if (map?.__artemis?.popup && typeof map.__artemis.popup.remove === 'function') {
+    map.__artemis.popup.remove();
+    map.__artemis.popup = null;
   }
-}
-
-// Строит содержимое popup из feature и layers.json.
-function buildPopupContent(feature, layerLookup = new Map()) {
-  const props = feature?.properties && typeof feature.properties === 'object' ? feature.properties : {};
-  const article = document.createElement('article');
-  article.className = 'popup-card';
-
-  const title = createTextElement('h3', props.name_ru, { fallback: 'Без названия' });
-  article.appendChild(title);
-
-  const safeImageUrl = normalizeSafeUrl(props.image_url, { allowRelative: true });
-  if (safeImageUrl) {
-    const image = document.createElement('img');
-    image.className = 'popup-image';
-    setSafeImageSource(image, safeImageUrl, { allowRelative: true });
-    image.alt = toSafeText(props.name_ru, 'Без названия');
-    image.loading = 'lazy';
-    image.referrerPolicy = 'no-referrer';
-    image.addEventListener('error', () => {
-      image.replaceWith(createImageFallback());
-    }, { once: true });
-    article.appendChild(image);
-  } else {
-    article.appendChild(createImageFallback());
+  if (typeof document !== 'undefined') {
+    document.querySelectorAll('.maplibregl-popup.artemis-popup').forEach((node) => node.remove());
   }
-
-  article.appendChild(createTextElement('p', props.description, { fallback: 'Описание отсутствует' }));
-
-  const layerId = normalizeLayerValue(props.layer_id);
-  article.appendChild(buildPopupMeta('Слой:', String(layerLookup.get(layerId) || layerId || 'Слой не указан')));
-  const dateText = [props?.date_start, props?.date_end].filter((value) => value !== null && value !== undefined && value !== '').join(' — ') || 'Даты не указаны';
-  article.appendChild(buildPopupMeta('Даты:', String(dateText)));
-
-  if (props?.source_license) {
-    article.appendChild(buildPopupMeta('Лицензия:', props.source_license));
-  }
-
-  const safeSourceUrl = normalizeSafeUrl(props?.source_url);
-  if (safeSourceUrl) {
-    const row = document.createElement('p');
-    const strong = document.createElement('strong');
-    strong.textContent = 'Источник:';
-    row.append(strong, ' ');
-    const link = document.createElement('a');
-    setSafeLink(link, safeSourceUrl);
-    setText(link, safeSourceUrl);
-    row.appendChild(link);
-    article.appendChild(row);
-  }
-
-  return article;
-}
-
-function buildPopupMeta(label, value) {
-  const row = document.createElement('p');
-  const strong = createTextElement('strong', label);
-  row.appendChild(strong);
-  appendText(row, ' ');
-  appendText(row, value);
-  return row;
-}
-
-function createImageFallback() {
-  return createTextElement('div', 'Изображение отсутствует', { className: 'popup-image placeholder' });
 }
 
 function normalizeLayerValue(value) {

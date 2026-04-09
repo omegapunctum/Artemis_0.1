@@ -1196,6 +1196,7 @@ function showDetailPanel(state, elements, map, feature, options = {}) {
 
   elements.detailPanelBody.replaceChildren();
   elements.detailPanel.dataset.mode = viewMode;
+  elements.detailPanelBody.dataset.mode = viewMode;
   elements.detailPanel.classList.toggle('is-preview-mode', viewMode === 'preview');
   elements.detailPanel.classList.toggle('is-full-mode', viewMode === 'full');
   updateDetailPanelHeading(elements, viewMode);
@@ -1230,6 +1231,7 @@ function hideDetailPanel(elements, state = null) {
   if (state) state.detailViewMode = 'preview';
   if (elements.detailPanel) {
     elements.detailPanel.dataset.mode = 'preview';
+    if (elements.detailPanelBody) elements.detailPanelBody.dataset.mode = 'preview';
     elements.detailPanel.classList.add('is-preview-mode');
     elements.detailPanel.classList.remove('is-full-mode');
   }
@@ -1919,7 +1921,8 @@ function buildPreviewDetailContent(state, elements, map, feature, props) {
   const description = getPreviewDescription(props);
 
   const detail = document.createElement('article');
-  detail.className = 'detail-content detail-content-preview';
+  detail.className = 'detail-content detail-content-preview detail-panel-body-inner';
+  detail.dataset.mode = 'preview';
 
   const titleSection = document.createElement('section');
   titleSection.className = 'detail-section detail-title-block';
@@ -1993,7 +1996,8 @@ function buildFullDetailContent(state, props, feature) {
   const licenseLabel = String(props.license || props.licence || props.rights || '').trim();
 
   const detail = document.createElement('article');
-  detail.className = 'detail-content detail-content-full';
+  detail.className = 'detail-content detail-content-full detail-panel-body-inner';
+  detail.dataset.mode = 'full';
 
   const mediaSection = document.createElement('section');
   mediaSection.className = 'detail-media-block';
