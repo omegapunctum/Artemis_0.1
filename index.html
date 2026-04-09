@@ -308,7 +308,7 @@
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script type="module">
     import { loadFeatures, loadMapFeed } from './js/data.js';
-    import { initMap } from './js/map.js';
+    import { initMap, waitForMapBootstrap } from './js/map.js';
     import { initUI, showGlobalDataError, hideGlobalDataError, showGlobalDataLoading, hideGlobalDataLoading } from './js/ui.js';
     import { initAuth } from './js/auth.js';
     import { initUGCUI } from './js/ui.ugc.js';
@@ -356,6 +356,8 @@
 
         setStatus('Инициализация карты…', { loading: true });
         const map = initMap('map', features);
+        await waitForMapBootstrap(map);
+        hideGlobalDataLoading();
 
         setStatus('Инициализация интерфейса…', { loading: true });
         const uiState = await initUI(map, features);
@@ -366,7 +368,6 @@
         const mapCount = uiState?.getVisibleCounts?.().mapCount ?? 0;
         clearError();
         hideGlobalDataError();
-        hideGlobalDataLoading();
         setStatus(`Карта готова. Найдено: ${foundCount}, на карте: ${mapCount}.`, { loading: false });
       } catch (error) {
         console.error('Ошибка инициализации:', error);
