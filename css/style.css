@@ -56,9 +56,9 @@
   --space-lg: 16px;
   --space-xl: 24px;
   /* Shadows + blur */
-  --shadow-subtle: 0 8px 18px rgba(2, 6, 23, 0.2);
-  --shadow-medium: 0 12px 30px rgba(2, 6, 23, 0.34);
-  --shadow-elevated: 0 16px 36px rgba(0, 0, 0, 0.34);
+  --shadow-subtle: 0 4px 12px rgba(2, 6, 23, 0.14);
+  --shadow-medium: 0 6px 16px rgba(2, 6, 23, 0.18);
+  --shadow-elevated: 0 10px 22px rgba(2, 6, 23, 0.2);
   --blur-sm: 12px;
   --blur-md: 16px;
   --blur-lg: 18px;
@@ -249,6 +249,8 @@ body { overflow: hidden; }
   row-gap: 8px;
   padding: 8px 10px;
   background: rgba(16, 24, 38, 0.52);
+  overflow: visible;
+  isolation: isolate;
 }
 .top-shell-left {
   display: grid;
@@ -360,6 +362,8 @@ body { overflow: hidden; }
   justify-items: end;
   min-width: 0;
   gap: 10px;
+  position: relative;
+  z-index: 1;
 }
 .top-utility-group {
   display: inline-flex;
@@ -504,13 +508,13 @@ body { overflow: hidden; }
   background: var(--glass-bg-strong);
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(var(--blur-lg));
-  box-shadow: var(--shadow-medium);
+  box-shadow: var(--shadow-subtle);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transform: translateY(-6px) scale(0.985);
   transition: opacity var(--motion-normal) var(--ease-standard), transform var(--motion-soft) var(--ease-standard), visibility 0ms linear var(--motion-soft);
-  z-index: var(--z-top-dropdown);
+  z-index: calc(var(--z-top-dropdown) + 4);
 }
 .top-panel.is-open {
   opacity: 1;
@@ -784,7 +788,7 @@ button:focus-visible {
   gap: 0;
   background: rgba(12, 18, 30, 0.52);
   border-color: rgba(148, 163, 184, 0.28);
-  box-shadow: 0 16px 42px rgba(2, 6, 23, 0.48);
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.22);
 }
 .timeline-row { display: grid; gap: 8px; }
 .timeline-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -1109,7 +1113,7 @@ button:focus-visible {
   will-change: opacity, transform;
   background: linear-gradient(165deg, rgba(8, 14, 26, 0.88), rgba(12, 20, 34, 0.78));
   border: 1px solid rgba(148, 163, 184, 0.3);
-  box-shadow: 0 16px 32px rgba(2, 6, 23, 0.5);
+  box-shadow: 0 8px 18px rgba(2, 6, 23, 0.26);
 }
 .detail-panel.is-full-mode {
   width: var(--detail-panel-width);
