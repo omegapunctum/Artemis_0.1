@@ -2,8 +2,11 @@ let accessToken = null;
 let refreshPromise = null;
 let initPromise = null;
 let resolvedApiBase = null;
+let sessionRestoreAttempted = false;
 const routeFallbackLogCache = new Set();
 const sessionRestoreLogCache = new Set();
+const SESSION_RESTORE_TIMEOUT_MS = 4500;
+const REFRESH_TIMEOUT_MS = 8000;
 
 const API_BASE_CANDIDATES = [
   (window.ARTEMIS_API_BASE || '').trim(),
@@ -50,18 +53,22 @@ function logRouteFallback({ method, path, tried, status, level = 'info' }) {
 
 function isExpectedSessionRestoreFailure(error) {
   const status = Number(error?.status || error?.responseStatus || 0);
-  return status === 401 || status === 404 || status === 405;
+  const code = String(error?.code || '').toUpperCase();
+  return status === 0 || status === 401 || status === 404 || status === 405 || code === 'AUTH_REFRESH_TIMEOUT' || code === 'AUTH_REFRESH_NETWORK';
 }
 
 function logSessionRestoreFailureOnce(error) {
   const status = Number(error?.status || error?.responseStatus || 0) || 'unknown';
-  const key = `session-restore:${status}`;
+  const code = String(error?.code || '').toUpperCase() || 'none';
+  const key = `session-restore:${status}:${code}`;
   if (sessionRestoreLogCache.has(key)) return;
   sessionRestoreLogCache.add(key);
-  const message = status === 401
-    ? 'ARTEMIS session restore skipped: no valid session.'
-    : 'ARTEMIS session restore unavailable on current API route.';
-  console.info(message, { status });
+  const message = code === 'AUTH_REFRESH_TIMEOUT'
+    ? 'ARTEMIS session restore skipped: refresh timeout.'
+    : status === 401
+      ? 'ARTEMIS session restore skipped: no valid session.'
+      : 'ARTEMIS session restore unavailable on current API route.';
+  console.info(message, { status, code });
 }
 
 async function requestApi(path, options = {}, fallbackMessage = 'API request failed', requestBehavior = {}) {
@@ -257,19 +264,29 @@ export async function logout() {
 export async function refreshToken(options = {}) {
   if (refreshPromise) return refreshPromise;
   const isSessionRestore = options?.reason === 'session-restore';
+  const timeoutMs = Math.max(1000, Number(options?.timeoutMs) || (isSessionRestore ? SESSION_RESTORE_TIMEOUT_MS : REFRESH_TIMEOUT_MS));
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort('auth-refresh-timeout'), timeoutMs);
 
   refreshPromise = (async () => {
-    const response = await requestApi('/auth/refresh', {
-      method: 'POST',
-      credentials: 'include'
-    }, 'Refresh failed', {
-      fallbackLogLevel: isSessionRestore ? 'debug' : 'info',
-      expectedErrorStatuses: [401, 404, 405],
-      expectedErrorLogLevel: isSessionRestore ? 'debug' : 'info',
-      defaultErrorLogLevel: 'warn'
-    });
+    try {
+      const response = await requestApi('/auth/refresh', {
+        method: 'POST',
+        credentials: 'include',
+        signal: controller.signal
+      }, 'Refresh failed', {
+        fallbackLogLevel: isSessionRestore ? 'debug' : 'info',
+        expectedErrorStatuses: [401, 404, 405],
+        expectedErrorLogLevel: isSessionRestore ? 'debug' : 'info',
+        defaultErrorLogLevel: 'warn'
+      });
 
-    return parseAccessToken(response);
+      return parseAccessToken(response);
+    } catch (error) {
+      throw normalizeRefreshError(error);
+    } finally {
+      window.clearTimeout(timeoutId);
+    }
   })();
 
   try {
@@ -300,10 +317,12 @@ function shouldAttemptRefresh(request) {
 export async function initAuth() {
   if (accessToken) return getCurrentUser();
   if (initPromise) return initPromise;
+  if (sessionRestoreAttempted) return null;
 
   initPromise = (async () => {
+    sessionRestoreAttempted = true;
     try {
-      await refreshToken({ reason: 'session-restore' });
+      await refreshToken({ reason: 'session-restore', timeoutMs: SESSION_RESTORE_TIMEOUT_MS });
       return getCurrentUser();
     } catch (_error) {
       return null;
@@ -313,6 +332,24 @@ export async function initAuth() {
   })();
 
   return initPromise;
+}
+
+function normalizeRefreshError(error) {
+  if (error?.name === 'AbortError') {
+    const timeoutError = new Error('Refresh timed out.');
+    timeoutError.code = 'AUTH_REFRESH_TIMEOUT';
+    timeoutError.status = 0;
+    timeoutError.responseStatus = 0;
+    return timeoutError;
+  }
+  if (error instanceof TypeError) {
+    const networkError = new Error(error.message || 'Refresh network failure.');
+    networkError.code = 'AUTH_REFRESH_NETWORK';
+    networkError.status = 0;
+    networkError.responseStatus = 0;
+    return networkError;
+  }
+  return error;
 }
 
 export async function fetchWithAuth(input, options = {}) {
