@@ -1,14 +1,20 @@
 {
-  "timestamp": "2026-04-11T06:51:12Z",
+  "timestamp": "2026-04-11T12:36:40Z",
   "source": "airtable",
   "records_total_source": 19,
   "records_exported": 19,
   "records_geojson": 19,
   "errors": 0,
-  "warnings": 76,
+  "warnings": 4,
   "error_stats": {},
   "warning_stats": {
-    "using legacy fallback field": 76
+    "legacy_fallback_longitude": 1,
+    "legacy_fallback_latitude": 1,
+    "legacy_fallback_source_license": 1,
+    "legacy_fallback_coordinates_confidence": 1
   },
-  "duration_seconds": 2.454
+  "warning_categories": {
+    "expected_fallback": 4
+  },
+  "duration_seconds": 2.211
 }
