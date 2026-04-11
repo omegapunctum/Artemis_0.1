@@ -113,11 +113,14 @@ export async function initUI(map, features) {
   }
   let coursesPayload = { courses: [] };
   let coursesError = '';
+  let coursesContractWarnings = [];
   try {
     coursesPayload = await loadCourses();
   } catch (error) {
     coursesError = 'Courses временно недоступны. Попробуйте позже.';
   }
+  const normalizedCoursesResult = normalizeCoursesForRuntime(coursesPayload?.courses || []);
+  coursesContractWarnings = normalizedCoursesResult.warnings;
   const layerLookup = buildLayerLookup(layers, allFeatures);
   setLayerLookup(map, layers);
 
@@ -219,8 +222,9 @@ export async function initUI(map, features) {
     filteredFeatureIds: [],
     displayMode: DEFAULT_DISPLAY_MODE,
     timeAggregation: {},
-    coursesState: createCoursesState(coursesPayload?.courses || []),
+    coursesState: createCoursesState(normalizedCoursesResult.courses),
     coursesError,
+    coursesContractWarnings,
     liveState: createLiveState(getRecentFeatures(18, { type: 'FeatureCollection', features: allFeatures })),
     liveError: ''
   };
@@ -833,6 +837,9 @@ function renderCoursesPanel(elements, state, map) {
     }));
     return;
   }
+  if (Array.isArray(state.coursesContractWarnings) && state.coursesContractWarnings.length) {
+    panel.appendChild(renderCoursesWarnings(state.coursesContractWarnings));
+  }
 
   const courses = state.coursesState?.courses || [];
   if (!courses.length) {
@@ -932,7 +939,100 @@ function renderCoursesPanel(elements, state, map) {
   });
   nav.append(prevBtn, nextBtn);
   courseCard.appendChild(nav);
+
+  if (safeStepIndex >= steps.length - 1) {
+    courseCard.appendChild(createInlineStateBlock({
+      variant: 'success',
+      title: 'Course complete',
+      message: 'Вы прошли все шаги этого курса.'
+    }));
+  }
   panel.appendChild(courseCard);
+}
+
+function normalizeCoursesForRuntime(rawCourses) {
+  const warnings = [];
+  const courses = [];
+  const source = Array.isArray(rawCourses) ? rawCourses : [];
+
+  source.forEach((candidate, index) => {
+    if (!candidate || typeof candidate !== 'object') {
+      warnings.push(`Course #${index + 1} skipped: invalid object.`);
+      return;
+    }
+
+    const id = String(candidate.id || '').trim();
+    const title = String(candidate.title || '').trim();
+    const description = String(candidate.description || '').trim();
+    const rawSteps = Array.isArray(candidate.steps) ? candidate.steps : [];
+    const steps = normalizeCourseSteps(rawSteps);
+
+    if (!id || !title || !description || !steps.length) {
+      warnings.push(`Course "${title || id || `#${index + 1}`}" skipped: missing required fields or valid steps.`);
+      return;
+    }
+
+    courses.push({ id, title, description, steps });
+  });
+
+  return { courses, warnings };
+}
+
+function renderCoursesWarnings(warnings) {
+  const deduped = [...new Set((Array.isArray(warnings) ? warnings : []).map((item) => String(item || '').trim()).filter(Boolean))];
+  const MAX_VISIBLE_WARNINGS = 5;
+  const visible = deduped.slice(0, MAX_VISIBLE_WARNINGS);
+  const hiddenCount = Math.max(0, deduped.length - visible.length);
+
+  const host = document.createElement('section');
+  host.className = 'inline-state inline-state-warning';
+
+  const title = document.createElement('h4');
+  title.className = 'inline-state-title';
+  title.textContent = 'Courses partially loaded';
+  host.appendChild(title);
+
+  const list = document.createElement('ul');
+  list.className = 'inline-state-list';
+  visible.forEach((warning) => {
+    const item = document.createElement('li');
+    item.textContent = warning;
+    list.appendChild(item);
+  });
+  host.appendChild(list);
+
+  if (hiddenCount > 0) {
+    const more = document.createElement('p');
+    more.className = 'inline-state-message';
+    more.textContent = `…and ${hiddenCount} more issue(s).`;
+    host.appendChild(more);
+  }
+
+  return host;
+}
+
+function normalizeCourseSteps(rawSteps) {
+  const steps = [];
+  const source = Array.isArray(rawSteps) ? rawSteps : [];
+  source.forEach((step, index) => {
+    if (!step || typeof step !== 'object') return;
+    const title = String(step.title || '').trim() || `Step ${index + 1}`;
+    const text = String(step.text || step.content || '').trim() || 'Описание шага отсутствует.';
+    const featureId = String(step.feature_id || '').trim();
+    const lng = Number(step.lng);
+    const lat = Number(step.lat);
+    const hasCoords = Number.isFinite(lng) && Number.isFinite(lat);
+    if (!featureId && !hasCoords) return;
+
+    steps.push({
+      id: String(step.id || `step-${index + 1}`),
+      title,
+      text,
+      ...(featureId ? { feature_id: featureId } : {}),
+      ...(hasCoords ? { lng, lat, zoom: Number(step.zoom) } : {})
+    });
+  });
+  return steps;
 }
 
 function applyCourseStepMapContext(state, map) {
@@ -952,6 +1052,8 @@ function applyCourseStepMapContext(state, map) {
     const feature = state.allFeatures.find((item) => getFeatureUiId(item) === String(step.feature_id));
     if (feature) {
       focusFeatureOnMap(map, feature);
+    } else {
+      showUiSystemMessage('Связанный объект шага не найден на карте', { variant: 'warning', timeout: 2600 });
     }
   }
 }

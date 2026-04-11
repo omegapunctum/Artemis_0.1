@@ -90,6 +90,14 @@ Vanilla JavaScript (no frameworks):
 - In static mode, auth refresh flow must not spam POST refresh attempts against unavailable endpoints.
 - Auth refresh guard prevents recurring `405` noise on static runtime by using controlled fallback behavior.
 
+## Auth / Deployment Constraints (Current Baseline)
+
+- Controlled-release baseline auth/session mode is **single-node backend only**.
+- `AUTH_SECRET_KEY` **must** be explicitly configured for real runtime; ephemeral per-process fallback is dev-only and not an acceptable deployment mode.
+- Refresh/session continuity depends on process-local in-memory state; restart/redeploy may invalidate refresh continuity and require re-login.
+- Multi-instance auth/session behavior is **not currently supported**.
+- Auth/scaling hardening for multi-instance support is planned as a dedicated future cycle.
+
 ---
 
 ## API Contract (MVP)

@@ -25,6 +25,7 @@ Audit covered:
 ## 3. Remaining gaps
 - **MEDIUM** — Manual smoke verification remains explicitly incomplete in `RELEASE_VERIFICATION.md` (full backend/API and UI smoke not re-verified in the latest cycle).
 - **LOW** — Export workflow contains both generic release gate script and an additional inline GeoJSON guard; functionally safe, but partially duplicative and increases maintenance surface.
+- **HIGH (deployment constraint, non-blocking for current baseline)** — Auth/session refresh lifecycle is process-local and not multi-instance safe; controlled-release runtime must remain explicit single-node with stable configured `AUTH_SECRET_KEY` until dedicated auth hardening cycle.
 
 ## 4. Release status
 **READY WITH GAPS**
@@ -32,7 +33,7 @@ Audit covered:
 Rationale:
 - No blocker-level inconsistency found across docs/code/tests/workflows for governance and release boundary.
 - Release gate and test suite are passing.
-- Remaining gaps are operational verification depth (manual smoke) and minor guard duplication, not architecture or governance integrity breaks.
+- Remaining gaps are operational verification depth (manual smoke), auth/deployment scaling constraint, and minor guard duplication; none are blockers for current single-node controlled baseline.
 
 ## 5. Recommended next actions
 1. Complete and record one full backend/API + UI manual smoke cycle in `RELEASE_VERIFICATION.md` for the next release cut.

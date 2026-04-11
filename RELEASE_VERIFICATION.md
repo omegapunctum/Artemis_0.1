@@ -31,10 +31,14 @@
 ## Known risks
 - Airtable remains an external dependency: network/rate-limit failures can still affect export/publish runs.
 - Current automated verification does not replace current-cycle manual smoke evidence for controlled release confidence.
+- Auth/session baseline is constrained to single-node deployment; multi-instance refresh/session behavior is not supported in current baseline.
+- `AUTH_SECRET_KEY` must be explicitly configured in real runtime; ephemeral per-process secret fallback is not an accepted deployment mode.
+- Backend restart/redeploy may break refresh continuity due to process-local refresh/session state.
 
 ## Release conclusion
 - Current state: **MOVE TO CONTROLLED RELEASE BASELINE**.
 - Automated and manual baselines are both explicitly confirmed for this cycle.
+- Operational rule for this baseline: run auth/session in explicit single-node mode until dedicated auth/scaling hardening cycle is completed.
 
 ## Legacy parts
 - Historical MVP verification notes are kept in `RELEASE_VERIFICATION_MVP_2026-03-30.md` and may contain checks that were not re-run in the current cycle.
