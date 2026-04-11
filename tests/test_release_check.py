@@ -14,13 +14,32 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def _build_fixture(root: Path, *, empty_features: bool = False, frontend_fallback: bool = False, include_sw: bool = True) -> None:
+def _build_fixture(
+    root: Path,
+    *,
+    empty_features: bool = False,
+    frontend_fallback: bool = False,
+    include_sw: bool = True,
+    expected_fallback_warnings: int = 0,
+    data_quality_warnings: int = 0,
+) -> None:
     features = [] if empty_features else [{"type": "Feature", "geometry": None, "properties": {}}]
     _write(
         root / "data" / "features.geojson",
         json.dumps({"type": "FeatureCollection", "features": features}),
     )
-    _write(root / "data" / "export_meta.json", json.dumps({"records_exported": len(features)}))
+    _write(
+        root / "data" / "export_meta.json",
+        json.dumps(
+            {
+                "records_exported": len(features),
+                "warning_categories": {
+                    "expected_fallback": expected_fallback_warnings,
+                    "data_quality": data_quality_warnings,
+                },
+            }
+        ),
+    )
     _write(root / "data" / "rejected.json", "[]")
 
     if frontend_fallback:
@@ -96,3 +115,19 @@ def test_release_check_fails_when_sw_missing(tmp_path: Path) -> None:
 
     assert result.returncode == 1
     assert "[FAIL] PWA: sw.js is missing" in result.stdout
+
+
+def test_release_check_fails_when_expected_fallback_exceeds_threshold(tmp_path: Path) -> None:
+    _build_fixture(tmp_path, expected_fallback_warnings=11)
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 1
+    assert "[FAIL] Data layer: expected_fallback warnings exceed threshold (11 > 10)" in result.stdout
+
+
+def test_release_check_fails_when_data_quality_exceeds_threshold(tmp_path: Path) -> None:
+    _build_fixture(tmp_path, data_quality_warnings=1)
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 1
+    assert "[FAIL] Data layer: data_quality warnings exceed threshold (1 > 0)" in result.stdout

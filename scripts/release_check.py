@@ -13,6 +13,9 @@ ROOT = Path(os.environ.get("RELEASE_CHECK_ROOT", Path(__file__).resolve().parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+MAX_EXPECTED_FALLBACK_WARNINGS = 10
+MAX_DATA_QUALITY_WARNINGS = 0
+
 
 class CheckFailed(Exception):
     pass
@@ -54,6 +57,28 @@ def check_data_layer() -> None:
         fail(
             "records mismatch: "
             f"records_exported={records_exported}, records_geojson={len(features)}"
+        )
+
+    warning_categories = export_meta.get("warning_categories") if isinstance(export_meta, dict) else None
+    if not isinstance(warning_categories, dict):
+        fail("data/export_meta.json missing warning_categories object")
+
+    expected_fallback = warning_categories.get("expected_fallback", 0)
+    data_quality = warning_categories.get("data_quality", 0)
+    if not isinstance(expected_fallback, int):
+        fail("data/export_meta.json warning_categories.expected_fallback must be integer")
+    if not isinstance(data_quality, int):
+        fail("data/export_meta.json warning_categories.data_quality must be integer")
+
+    if expected_fallback > MAX_EXPECTED_FALLBACK_WARNINGS:
+        fail(
+            "expected_fallback warnings exceed threshold "
+            f"({expected_fallback} > {MAX_EXPECTED_FALLBACK_WARNINGS})"
+        )
+    if data_quality > MAX_DATA_QUALITY_WARNINGS:
+        fail(
+            "data_quality warnings exceed threshold "
+            f"({data_quality} > {MAX_DATA_QUALITY_WARNINGS})"
         )
 
     rejected_path = ROOT / "data/rejected.json"

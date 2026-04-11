@@ -440,38 +440,44 @@ def map_record(
     longitude_parse_error = False
     latitude_parse_error = False
 
-    longitude = to_float_or_none(fields.get("longitude_num"), record_id, "longitude_num", errors)
-    if fields.get("longitude_num") not in (None, "") and longitude is None:
+    longitude_num_raw = fields.get("longitude_num")
+    longitude = to_float_or_none(longitude_num_raw, record_id, "longitude_num", errors)
+    if longitude_num_raw not in (None, "") and longitude is None:
         longitude_parse_error = True
     if longitude in (None, ""):
         legacy_longitude = fields.get("longitude")
         if legacy_longitude not in (None, ""):
-            append_warning_once(
-                errors,
-                record_id=record_id,
-                field="longitude",
-                warning="using legacy fallback field",
-                value=legacy_longitude,
-                reason="legacy_fallback_longitude",
-            )
+            # Transitional signal only when canonical field was present but unusable.
+            if longitude_num_raw not in (None, ""):
+                append_warning_once(
+                    errors,
+                    record_id=record_id,
+                    field="longitude",
+                    warning="using legacy fallback field",
+                    value=legacy_longitude,
+                    reason="legacy_fallback_longitude",
+                )
         longitude = to_float_or_none(legacy_longitude, record_id, "longitude", errors)
         if legacy_longitude not in (None, "") and longitude is None:
             longitude_parse_error = True
 
-    latitude = to_float_or_none(fields.get("latitude_num"), record_id, "latitude_num", errors)
-    if fields.get("latitude_num") not in (None, "") and latitude is None:
+    latitude_num_raw = fields.get("latitude_num")
+    latitude = to_float_or_none(latitude_num_raw, record_id, "latitude_num", errors)
+    if latitude_num_raw not in (None, "") and latitude is None:
         latitude_parse_error = True
     if latitude in (None, ""):
         legacy_latitude = fields.get("latitude")
         if legacy_latitude not in (None, ""):
-            append_warning_once(
-                errors,
-                record_id=record_id,
-                field="latitude",
-                warning="using legacy fallback field",
-                value=legacy_latitude,
-                reason="legacy_fallback_latitude",
-            )
+            # Transitional signal only when canonical field was present but unusable.
+            if latitude_num_raw not in (None, ""):
+                append_warning_once(
+                    errors,
+                    record_id=record_id,
+                    field="latitude",
+                    warning="using legacy fallback field",
+                    value=legacy_latitude,
+                    reason="legacy_fallback_latitude",
+                )
         latitude = to_float_or_none(legacy_latitude, record_id, "latitude", errors)
         if legacy_latitude not in (None, "") and latitude is None:
             latitude_parse_error = True
@@ -490,31 +496,37 @@ def map_record(
     if is_active is None and is_active_raw not in (None, ""):
         append_diagnostic(errors, record_id=record_id, field="is_active", error="invalid bool", value=is_active_raw)
 
-    source_license = normalize_source_license(fields.get("source_license_enum"))
+    source_license_enum_raw = fields.get("source_license_enum")
+    source_license = normalize_source_license(source_license_enum_raw)
     if source_license is None:
         source_license = normalize_source_license(fields.get("source_license"))
         if source_license is not None:
-            append_warning_once(
-                errors,
-                record_id=record_id,
-                field="source_license",
-                warning="using legacy fallback field",
-                value=source_license,
-                reason="legacy_fallback_source_license",
-            )
+            # Transitional signal only when canonical field was present but unusable.
+            if source_license_enum_raw not in (None, ""):
+                append_warning_once(
+                    errors,
+                    record_id=record_id,
+                    field="source_license",
+                    warning="using legacy fallback field",
+                    value=source_license,
+                    reason="legacy_fallback_source_license",
+                )
 
-    coordinates_confidence = normalize_coordinates_confidence(fields.get("coordinates_confidence_enum"))
+    coordinates_confidence_enum_raw = fields.get("coordinates_confidence_enum")
+    coordinates_confidence = normalize_coordinates_confidence(coordinates_confidence_enum_raw)
     if coordinates_confidence is None:
         coordinates_confidence = normalize_coordinates_confidence(fields.get("coordinates_confidence"))
         if coordinates_confidence is not None:
-            append_warning_once(
-                errors,
-                record_id=record_id,
-                field="coordinates_confidence",
-                warning="using legacy fallback field",
-                value=coordinates_confidence,
-                reason="legacy_fallback_coordinates_confidence",
-            )
+            # Transitional signal only when canonical field was present but unusable.
+            if coordinates_confidence_enum_raw not in (None, ""):
+                append_warning_once(
+                    errors,
+                    record_id=record_id,
+                    field="coordinates_confidence",
+                    warning="using legacy fallback field",
+                    value=coordinates_confidence,
+                    reason="legacy_fallback_coordinates_confidence",
+                )
 
     validated_longitude = validate_coordinate_range(longitude, -180.0, 180.0, record_id, "longitude", errors)
     validated_latitude = validate_coordinate_range(latitude, -90.0, 90.0, record_id, "latitude", errors)
@@ -961,7 +973,9 @@ def validate_feature(mapped: Dict[str, Any], layer_ids: set[str], warnings: List
         mapped["_invalid_coordinates"] = True
     mapped["latitude"] = latitude
     mapped["longitude"] = longitude
-    if (latitude is None) ^ (longitude is None):
+    if latitude is None and longitude is None:
+        critical("geometry", "missing_geometry")
+    elif (latitude is None) ^ (longitude is None):
         critical("geometry", "missing_geometry_coordinate")
     elif latitude is not None and longitude is not None and not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
         critical("geometry", "invalid_coordinates")
@@ -1050,7 +1064,7 @@ def aggregate_warning_categories(warnings: List[Dict[str, Any]]) -> Dict[str, in
             categories["expected_fallback"] += 1
         else:
             categories["data_quality"] += 1
-    return {key: value for key, value in categories.items() if value > 0}
+    return categories
 
 
 def write_json(path: Path, data: Any) -> None:
@@ -1439,10 +1453,15 @@ def main() -> int:
     valid_features = sort_mapped_records(valid_features)
 
     geojson = build_geojson_features(valid_features, warnings, errors)
+    total_records = len(records)
+    exported_records = len(valid_features)
+    geojson_records = len(geojson["features"])
+    rejected_records = len(rejected_features)
+
     validation_report = build_validation_report(
-        total_records=len(records),
-        valid_records=len(valid_features),
-        skipped_records=len(records) - len(valid_features),
+        total_records=total_records,
+        valid_records=exported_records,
+        skipped_records=rejected_records,
         warnings=warnings,
         errors=errors,
     )
@@ -1453,9 +1472,10 @@ def main() -> int:
     export_meta = {
         "timestamp": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "source": "dry-run" if dry_run else "airtable",
-        "records_total_source": len(records),
-        "records_exported": len(valid_features),
-        "records_geojson": len(geojson["features"]),
+        "records_total_source": total_records,
+        "records_exported": exported_records,
+        "records_geojson": geojson_records,
+        "records_rejected": rejected_records,
         "errors": len(errors),
         "warnings": len(warnings),
         "error_stats": error_stats,
