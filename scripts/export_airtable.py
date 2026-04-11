@@ -140,6 +140,30 @@ def append_diagnostic(
     issues.append(payload)
 
 
+def append_warning_once(
+    issues: List[Dict[str, Any]],
+    *,
+    record_id: str,
+    field: str,
+    warning: str,
+    value: Any = None,
+    reason: Optional[str] = None,
+) -> None:
+    """Append warning once per (field, reason) across one export run."""
+    resolved_reason = reason or warning
+    for issue in issues:
+        if issue.get("severity") == "warning" and issue.get("field") == field and issue.get("reason") == resolved_reason:
+            return
+    append_diagnostic(
+        issues,
+        record_id=record_id,
+        field=field,
+        warning=warning,
+        value=value,
+        reason=resolved_reason,
+    )
+
+
 def to_date_or_none(value: Any, record_id: str, field: str, errors: List[Dict[str, Any]]) -> Optional[str]:
     if value in (None, ""):
         return None
@@ -422,12 +446,13 @@ def map_record(
     if longitude in (None, ""):
         legacy_longitude = fields.get("longitude")
         if legacy_longitude not in (None, ""):
-            append_diagnostic(
+            append_warning_once(
                 errors,
                 record_id=record_id,
                 field="longitude",
                 warning="using legacy fallback field",
                 value=legacy_longitude,
+                reason="legacy_fallback_longitude",
             )
         longitude = to_float_or_none(legacy_longitude, record_id, "longitude", errors)
         if legacy_longitude not in (None, "") and longitude is None:
@@ -439,12 +464,13 @@ def map_record(
     if latitude in (None, ""):
         legacy_latitude = fields.get("latitude")
         if legacy_latitude not in (None, ""):
-            append_diagnostic(
+            append_warning_once(
                 errors,
                 record_id=record_id,
                 field="latitude",
                 warning="using legacy fallback field",
                 value=legacy_latitude,
+                reason="legacy_fallback_latitude",
             )
         latitude = to_float_or_none(legacy_latitude, record_id, "latitude", errors)
         if legacy_latitude not in (None, "") and latitude is None:
@@ -468,24 +494,26 @@ def map_record(
     if source_license is None:
         source_license = normalize_source_license(fields.get("source_license"))
         if source_license is not None:
-            append_diagnostic(
+            append_warning_once(
                 errors,
                 record_id=record_id,
                 field="source_license",
                 warning="using legacy fallback field",
                 value=source_license,
+                reason="legacy_fallback_source_license",
             )
 
     coordinates_confidence = normalize_coordinates_confidence(fields.get("coordinates_confidence_enum"))
     if coordinates_confidence is None:
         coordinates_confidence = normalize_coordinates_confidence(fields.get("coordinates_confidence"))
         if coordinates_confidence is not None:
-            append_diagnostic(
+            append_warning_once(
                 errors,
                 record_id=record_id,
                 field="coordinates_confidence",
                 warning="using legacy fallback field",
                 value=coordinates_confidence,
+                reason="legacy_fallback_coordinates_confidence",
             )
 
     validated_longitude = validate_coordinate_range(longitude, -180.0, 180.0, record_id, "longitude", errors)
@@ -519,12 +547,13 @@ def map_record(
         invalid_layer_link = True
 
     if layer_id_used_legacy_fallback:
-        append_diagnostic(
+        append_warning_once(
             errors,
             record_id=record_id,
             field="layer_id",
             warning="using legacy string fallback",
             value=raw_layer_id,
+            reason="legacy_string_layer_id",
         )
 
     mapped_layer_id = raw_layer_id
@@ -1013,6 +1042,17 @@ def aggregate_issues(issues: List[Dict[str, Any]]) -> Dict[str, int]:
     return stats
 
 
+def aggregate_warning_categories(warnings: List[Dict[str, Any]]) -> Dict[str, int]:
+    categories = {"expected_fallback": 0, "data_quality": 0}
+    for issue in warnings:
+        reason = str(issue.get("reason") or "").strip()
+        if reason.startswith("legacy_"):
+            categories["expected_fallback"] += 1
+        else:
+            categories["data_quality"] += 1
+    return {key: value for key, value in categories.items() if value > 0}
+
+
 def write_json(path: Path, data: Any) -> None:
     """Безопасная сериализация JSON в файл."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1408,6 +1448,7 @@ def main() -> int:
     )
     error_stats = aggregate_issues(errors)
     warning_stats = aggregate_issues(warnings)
+    warning_categories = aggregate_warning_categories(warnings)
 
     export_meta = {
         "timestamp": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
@@ -1419,6 +1460,7 @@ def main() -> int:
         "warnings": len(warnings),
         "error_stats": error_stats,
         "warning_stats": warning_stats,
+        "warning_categories": warning_categories,
         "duration_seconds": round(time.time() - started_at, 3),
     }
 

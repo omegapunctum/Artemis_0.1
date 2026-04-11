@@ -2,13 +2,8 @@ import os
 import unittest
 
 from fastapi import HTTPException
-from pathlib import Path
 from pydantic import ValidationError
 from unittest.mock import patch
-
-DB_PATH = Path('artemis_auth.db')
-if DB_PATH.exists():
-    DB_PATH.unlink()
 
 os.environ.setdefault('MODERATOR_EMAILS', 'moderator@example.com,moderator2@example.com')
 os.environ.setdefault('AIRTABLE_TOKEN', 'test-token')

@@ -2,14 +2,9 @@ import os
 import subprocess
 import time
 import unittest
-from pathlib import Path
 from uuid import uuid4
 
 import requests
-
-DB_PATH = Path("artemis_auth.db")
-if DB_PATH.exists():
-    DB_PATH.unlink()
 
 os.environ.setdefault("AUTH_SECRET_KEY", "test-secret-auth-api")
 os.environ.setdefault("COOKIE_HTTPONLY", "true")

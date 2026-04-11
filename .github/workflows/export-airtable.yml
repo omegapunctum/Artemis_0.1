@@ -32,6 +32,15 @@ jobs:
       - name: Ensure data directory exists
         run: mkdir -p data
 
+      - name: Run release gate (block export on fail)
+        run: |
+          if python scripts/release_check.py; then
+            echo "✔ Release gate passed"
+          else
+            echo "✖ Release gate failed → blocking export" >&2
+            exit 1
+          fi
+
       - name: Run Airtable export
         env:
           AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}

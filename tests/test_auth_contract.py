@@ -1,10 +1,5 @@
 import os
 import unittest
-from pathlib import Path
-
-DB_PATH = Path('artemis_auth.db')
-if DB_PATH.exists():
-    DB_PATH.unlink()
 
 os.environ.setdefault('AUTH_SECRET_KEY', 'test-secret-for-tests-only')
 os.environ.setdefault('COOKIE_SECURE', 'false')

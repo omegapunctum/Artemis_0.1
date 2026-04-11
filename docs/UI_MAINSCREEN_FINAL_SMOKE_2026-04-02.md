@@ -190,5 +190,25 @@ Scope: финальная ручная проверка главного explore
 
 ---
 
+## 11) Canonical data-source discipline (release-critical)
+**Preconditions**
+- Приложение запущено в production-default runtime.
+- Доступны browser devtools (Network).
+
+**Steps**
+1. Выполнить hard refresh.
+2. Проверить источники данных карты в Network.
+3. Зафиксировать, что базовая загрузка идёт из `/data/*` (включая `data/features.geojson`).
+4. Проверить, что нет признаков fallback/substitution поведения на `/api/map/feed` в базовом explore-flow.
+
+**Expected result**
+- Карта загружается из canonical published `data/*`.
+- `/api/map/feed` не выступает production-default source для main map runtime.
+
+**Error / edge case**
+- Если базовая загрузка карты зависит от runtime substitution на `/api/map/feed` — FAIL для release smoke.
+
+---
+
 ## Findings / Follow-up
 - [none]

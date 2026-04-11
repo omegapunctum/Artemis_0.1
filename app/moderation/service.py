@@ -1,3 +1,10 @@
+"""
+Moderation runtime service boundary:
+- Runtime moderation updates draft review state and Airtable staging mirrors only.
+- Runtime API never overwrites canonical public dataset files under data/*.
+- Public dataset publish is batch-only via ETL/export workflow.
+"""
+
 import json
 import hashlib
 import logging
@@ -42,6 +49,10 @@ PUBLISH_STATUS_FAILED = "failed"
 logger = logging.getLogger(__name__)
 _publish_locks: dict[int, threading.Lock] = {}
 _publish_locks_guard = threading.Lock()
+RUNTIME_PUBLISH_BOUNDARY_NOTE = (
+    "Runtime moderation syncs Airtable staging records only; "
+    "canonical public dataset publish is batch ETL/workflow only."
+)
 
 
 def normalize_coordinates_source(value: Any) -> str:
@@ -100,6 +111,7 @@ def approve_draft(
     result_context: dict[str, str] | None = None,
 ) -> Draft:
     logger.info("APPROVE: draft_id=%s", draft.id)
+    logger.debug(RUNTIME_PUBLISH_BOUNDARY_NOTE)
     with _draft_publish_lock(draft.id):
         db.refresh(draft)
 

@@ -11,7 +11,8 @@ ARTEMIS combines:
 - curated historical data (Airtable → ETL → GeoJSON)
 - interactive map visualization (MapLibre)
 - user-generated content (UGC)
-- moderation and publishing pipeline
+- moderation/review runtime flow
+- batch public publish pipeline
 - progressive web app (PWA)
 
 The system is designed to be **simple, modular, and scalable**.
@@ -32,8 +33,9 @@ The system is designed to be **simple, modular, and scalable**.
 - Publication chain:
   1. Airtable `Features` records are exported by ETL
   2. validated artifacts are written to `data/*`
-  3. artifacts are committed to GitHub `main`
-  4. GitHub Pages serves the map from published `data/*`
+  3. public dataset is published only by batch overwrite through ETL/export workflow
+  4. artifacts are committed to GitHub `main`
+  5. GitHub Pages serves the map from published `data/*`
 
 ### Frontend
 Vanilla JavaScript (no frameworks):
@@ -52,8 +54,8 @@ Vanilla JavaScript (no frameworks):
 - Auth API (JWT + refresh cookie)
 - Drafts API (CRUD)
 - Upload API (images)
-- Moderation API (review + publish)
-- Airtable integration (publish pipeline)
+- Moderation API (review/approve/reject + Airtable staging sync; not direct public dataset publish)
+- Airtable integration (staging sync for review outcomes; canonical public publish remains ETL/export workflow only)
 - Upload lifecycle cleanup: orphan `/uploads/*` files are cleaned safely when drafts are updated/deleted and by periodic orphan scan.
 
 ### CI/CD
@@ -69,6 +71,8 @@ Vanilla JavaScript (no frameworks):
 - Access token stored **in memory only**
 - Refresh token stored in **httpOnly cookie**
 - **GeoJSON is the single source of truth** for the map
+- Canonical public dataset for map rendering: **`data/features.geojson`** (served from `/data/*`)
+- `/api/map/feed` is an auxiliary internal/read-only runtime route, not the production-default public map source
 - No direct Airtable access from frontend
 - Minimal, clean code (no overengineering)
 

@@ -5,6 +5,12 @@
 - [ ] Simulate `/data/*` failure and confirm a global error state appears with readable recovery guidance.
 - [ ] From global data load error state, `Retry` triggers a new request and restores normal UI on success.
 
+## Release-critical runtime checks
+- [ ] Map initial dataset is loaded from canonical `/data/*` (primary: `data/features.geojson`) in production-default flow.
+- [ ] No visible runtime substitution from `/data/*` to `/api/map/feed` is observed in production-default flow.
+- [ ] Main explore runtime (map + list + detail) remains usable after auth/session transitions (login/refresh/logout baseline sanity).
+- [ ] PWA installability/offline behavior has explicit current-cycle status (`checked` / `not checked`) before release decision.
+
 ## Map and list sync
 - [ ] Select an item in the list and confirm the same object is highlighted/selected on the map.
 - [ ] Select an item on the map and confirm the same object is highlighted/selected in the list.

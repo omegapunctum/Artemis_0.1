@@ -186,5 +186,25 @@
 
 ---
 
+## 11) Canonical map source / no runtime substitution (release-critical)
+**Preconditions**
+- Приложение открыто в production-default runtime.
+- Network tab доступен для наблюдения data-source запросов.
+
+**Steps**
+1. Выполнить hard refresh.
+2. Проверить загрузку `data/features.geojson` и related `data/*`.
+3. Воспроизвести базовые взаимодействия (search/filter/timeline).
+4. Проверить отсутствие признаков production-default fallback/substitution на `/api/map/feed`.
+
+**Expected result**
+- Main map runtime использует canonical published `data/*` path.
+- `/api/map/feed` остаётся auxiliary/internal route и не выглядит как primary production map source.
+
+**Error / edge case**
+- Если main map flow visibly depends on runtime substitution from `/data/*` to `/api/map/feed` — FAIL.
+
+---
+
 ## Execution note
 - Этот документ покрывает только targeted verification layer unified UI/UX pass и не заменяет полный regression smoke.

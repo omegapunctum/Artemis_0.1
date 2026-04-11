@@ -1,3 +1,8 @@
+"""
+Moderation runtime endpoints manage review decisions only.
+They are not a direct publish path for canonical public dataset data/*.
+"""
+
 import logging
 
 from pydantic import BaseModel
