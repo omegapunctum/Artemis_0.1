@@ -1,6 +1,6 @@
-/docs/omegapunctum
-/js/omegapunctum
-/app/omegapunctum
-/scripts/omegapunctum
-/data/omegapunctum
-/.github/omegapunctum
+/docs/ @omegapunctum
+/js/ @omegapunctum
+/app/ @omegapunctum
+/scripts/ @omegapunctum
+/data/ @omegapunctum
+/.github/ @omegapunctum

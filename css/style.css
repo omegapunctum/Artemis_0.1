@@ -445,6 +445,28 @@ body { overflow: hidden; }
   background: rgba(15, 23, 42, 0.38);
 }
 .top-actions-cluster::-webkit-scrollbar { display: none; }
+.quick-layer-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 2px;
+}
+.quick-layer-filter-btn {
+  min-height: 28px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: rgba(15, 23, 42, 0.26);
+  color: var(--color-text-secondary);
+  font: var(--font-caption);
+  padding: 0 8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.quick-layer-filter-btn.is-active {
+  border-color: rgba(125, 211, 252, 0.72);
+  background: rgba(14, 116, 144, 0.28);
+  color: var(--color-text-primary);
+}
 .layers-entry-helper {
   margin: 0;
   padding: 0 2px 0 6px;
@@ -630,6 +652,15 @@ body { overflow: hidden; }
 .search-no-results + .ui-button {
   margin-top: 8px;
   width: 100%;
+}
+.search-truncation-note {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  background: rgba(148, 163, 184, 0.08);
+  color: var(--color-text-secondary);
+  font: var(--font-meta);
 }
 .panel-title { margin: 0 0 var(--space-sm); font: var(--font-panel-title); }
 .status-summary { color: #bfdbfe; font: var(--font-body); margin-bottom: var(--space-md); }
@@ -1951,9 +1982,22 @@ button:focus-visible {
 
 @media (max-width: 1080px) {
   .top-actions-cluster { gap: 6px; padding: 3px 7px; }
+  .quick-layer-filter {
+    display: inline-flex;
+    max-width: 180px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .quick-layer-filter::-webkit-scrollbar { display: none; }
+  .quick-layer-filter-btn {
+    min-height: 26px;
+    padding: 0 7px;
+  }
   .layers-entry-helper { display: none; }
 }
 @media (max-width: 720px) {
+  .quick-layer-filter { max-width: 132px; }
   #top-header { left: calc(8px + var(--safe-left)); right: calc(8px + var(--safe-right)); top: calc(8px + var(--safe-top)); min-height: 50px; padding: 6px 8px; }
   #top-header { grid-template-columns: minmax(132px, 1fr) minmax(120px, 1fr) auto; }
   .brand { font-size: 12px; }

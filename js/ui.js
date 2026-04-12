@@ -136,6 +136,7 @@ export async function initUI(map, features) {
     searchDropdown: document.getElementById('search-dropdown'),
     filtersBtn: document.getElementById('filters-btn'),
     layersBtn: document.getElementById('layers-btn'),
+    quickLayerFilter: document.getElementById('quick-layer-filter'),
     layersEntryHelper: document.getElementById('layers-entry-helper'),
     bookmarksBtn: document.getElementById('bookmarks-btn'),
     coursesBtn: document.getElementById('courses-btn'),
@@ -202,6 +203,9 @@ export async function initUI(map, features) {
     hoveredFeatureId: null,
     enabledLayerIds: new Set(layers.filter((layer) => layer?.is_enabled !== false).map((layer) => String(layer.layer_id || layer.id || '').trim()).filter(Boolean)),
     defaultEnabledLayerIds: new Set(layers.filter((layer) => layer?.is_enabled !== false).map((layer) => String(layer.layer_id || layer.id || '').trim()).filter(Boolean)),
+    quickLayerOptions: [],
+    activeQuickLayerIds: new Set(),
+    defaultQuickLayerIds: new Set(),
     confidenceFilter: 'all',
     overlay: { activePrimary: null, activeModal: null },
     viewport: { mode: 'desktop', isMobile: false, isTablet: false },
@@ -237,6 +241,7 @@ export async function initUI(map, features) {
       if (layerId) state.enabledLayerIds.add(layerId);
     });
   }
+  initializeQuickLayerState(state);
 
   hydrateTimeline(elements, years, state);
   setupOverlayManager(elements, state, map);
@@ -247,6 +252,7 @@ export async function initUI(map, features) {
   setupDisplayModeToggle(elements, state, map);
   setMapDisplayMode(map, state.displayMode);
   renderTopPanels(elements, state, layers, confidenceValues, map);
+  renderQuickLayerFilter(elements, state);
   renderCardsState(elements, state);
 
   const applyState = () => {
@@ -271,12 +277,14 @@ export async function initUI(map, features) {
       state.lastAppliedMapDataKey = mapDataKey;
     }
 
-    setMapLayerFilter(map, buildMapYearFilter(state.currentStartYear, state.currentEndYear));
+    setMapLayerFilter(map, buildMapFilterExpression(state));
     const filteredIdsSet = new Set(state.filteredFeatureIds);
-    if (state.selectedFeatureId && !filteredIdsSet.has(state.selectedFeatureId)) {
+    const selectedFeature = getSelectedFeature(state);
+    if (state.selectedFeatureId && (!filteredIdsSet.has(state.selectedFeatureId) || !isFeatureAllowedByQuickLayers(selectedFeature, state))) {
       clearSelection(state, elements, map);
     }
-    if (state.hoveredFeatureId && !filteredIdsSet.has(state.hoveredFeatureId)) {
+    const hoveredFeature = getFeatureById(state, state.hoveredFeatureId);
+    if (state.hoveredFeatureId && (!filteredIdsSet.has(state.hoveredFeatureId) || !isFeatureAllowedByQuickLayers(hoveredFeature, state))) {
       clearHoveredFeature(state, map);
     }
     setSelectedFeatureId(map, state.selectedFeatureId);
@@ -541,6 +549,7 @@ function isFeatureVisible(feature, state) {
   const text = state.search.toLowerCase();
   const layerId = String(props.layer_id || '').trim();
   if (layerId && !state.enabledLayerIds.has(layerId)) return false;
+  if (!isFeatureAllowedByQuickLayers(feature, state)) return false;
   if (state.confidenceFilter !== 'all') {
     const confidence = String(props.coordinates_confidence || 'unknown').toLowerCase();
     if (confidence !== state.confidenceFilter) return false;
@@ -1114,7 +1123,7 @@ function renderLivePanel(elements, state, map) {
 
 function buildSearchResults(filteredFeatures, searchText) {
   if (!searchText) return [];
-  return filteredFeatures.slice(0, 5);
+  return filteredFeatures.slice(0, 12);
 }
 
 function renderSearchDropdown(elements, state, map) {
@@ -1163,6 +1172,15 @@ function renderSearchDropdown(elements, state, map) {
     });
     elements.searchDropdown.appendChild(item);
   });
+
+  const isTruncated = state.filteredFeatures.length > state.searchResults.length;
+  if (isTruncated) {
+    const truncationNote = document.createElement('div');
+    truncationNote.className = 'search-truncation-note';
+    truncationNote.setAttribute('role', 'note');
+    truncationNote.textContent = `Показаны первые ${state.searchResults.length} результатов`;
+    elements.searchDropdown.appendChild(truncationNote);
+  }
 }
 
 function setupOverlayManager(elements, state, map) {
@@ -1276,10 +1294,15 @@ function restoreDefaultLayers(state) {
   state.enabledLayerIds = new Set(state.defaultEnabledLayerIds);
 }
 
+function restoreDefaultQuickLayers(state) {
+  state.activeQuickLayerIds = new Set(state.defaultQuickLayerIds);
+}
+
 function resetExploreConstraints(elements, state, { keepSearch = false } = {}) {
   if (!keepSearch) clearSearchState(elements, state, { closePanel: true, notify: false });
   state.confidenceFilter = 'all';
   restoreDefaultLayers(state);
+  restoreDefaultQuickLayers(state);
   state.currentStartYear = Number(elements.timelineStart?.min ?? state.currentStartYear);
   state.currentEndYear = Number(elements.timelineEnd?.max ?? state.currentEndYear);
   if (elements.timelineStart) elements.timelineStart.value = String(state.currentStartYear);
@@ -1418,12 +1441,14 @@ function renderCards(elements, state, map) {
 
 function buildVisibilityKey(state) {
   const enabledLayerIds = [...state.enabledLayerIds].sort().join(',');
+  const activeQuickLayerIds = [...state.activeQuickLayerIds].sort().join(',');
   return [
     state.search,
     state.currentStartYear,
     state.currentEndYear,
     state.confidenceFilter,
-    enabledLayerIds
+    enabledLayerIds,
+    activeQuickLayerIds
   ].join('|');
 }
 
@@ -1854,6 +1879,75 @@ function buildMapYearFilter(start, end) {
   ];
 }
 
+function buildMapFilterExpression(state) {
+  const timeline = buildMapYearFilter(state.currentStartYear, state.currentEndYear);
+  const quickLayer = buildQuickLayerFilter(state);
+  if (!quickLayer) return timeline;
+  return ['all', timeline, quickLayer];
+}
+
+function buildQuickLayerFilter(state) {
+  if (!Array.isArray(state.quickLayerOptions) || !state.quickLayerOptions.length) return null;
+  const allIds = state.quickLayerOptions.map((item) => item.id);
+  const activeIds = allIds.filter((id) => state.activeQuickLayerIds.has(id));
+  if (activeIds.length === allIds.length) return null;
+  return ['any',
+    ['!', ['in', ['get', 'layer_id'], ['literal', allIds]]],
+    ['in', ['get', 'layer_id'], ['literal', activeIds]]
+  ];
+}
+
+function isFeatureAllowedByQuickLayers(feature, state) {
+  if (!feature || !Array.isArray(state.quickLayerOptions) || !state.quickLayerOptions.length) return true;
+  const layerId = String(normalizeProps(feature).layer_id || '').trim();
+  if (!layerId) return true;
+  const isQuickOption = state.quickLayerOptions.some((item) => item.id === layerId);
+  if (!isQuickOption) return true;
+  return state.activeQuickLayerIds.has(layerId);
+}
+
+function initializeQuickLayerState(state) {
+  const counts = new Map();
+  state.allFeatures.forEach((feature) => {
+    const layerId = String(normalizeProps(feature).layer_id || '').trim();
+    if (!layerId) return;
+    counts.set(layerId, Number(counts.get(layerId) || 0) + 1);
+  });
+  const quickLayerOptions = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 5)
+    .map(([id, count]) => ({ id, count, label: state.layerLookup.get(id) || id }));
+  state.quickLayerOptions = quickLayerOptions;
+  state.defaultQuickLayerIds = new Set(quickLayerOptions.map((item) => item.id));
+  state.activeQuickLayerIds = new Set(state.defaultQuickLayerIds);
+}
+
+function renderQuickLayerFilter(elements, state) {
+  const container = elements.quickLayerFilter;
+  if (!container) return;
+  container.replaceChildren();
+  if (!Array.isArray(state.quickLayerOptions) || !state.quickLayerOptions.length) {
+    container.hidden = true;
+    return;
+  }
+  container.hidden = false;
+  state.quickLayerOptions.forEach((item) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    const isActive = state.activeQuickLayerIds.has(item.id);
+    btn.className = `quick-layer-filter-btn${isActive ? ' is-active' : ''}`;
+    btn.textContent = item.label;
+    btn.setAttribute('aria-pressed', String(isActive));
+    btn.addEventListener('click', () => {
+      if (state.activeQuickLayerIds.has(item.id)) state.activeQuickLayerIds.delete(item.id);
+      else state.activeQuickLayerIds.add(item.id);
+      renderQuickLayerFilter(elements, state);
+      state.applyState?.();
+    });
+    container.appendChild(btn);
+  });
+}
+
 function updateCounters(elements, state, map) {
   const diagnostics = getMapBuildDiagnostics(map);
   if (elements.resultsCount) elements.resultsCount.textContent = String(state.filteredFeatures.length);
@@ -1948,6 +2042,12 @@ function restoreDetailFocus(elements, state) {
 
 function getSelectedFeature(state) {
   return state.allFeatures.find((feature) => getFeatureUiId(feature) === state.selectedFeatureId) || null;
+}
+
+function getFeatureById(state, featureId) {
+  const normalizedId = featureId ? String(featureId) : '';
+  if (!normalizedId) return null;
+  return state.allFeatures.find((feature) => getFeatureUiId(feature) === normalizedId) || null;
 }
 
 function renderCardsSkeleton(elements, count = 4) {
@@ -2522,7 +2622,17 @@ function getActiveFiltersCount(state) {
   return Number(Boolean(state.search))
     + Number(state.confidenceFilter !== 'all')
     + Number(hasLayerCustomization(state))
+    + Number(hasQuickLayerCustomization(state))
     + Number(hasTimelineFilter);
+}
+
+function hasQuickLayerCustomization(state) {
+  if (!(state?.defaultQuickLayerIds instanceof Set) || !(state?.activeQuickLayerIds instanceof Set)) return false;
+  if (state.defaultQuickLayerIds.size !== state.activeQuickLayerIds.size) return true;
+  for (const id of state.defaultQuickLayerIds) {
+    if (!state.activeQuickLayerIds.has(id)) return true;
+  }
+  return false;
 }
 
 function hasLayerCustomization(state) {
@@ -2538,6 +2648,7 @@ function buildResultFeedbackLabel(state) {
   const constraints = [];
   if (state.search) constraints.push(`поиск: «${state.search}»`);
   if (hasLayerCustomization(state)) constraints.push('слои');
+  if (hasQuickLayerCustomization(state)) constraints.push('категории');
   if (state.confidenceFilter !== 'all') constraints.push(`confidence: ${state.confidenceFilter}`);
   const yearMin = Number(state.yearBounds?.min ?? state.currentStartYear);
   const yearMax = Number(state.yearBounds?.max ?? state.currentEndYear);
