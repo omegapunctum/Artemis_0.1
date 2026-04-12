@@ -174,6 +174,13 @@ Optional raw export (if `data/features.json` exists):
 python scripts/import_features.py export --geojson-in data/features.geojson --raw-json-in data/features.json --include-raw --out-dir data/export
 ```
 
-## Reference Documentation
+## Documentation System
 
-Canonical reference docs for audit/patch validation are located in [`docs/reference/`](docs/reference/README.md).
+Repository documentation is organized into four pragmatic layers:
+
+- **canonical** — source of truth documents that define current project rules and structure.
+- **work** — active working documents for current implementation tracks.
+- **audits** — verification, audit, and validation outputs.
+- **archive** — historical snapshots and superseded materials kept for traceability.
+
+Canonical docs live in `docs/`, while supporting layers are in `docs/work/`, `docs/audits/`, and `docs/archive/`.
