@@ -183,4 +183,6 @@ Repository documentation is organized into four pragmatic layers:
 - **audits** — verification, audit, and validation outputs.
 - **archive** — historical snapshots and superseded materials kept for traceability.
 
-Canonical docs live in `docs/`, while supporting layers are in `docs/work/`, `docs/audits/`, and `docs/archive/`.
+Canonical docs are maintained in root `README.md` and active documents in `docs/` (for example: `docs/ARTEMIS_MASTER_PROMPT.md`, `docs/PROJECT_STRUCTURE.md`, `docs/PROJECT_PHASES.md`, `docs/PRIORITIES.md`, `docs/DATA_CONTRACT.md`).
+Supporting layers live in `docs/work/`, `docs/audits/`, and `docs/archive/`.
+`docs/reference/` is legacy/archive-only and is not a source-of-truth layer.
