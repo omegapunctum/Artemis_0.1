@@ -949,6 +949,7 @@ button:focus-visible {
   border-radius: 50%;
 }
 .timeline-track-wrap:hover .timeline-knob { box-shadow: 0 3px 10px rgba(2, 6, 23, 0.46), 0 0 0 2px rgba(56, 189, 248, 0.24); }
+.timeline-track-wrap:focus-within .timeline-knob { box-shadow: 0 3px 10px rgba(2, 6, 23, 0.46), 0 0 0 2px rgba(125, 211, 252, 0.42); }
 .timeline-track-wrap.is-dragging .timeline-knob {
   box-shadow: 0 3px 12px rgba(2, 6, 23, 0.5), 0 0 0 3px rgba(56, 189, 248, 0.24);
 }

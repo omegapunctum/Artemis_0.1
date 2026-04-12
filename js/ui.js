@@ -193,7 +193,7 @@ export async function initUI(map, features) {
     search: '',
     currentStartYear: years.min,
     currentEndYear: years.max,
-    timelineMode: 'point',
+    timelineMode: 'range',
     timelinePointYear: years.max,
     timelineRangeStart: years.min,
     timelineRangeEnd: years.max,
@@ -1303,10 +1303,17 @@ function resetExploreConstraints(elements, state, { keepSearch = false } = {}) {
   state.confidenceFilter = 'all';
   restoreDefaultLayers(state);
   restoreDefaultQuickLayers(state);
-  state.currentStartYear = Number(elements.timelineStart?.min ?? state.currentStartYear);
-  state.currentEndYear = Number(elements.timelineEnd?.max ?? state.currentEndYear);
+  const minYear = Number(elements.timelineStart?.min ?? state.currentStartYear);
+  const maxYear = Number(elements.timelineEnd?.max ?? state.currentEndYear);
+  state.timelineMode = 'range';
+  state.timelineRangeStart = minYear;
+  state.timelineRangeEnd = maxYear;
+  state.timelinePointYear = maxYear;
+  state.currentStartYear = minYear;
+  state.currentEndYear = maxYear;
   if (elements.timelineStart) elements.timelineStart.value = String(state.currentStartYear);
   if (elements.timelineEnd) elements.timelineEnd.value = String(state.currentEndYear);
+  syncLegacyDateInputs(elements, state);
   updateTimelineLabel(elements, state);
   updateTimelineViz(elements, state);
 }
@@ -1613,8 +1620,8 @@ function hydrateTimeline(elements, years, state) {
   state.timelineRangeStart = years.min;
   state.timelineRangeEnd = years.max;
   state.timelinePointYear = years.max;
-  state.currentStartYear = state.timelinePointYear;
-  state.currentEndYear = state.timelinePointYear;
+  state.currentStartYear = state.timelineRangeStart;
+  state.currentEndYear = state.timelineRangeEnd;
   elements.timelineStart.value = String(state.currentStartYear);
   elements.timelineEnd.value = String(state.currentEndYear);
   renderTimelineAxis(elements, years);
@@ -1817,7 +1824,6 @@ function setupTimelinePointerInteractions(elements, state) {
 
   [elements.timelineStart, elements.timelineEnd].forEach((input) => {
     input.style.pointerEvents = 'none';
-    input.tabIndex = -1;
   });
 
   elements.timelineKnobStart?.addEventListener('pointerdown', (event) => {
