@@ -29,7 +29,7 @@ Out-of-scope: data-layer internals, feature logic, architecture changes.
      - warning thresholds (`expected_fallback <= 10`, `data_quality <= 0`),
      - backend entrypoint import/app presence,
      - canonical frontend data-source discipline and anti-fallback patterns,
-     - PWA auth/private cache constraints,
+     - PWA auth/private cache constraints (semantic bypass/no-cache verification, not token absence),
      - governance guard against direct runtime `publish(` outside moderation.
 
 3. **Test coverage for gate behavior exists**

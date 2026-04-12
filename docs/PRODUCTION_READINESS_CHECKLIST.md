@@ -41,8 +41,8 @@
 - FAIL: Файл `sw.js` отсутствует.
 
 - [ ] Check: Service Worker не кэширует auth/private.
-- PASS: В `sw.js` отсутствуют пути `/api/auth` и `/api/drafts`.
-- FAIL: В `sw.js` найден `/api/auth` или `/api/drafts`.
+- PASS: `sw.js` содержит явный network-only bypass для private/auth-запросов (например, `isPrivateApiRequest -> event.respondWith(fetch(request)); return;`) и не содержит явного `cache.put` для private/auth route.
+- FAIL: В `sw.js` нет явного bypass для private/auth-запросов либо найдены признаки их cache eligibility.
 
 ## 5. Governance
 

@@ -147,10 +147,35 @@ def check_pwa() -> None:
         fail("sw.js is missing")
 
     sw_text = sw_path.read_text(encoding="utf-8")
-    forbidden = ["/api/auth", "/api/drafts"]
-    for token in forbidden:
-        if token in sw_text:
-            fail(f'sw.js contains forbidden cache path: "{token}"')
+    sw_text_lower = sw_text.lower()
+
+    has_private_scope = (
+        "startswith('api/')" in sw_text_lower
+        or 'startswith("api/")' in sw_text_lower
+        or "startswith('/api/')" in sw_text_lower
+        or 'startswith("/api/")' in sw_text_lower
+    )
+    if not has_private_scope:
+        private_tokens = ("api/auth", "api/drafts", "api/me", "api/uploads", "api/moderation")
+        has_private_scope = any(token in sw_text_lower for token in private_tokens)
+    if not has_private_scope:
+        fail("sw.js missing private/api request scope in bypass classifier")
+
+    private_guard = re.search(
+        r"if\s*\(\s*isprivateapirequest\s*\)\s*\{[\s\S]{0,500}?event\.respondwith\(fetch\(request\)\)[\s\S]{0,200}?return\s*;",
+        sw_text,
+        flags=re.IGNORECASE,
+    )
+    if private_guard is None:
+        fail("sw.js missing explicit network-only bypass for private/auth requests")
+
+    forbidden_cache_patterns = [
+        r"cache\.put\([^)]*/api/auth",
+        r"cache\.put\([^)]*/api/drafts",
+    ]
+    for pattern in forbidden_cache_patterns:
+        if re.search(pattern, sw_text_lower):
+            fail("sw.js contains explicit cache.put for private/auth route")
 
 
 def check_governance() -> None:

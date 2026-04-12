@@ -20,6 +20,7 @@ def _build_fixture(
     empty_features: bool = False,
     frontend_fallback: bool = False,
     include_sw: bool = True,
+    unsafe_sw: bool = False,
     expected_fallback_warnings: int = 0,
     data_quality_warnings: int = 0,
 ) -> None:
@@ -60,7 +61,38 @@ export async function loadPrimary() {
     _write(root / "js" / "data.js", data_js)
 
     if include_sw:
-        _write(root / "sw.js", "self.addEventListener('fetch', () => {});\n")
+        if unsafe_sw:
+            _write(
+                root / "sw.js",
+                """
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith('/api/auth')) {
+    event.respondWith(caches.open('runtime').then((cache) => cache.match(event.request)));
+    return;
+  }
+  event.respondWith(fetch(event.request));
+});
+""".strip()
+                + "\n",
+            )
+        else:
+            _write(
+                root / "sw.js",
+                """
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+  const isPrivateApiRequest = url.pathname.startsWith('/api/');
+  if (isPrivateApiRequest) {
+    event.respondWith(fetch(request));
+    return;
+  }
+  event.respondWith(fetch(request));
+});
+""".strip()
+                + "\n",
+            )
 
     _write(root / "app" / "__init__.py", "")
     _write(root / "app" / "main.py", "app = object()\n")
@@ -115,6 +147,14 @@ def test_release_check_fails_when_sw_missing(tmp_path: Path) -> None:
 
     assert result.returncode == 1
     assert "[FAIL] PWA: sw.js is missing" in result.stdout
+
+
+def test_release_check_fails_when_private_requests_are_cache_eligible(tmp_path: Path) -> None:
+    _build_fixture(tmp_path, unsafe_sw=True)
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 1
+    assert "[FAIL] PWA:" in result.stdout
 
 
 def test_release_check_fails_when_expected_fallback_exceeds_threshold(tmp_path: Path) -> None:

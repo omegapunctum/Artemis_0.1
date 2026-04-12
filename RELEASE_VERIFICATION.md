@@ -14,6 +14,7 @@
 - ✅ Full automated test suite passes: `python -m pytest`.
 - ✅ Export workflow enforces release gate before export/publish.
 - ✅ ETL self-check executed in current verification cycle: `python scripts/export_airtable.py --self-test`.
+- ✅ PWA gate verifies private/auth semantics by network-only bypass (not by naive route-string absence).
 
 ## Manual smoke status
 - ✅ Manual smoke artifacts exist and remain reference baseline:

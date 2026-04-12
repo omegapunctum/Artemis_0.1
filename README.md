@@ -102,12 +102,25 @@ Vanilla JavaScript (no frameworks):
 
 ## API Contract (MVP)
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/refresh`
-- `POST /api/auth/logout`
-- `GET /api/me`
-- `GET /api/health`
+- Auth (`/api/auth/*`):
+  - `POST /api/auth/register`
+  - `POST /api/auth/login`
+  - `POST /api/auth/refresh`
+  - `POST /api/auth/logout`
+- User/session:
+  - `GET /api/me`
+  - `GET /api/health`
+- Drafts:
+  - `GET|POST|PUT|DELETE /api/drafts`
+- Uploads:
+  - `POST /api/uploads`
+  - `GET /api/uploads/{filename}`
+- Moderation (`/api/moderation/*`):
+  - review/approve/reject runtime routes for moderation workflow
+- Auxiliary runtime feed:
+  - `GET /api/map/feed` (auxiliary/internal read-only route)
+- Canonical public map data path:
+  - `/data/*` (with `data/features.geojson` as production-default public source)
 
 ---
 
