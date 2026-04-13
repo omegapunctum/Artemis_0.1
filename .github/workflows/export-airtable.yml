@@ -56,38 +56,9 @@ jobs:
             exit 1
           fi
 
-      - name: "Release guard: validate features.geojson"
+      - name: Run release gate on exported artifacts
         run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-
-          path = Path("data/features.geojson")
-          if not path.exists():
-              raise SystemExit("ERROR: data/features.geojson not found")
-
-          raw = path.read_text(encoding="utf-8").strip()
-          if not raw:
-              raise SystemExit("ERROR: data/features.geojson is empty")
-
-          try:
-              payload = json.loads(raw)
-          except json.JSONDecodeError as exc:
-              raise SystemExit(f"ERROR: invalid JSON in data/features.geojson: {exc}") from exc
-
-          if not isinstance(payload, dict) or payload.get("type") != "FeatureCollection":
-              raise SystemExit("ERROR: data/features.geojson must be a GeoJSON FeatureCollection")
-
-          features = payload.get("features")
-          if features is None:
-              raise SystemExit("ERROR: data/features.geojson must contain top-level 'features'")
-          if not isinstance(features, list):
-              raise SystemExit("ERROR: data/features.geojson field 'features' must be a list")
-          if len(features) == 0:
-              raise SystemExit("ERROR: data/features.geojson contains 0 features")
-
-          print(f"Release guard OK: FeatureCollection is valid and has {len(features)} feature(s)")
-          PY
+          python scripts/release_check.py
 
       - name: Debug data files
         run: ls -lh data/

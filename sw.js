@@ -21,8 +21,6 @@ const OFFLINE_STYLE = {
 };
 const BASE_PATH = getBasePath();
 const PRECACHE_PATHS = [
-  '',
-  'index.html',
   'manifest.json',
   'css/style.css',
   'js/auth.js',
@@ -45,7 +43,6 @@ const PRECACHE_URLS = [
   MAPLIBRE_STYLE_URL,
   MAP_STYLE_URL
 ];
-const INDEX_URL = toBaseUrl('index.html');
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
@@ -173,7 +170,7 @@ function isDataRequest(url) {
 
 function isStaticAssetRequest(url, request) {
   return (
-    (url.origin === self.location.origin && ['document', 'style', 'script', 'worker', 'image', 'font'].includes(request.destination))
+    (url.origin === self.location.origin && ['style', 'script', 'worker', 'image', 'font'].includes(request.destination))
     || url.href === MAPLIBRE_SCRIPT_URL
     || url.href === MAPLIBRE_STYLE_URL
     || url.href === MAP_STYLE_URL
@@ -182,33 +179,9 @@ function isStaticAssetRequest(url, request) {
 
 async function handleNavigationRequest(request) {
   try {
-    const cache = await caches.open(STATIC_CACHE);
-    const networkResponse = await fetch(request);
-
-    if (networkResponse && networkResponse.ok) {
-      const contentType = networkResponse.headers.get('Content-Type') || '';
-      if (contentType.includes('text/html')) {
-        await cache.put(INDEX_URL, networkResponse.clone());
-      }
-      console.debug('[SW] navigation network hit -> cache updated');
-      return networkResponse;
-    }
-
-    const fallback = await cache.match(INDEX_URL);
-    if (fallback) {
-      console.debug('[SW] navigation non-OK response, fallback to cached shell');
-      return fallback;
-    }
-
-    return networkResponse;
+    return await fetch(request, { cache: 'no-store' });
   } catch (error) {
-    console.debug('[SW] navigation network failed, fallback to cached shell');
-    const cache = await caches.open(STATIC_CACHE);
-    const fallback = await cache.match(INDEX_URL);
-    if (fallback) {
-      notifyClients({ type: 'ARTEMIS_NAVIGATION_OFFLINE_FALLBACK' });
-      return fallback;
-    }
+    console.debug('[SW] navigation network failed');
     return Response.error();
   }
 }

@@ -18,9 +18,8 @@
     <h1>ARTEMIS</h1>
 
     <div id="auth-buttons" class="top-controls">
-      <button id="login-btn" type="button">Login</button>
-      <button id="register-btn" type="button">Register</button>
-      <button id="install-btn" type="button" hidden>Install</button>
+      <button id="login-btn" type="button">Вход</button>
+      <button id="register-btn" type="button">Регистрация</button>
     </div>
 
     <section id="profile-panel" hidden>
@@ -28,7 +27,7 @@
       <div class="profile-actions">
         <button id="open-draft-editor-btn" type="button">Создать черновик</button>
         <button id="refresh-drafts-btn" type="button">Мои черновики</button>
-        <button id="logout-btn" type="button">Logout</button>
+        <button id="logout-btn" type="button">Выйти</button>
       </div>
       <ul id="drafts-list"></ul>
     </section>
@@ -42,7 +41,7 @@
       <label for="date-to">Дата до</label><input id="date-to" type="number" />
     </section>
 
-    <section class="results-summary" aria-label="Сводка результатов">
+    <section id="results-summary" class="results-summary" aria-label="Сводка результатов" hidden>
       <div><strong>Загружено из файла:</strong> <span id="source-count">0</span></div>
       <div><strong>Валидные Point:</strong> <span id="point-valid-count">0</span></div>
       <div><strong>Найдено:</strong> <span id="results-count">0</span></div>
@@ -52,11 +51,11 @@
   </aside>
 
   <div id="app-shell">
-    <header id="top-header" class="glass-panel" aria-label="Top controls">
+    <header id="top-header" class="glass-panel" aria-label="Верхняя панель управления">
       <div class="top-shell-left">
-        <div class="brand" aria-label="ARTEMIS logo">ARTEMIS</div>
+        <div class="brand" aria-label="Логотип ARTEMIS">ARTEMIS</div>
         <nav class="project-nav" aria-label="Основная навигация проекта">
-          <a href="#" class="project-nav-link">Главная</a>
+          <a href="#" class="project-nav-link" aria-current="page">Главная</a>
           <a href="#" class="project-nav-link">О проекте</a>
           <a href="#" class="project-nav-link">Курсы</a>
           <a href="#" class="project-nav-link">Коллекции</a>
@@ -64,24 +63,25 @@
         </nav>
       </div>
       <div class="search-shell">
-        <input id="global-search" type="search" placeholder="Search events, people, places, dates..." autocomplete="off" />
-        <button id="search-clear-btn" class="icon-btn search-clear-btn" type="button" aria-label="Clear search" hidden>×</button>
+        <input id="global-search" type="search" placeholder="Поиск объектов, людей, мест и дат..." autocomplete="off" />
+        <button id="search-clear-btn" class="icon-btn search-clear-btn" type="button" aria-label="Очистить поиск" title="Очистить поиск" hidden>×</button>
         <div id="search-no-results-state" class="search-no-results-state" hidden aria-live="polite">
-          <span id="search-no-results-text">Ничего не найдено. Попробуйте изменить запрос.</span>
+          <span id="search-no-results-text">Ничего не найдено. Измените поиск, фильтры или период.</span>
           <button id="search-no-results-reset" type="button" class="ui-button ui-button-secondary">Сбросить поиск</button>
         </div>
         <div id="search-dropdown" class="top-panel search-dropdown" hidden></div>
       </div>
       <div class="top-actions">
-        <div class="top-utility-group" role="group" aria-label="Utility actions">
-          <button id="ugc-create-btn" class="ui-button ui-button-secondary" type="button" aria-label="Create draft">Create draft</button>
-          <button id="moderation-toggle-btn" type="button" aria-label="Toggle moderation workspace" aria-expanded="false" data-moderation-action="toggle-workspace" hidden>Moderation</button>
+        <div class="top-utility-group" role="group" aria-label="Служебные действия">
+          <button id="ugc-create-btn" class="ui-button ui-button-secondary" type="button" aria-label="Создать черновик" hidden>Создать черновик</button>
+          <button id="moderation-toggle-btn" type="button" aria-label="Открыть модерацию" aria-expanded="false" data-moderation-action="toggle-workspace" hidden>Модерация</button>
           <div class="profile-shell">
             <button id="profile-menu-trigger" class="profile-trigger" type="button" aria-label="Открыть меню профиля" aria-expanded="false" aria-controls="profile-menu">
               <span class="profile-trigger-icon" aria-hidden="true">👤</span>
             </button>
             <div id="profile-menu" class="top-panel profile-menu" hidden role="menu" aria-label="Меню профиля">
               <button type="button" class="profile-menu-item" role="menuitem">Профиль</button>
+              <button id="ugc-create-menu-btn" type="button" class="profile-menu-item" role="menuitem">Создать черновик</button>
               <button type="button" class="profile-menu-item" role="menuitem">Мои черновики</button>
               <button type="button" class="profile-menu-item" role="menuitem">Закладки</button>
               <button type="button" class="profile-menu-item" role="menuitem">Настройки</button>
@@ -89,19 +89,19 @@
             </div>
           </div>
         </div>
-        <div class="map-tools-shell" role="group" aria-label="Map tools">
-          <div class="top-actions-cluster" role="group" aria-label="Map controls">
-            <button id="filters-btn" type="button" aria-label="Toggle filters" aria-expanded="false">Filters</button>
-            <button id="layers-btn" type="button" aria-label="Toggle layers" aria-expanded="false">Layers</button>
-            <button id="bookmarks-btn" type="button" aria-label="Toggle bookmarks" aria-expanded="false">Bookmarks</button>
-            <button id="courses-btn" type="button" aria-label="Toggle courses" aria-expanded="false">Courses</button>
+        <div class="map-tools-shell" role="group" aria-label="Инструменты карты">
+          <div class="top-actions-cluster" role="group" aria-label="Элементы управления картой">
+            <button id="filters-btn" type="button" aria-label="Открыть фильтры объектов" title="Фильтры объектов" aria-expanded="false">Фильтры</button>
+            <button id="layers-btn" type="button" aria-label="Открыть слои карты" title="Слои карты" aria-expanded="false">Слои</button>
+            <button id="bookmarks-btn" type="button" aria-label="Открыть закладки" title="Закладки" aria-expanded="false">Закладки</button>
+            <button id="courses-btn" type="button" aria-label="Открыть курсы" title="Курсы" aria-expanded="false">Курсы</button>
             <button id="map-theme-toggle" type="button" aria-label="Сменить тему карты">Серая</button>
-            <button id="live-btn" type="button" aria-label="Toggle live feed" aria-expanded="false">LIVE</button>
+            <button id="live-btn" type="button" aria-label="Лента событий" aria-expanded="false">Лента</button>
             <div id="quick-layer-filter" class="quick-layer-filter" role="group" aria-label="Быстрый фильтр категорий"></div>
             <p id="layers-entry-helper" class="layers-entry-helper">Слои карты</p>
           </div>
         </div>
-        <button id="overflow-btn" class="icon-btn" type="button" aria-label="More actions">⋯</button>
+        <button id="overflow-btn" class="icon-btn" type="button" aria-label="Ещё действия">⋯</button>
       </div>
       <section id="filters-panel" class="glass-panel top-panel" hidden></section>
       <section id="layers-panel" class="glass-panel top-panel" hidden></section>
@@ -114,28 +114,23 @@
       <div id="map"></div>
     </main>
     <section id="onboarding-overlay" class="onboarding-overlay" aria-live="polite">
-      <div class="onboarding-card glass-panel" role="note" aria-label="Подсказка для первого входа">
-        <h2 class="onboarding-title">Быстрый старт</h2>
-        <ul class="onboarding-list">
-          <li>Исследуйте карту и перемещайтесь по ней.</li>
-          <li>Используйте поиск для быстрого перехода к объектам.</li>
-          <li>Переключайте слои, чтобы сравнивать данные.</li>
-          <li>Меняйте период на таймлайне внизу экрана.</li>
-        </ul>
-        <button id="onboarding-dismiss-btn" class="ui-button ui-button-primary" type="button">Понятно</button>
+      <div class="onboarding-card glass-panel" role="note" aria-label="Подсказка первого шага">
+        <p class="onboarding-title">Выберите объект на карте или измените период на таймлайне внизу.</p>
+        <button id="onboarding-dismiss-btn" class="icon-btn onboarding-dismiss-btn" type="button" aria-label="Закрыть подсказку">×</button>
       </div>
     </section>
     <section id="global-data-loading" class="global-data-loading glass-panel" aria-live="polite" aria-hidden="false">
-      <p id="global-data-loading-text" class="global-data-loading-text">Загрузка карты…</p>
+      <p id="global-data-loading-text" class="global-data-loading-text">Загрузка карты...</p>
     </section>
     <section id="global-data-error" class="global-data-error glass-panel" hidden aria-hidden="true" aria-live="assertive">
       <p id="global-data-error-text" class="global-data-error-text">Не удалось загрузить данные карты.</p>
       <button id="global-data-error-retry" type="button" class="ui-button ui-button-primary">Повторить</button>
     </section>
 
-    <section id="bottom-panel" class="glass-panel" aria-label="Timeline">
+    <section id="bottom-panel" class="glass-panel" aria-label="Таймлайн">
       <div id="timeline" class="timeline-row">
         <div class="timeline-head">
+          <div class="timeline-helper-label">Период отображения объектов</div>
           <div id="timeline-range-label">Выбранная точка</div>
           <div class="timeline-mode-toggle" role="group" aria-label="Режим времени">
             <button id="timeline-mode-point" class="timeline-mode-btn is-active" type="button" aria-pressed="true">Точка</button>
@@ -149,131 +144,131 @@
           <div id="timeline-knob-start" class="timeline-knob"></div>
           <div id="timeline-knob-end" class="timeline-knob"></div>
           <div id="timeline-axis" class="timeline-axis" aria-hidden="true"></div>
-          <input id="timeline-start" type="range" min="-3000" max="2026" value="1600" step="1" />
-          <input id="timeline-end" type="range" min="-3000" max="2026" value="1650" step="1" />
+          <input id="timeline-start" type="range" min="-3000" max="2026" value="1600" step="1" aria-label="Начало временного диапазона" />
+          <input id="timeline-end" type="range" min="-3000" max="2026" value="1650" step="1" aria-label="Конец временного диапазона" />
         </div>
       </div>
     </section>
 
-    <aside id="detail-panel" class="glass-panel detail-panel is-preview-mode" data-mode="preview" hidden aria-label="Object preview" aria-labelledby="detail-panel-heading" aria-hidden="true" role="dialog" aria-modal="false" tabindex="-1">
+    <aside id="detail-panel" class="glass-panel detail-panel is-preview-mode" data-mode="preview" hidden aria-label="Предпросмотр объекта" aria-labelledby="detail-panel-heading" aria-hidden="true" role="dialog" aria-modal="false" tabindex="-1">
       <header class="detail-panel-head panel-header">
         <h2 id="detail-panel-heading" class="detail-panel-heading">Быстрый просмотр</h2>
         <div class="detail-panel-actions">
-          <button id="detail-panel-expand" class="icon-btn" type="button" aria-label="Expand detail panel" aria-expanded="false" hidden>⇧</button>
+          <button id="detail-panel-expand" class="icon-btn" type="button" aria-label="Развернуть панель" aria-expanded="false" hidden>⇧</button>
           <button id="detail-panel-close" class="floating-card-close" type="button" aria-label="Закрыть карточку предпросмотра">×</button>
         </div>
       </header>
       <div id="detail-panel-body" class="detail-panel-body" aria-live="polite"></div>
     </aside>
 
-    <aside id="ugc-panel" class="glass-panel ugc-panel" hidden aria-label="Draft editor" aria-hidden="true">
+    <aside id="ugc-panel" class="glass-panel ugc-panel" hidden aria-label="Редактор черновика" aria-hidden="true">
       <header class="ugc-panel-head panel-header">
         <div>
-          <h2 id="ugc-panel-title" class="ugc-panel-title">Create draft</h2>
-          <p id="ugc-panel-subtitle" class="ugc-panel-subtitle">Draft status: pristine</p>
+          <h2 id="ugc-panel-title" class="ugc-panel-title">Создать черновик</h2>
+          <p id="ugc-panel-subtitle" class="ugc-panel-subtitle">Статус черновика: новый</p>
         </div>
-        <button id="ugc-close-btn" class="floating-card-close" type="button" aria-label="Close draft panel">×</button>
+        <button id="ugc-close-btn" class="floating-card-close" type="button" aria-label="Закрыть панель черновика">×</button>
       </header>
       <div id="ugc-auth-cta" class="ugc-inline-note" hidden></div>
       <div id="ugc-global-error" class="ugc-inline-error" hidden></div>
       <section class="ugc-my-drafts">
         <div class="ugc-my-drafts-head">
-          <h3>My drafts</h3>
-          <button id="ugc-refresh-drafts-btn" class="ui-button" type="button">Refresh</button>
+          <h3>Мои черновики</h3>
+          <button id="ugc-refresh-drafts-btn" class="ui-button" type="button">Обновить</button>
         </div>
-        <div id="ugc-drafts-empty" class="ugc-empty-state" hidden>No drafts yet</div>
+        <div id="ugc-drafts-empty" class="ugc-empty-state" hidden>Черновиков пока нет</div>
         <ul id="ugc-drafts-list" class="ugc-drafts-list"></ul>
       </section>
       <form id="ugc-draft-form" class="ugc-draft-form" novalidate>
         <section class="ugc-form-section">
-          <h3>Basic info</h3>
-          <label>name_ru <input name="name_ru" /></label>
-          <label>name_en <input name="name_en" /></label>
-          <label>layer_id
+          <h3>Основная информация</h3>
+          <label>Название (RU) <input name="name_ru" /></label>
+          <label>Название (EN) <input name="name_en" /></label>
+          <label>Слой
             <select name="layer_id">
-              <option value="">Select layer</option>
+              <option value="">Выберите слой</option>
             </select>
           </label>
-          <label>title_short <input name="title_short" maxlength="120" /></label>
+          <label>Краткий заголовок <input name="title_short" maxlength="120" /></label>
         </section>
         <section class="ugc-form-section">
-          <h3>Time</h3>
-          <label>date_start <input name="date_start" inputmode="numeric" /></label>
-          <label>date_end <input name="date_end" inputmode="numeric" /></label>
+          <h3>Время</h3>
+          <label>Дата начала <input name="date_start" inputmode="numeric" /></label>
+          <label>Дата окончания <input name="date_end" inputmode="numeric" /></label>
         </section>
         <section class="ugc-form-section">
-          <h3>Location</h3>
+          <h3>Местоположение</h3>
           <div class="ugc-coords-row">
-            <label>latitude <input name="latitude" inputmode="decimal" /></label>
-            <label>longitude <input name="longitude" inputmode="decimal" /></label>
+            <label>Широта <input name="latitude" inputmode="decimal" /></label>
+            <label>Долгота <input name="longitude" inputmode="decimal" /></label>
           </div>
-          <label>coordinates_confidence
+          <label>Точность координат
             <select name="coordinates_confidence">
-              <option value="">Not set</option>
-              <option value="exact">exact</option>
-              <option value="approximate">approximate</option>
-              <option value="conditional">conditional</option>
+              <option value="">Не задана</option>
+              <option value="exact">точные</option>
+              <option value="approximate">приблизительные</option>
+              <option value="conditional">условные</option>
             </select>
           </label>
-          <button id="ugc-use-map-center-btn" class="ui-button ui-button-secondary" type="button">Use current map center</button>
+          <button id="ugc-use-map-center-btn" class="ui-button ui-button-secondary" type="button">Использовать текущий центр карты</button>
         </section>
         <section class="ugc-form-section">
-          <h3>Media & source</h3>
-          <label>image_url <input name="image_url" inputmode="url" /></label>
-          <label>source_url <input name="source_url" inputmode="url" /></label>
+          <h3>Медиа и источник</h3>
+          <label>URL изображения <input name="image_url" inputmode="url" /></label>
+          <label>URL источника <input name="source_url" inputmode="url" /></label>
         </section>
         <section class="ugc-form-section">
-          <h3>Description & tags</h3>
-          <label>description <textarea name="description" maxlength="2000"></textarea></label>
-          <label>tags <input name="tags" placeholder="tag1, tag2" /></label>
+          <h3>Описание и теги</h3>
+          <label>Описание <textarea name="description" maxlength="2000"></textarea></label>
+          <label>Теги <input name="tags" placeholder="тег1, тег2" /></label>
         </section>
         <div id="ugc-field-errors" class="ugc-field-errors"></div>
         <div class="ugc-form-actions">
-          <button id="ugc-save-btn" class="ui-button ui-button-primary" type="submit">Save draft</button>
-          <button id="ugc-submit-btn" class="ui-button ui-button-success" type="button">Submit for review</button>
-          <button id="ugc-delete-btn" class="ui-button ui-button-danger" type="button">Delete draft</button>
-          <button id="ugc-cancel-btn" class="ui-button ui-button-secondary" type="button">Cancel</button>
+          <button id="ugc-save-btn" class="ui-button ui-button-primary" type="submit">Сохранить черновик</button>
+          <button id="ugc-submit-btn" class="ui-button ui-button-success" type="button">Отправить на проверку</button>
+          <button id="ugc-delete-btn" class="ui-button ui-button-danger" type="button">Удалить черновик</button>
+          <button id="ugc-cancel-btn" class="ui-button ui-button-secondary" type="button">Отмена</button>
         </div>
       </form>
     </aside>
 
-    <aside id="moderation-workspace" class="glass-panel moderation-workspace" hidden aria-label="Moderation workspace" aria-hidden="true">
+    <aside id="moderation-workspace" class="glass-panel moderation-workspace" hidden aria-label="Рабочая область модерации" aria-hidden="true">
       <header class="moderation-head panel-header">
-        <h2>Moderation queue</h2>
+        <h2>Очередь модерации</h2>
         <div class="moderation-head-actions">
-          <button type="button" data-moderation-action="mobile-back" class="moderation-mobile-back">Back</button>
-          <button type="button" data-moderation-action="refresh-queue">Refresh</button>
-          <button type="button" class="floating-card-close" data-moderation-action="close-workspace" aria-label="Close moderation">×</button>
+          <button type="button" data-moderation-action="mobile-back" class="moderation-mobile-back">Назад</button>
+          <button type="button" data-moderation-action="refresh-queue">Обновить</button>
+          <button type="button" class="floating-card-close" data-moderation-action="close-workspace" aria-label="Закрыть модерацию">×</button>
         </div>
       </header>
-      <section class="moderation-list-area" aria-label="Pending drafts">
+      <section class="moderation-list-area" aria-label="Черновики на проверке">
         <div class="moderation-filters">
-          <input id="moderation-search" type="search" placeholder="Search name/title..." autocomplete="off" />
-          <button id="moderation-clear-search" type="button" class="ui-button ui-button-secondary">Clear</button>
-          <select id="moderation-sort" aria-label="Sort moderation queue">
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
+          <input id="moderation-search" type="search" placeholder="Поиск по названию..." autocomplete="off" />
+          <button id="moderation-clear-search" type="button" class="ui-button ui-button-secondary">Очистить</button>
+          <select id="moderation-sort" aria-label="Сортировка очереди модерации">
+            <option value="newest">Сначала новые</option>
+            <option value="oldest">Сначала старые</option>
           </select>
         </div>
         <div id="moderation-queue-state"></div>
         <div id="moderation-list" class="moderation-list"></div>
       </section>
-      <section id="moderation-review" class="moderation-review-area" aria-label="Draft review panel"></section>
+      <section id="moderation-review" class="moderation-review-area" aria-label="Панель проверки черновика"></section>
     </aside>
 
     <div id="moderation-reject-modal" class="moderation-reject-modal" hidden aria-hidden="true">
-      <div class="glass-panel moderation-reject-card" role="dialog" aria-modal="true" aria-label="Reject draft">
-        <h3>Reject draft</h3>
-        <label for="moderation-reject-reason">Reason (optional)</label>
-        <textarea id="moderation-reject-reason" maxlength="1000" placeholder="Add reject reason if backend supports it"></textarea>
+      <div class="glass-panel moderation-reject-card" role="dialog" aria-modal="true" aria-label="Отклонить черновик">
+        <h3>Отклонить черновик</h3>
+        <label for="moderation-reject-reason">Причина (необязательно)</label>
+        <textarea id="moderation-reject-reason" maxlength="1000" placeholder="Добавьте причину отклонения (если поддерживается)"></textarea>
         <div class="moderation-reject-actions">
-          <button type="button" data-moderation-action="submit-reject">Reject</button>
-          <button type="button" data-moderation-action="close-reject-modal">Cancel</button>
+          <button type="button" data-moderation-action="submit-reject">Отклонить</button>
+          <button type="button" data-moderation-action="close-reject-modal">Отмена</button>
         </div>
       </div>
     </div>
     <div id="status" class="status-panel" role="status" aria-live="polite">
-      <div id="loading-indicator" class="status-inline-loading" hidden>Loading...</div>
+      <div id="loading-indicator" class="status-inline-loading" hidden>Загрузка...</div>
       <div id="status-loading" class="status-loading">Инициализация приложения…</div>
       <div id="status-message">Ожидание загрузки…</div>
       <div id="status-error" class="status-error" hidden></div>
@@ -281,8 +276,8 @@
   </div>
 
   <div id="offline-status" class="offline-status" role="status" aria-live="polite" hidden>
-    <span class="offline-status-title">You are offline</span>
-    <span class="offline-status-hint">Cached map data may still be available</span>
+    <span class="offline-status-title">Нет подключения к сети</span>
+    <span class="offline-status-hint">Кэшированные данные карты могут быть доступны</span>
   </div>
   <div id="app-status-host" class="app-status-host" aria-live="polite" aria-atomic="false"></div>
 
@@ -293,7 +288,7 @@
       <button type="button" class="modal-close" data-close-modal aria-label="Закрыть">×</button>
       <h3>Вход / Регистрация</h3>
       <form id="login-form" data-mode="login" novalidate>
-        <label>Email <input type="email" name="email" required /></label>
+        <label>Эл. почта <input type="email" name="email" required /></label>
         <label>Пароль <input type="password" name="password" minlength="8" required /></label>
         <button type="submit">Продолжить</button>
       </form>
@@ -318,6 +313,16 @@
     const statusLoading = document.getElementById('status-loading');
     const USE_MAP_FEED = false;
     const DATA_LOAD_TIMEOUT_MS = 8000;
+    const runtimeReadiness = {
+      dataReady: false,
+      mapReady: false,
+      uiReady: false,
+      failed: false,
+      phaseMessage: 'Загрузка данных...',
+      readyMessage: 'Карта готова',
+      errorMessage: ''
+    };
+    let lastRuntimeStatusKey = '';
     const DEBUG_TELEMETRY_STATUS = (() => {
       const debugParam = new URLSearchParams(window.location.search).get('debug');
       if (typeof debugParam === 'string' && ['1', 'true', 'on'].includes(debugParam.trim().toLowerCase())) {
@@ -333,10 +338,31 @@
 
     // Обновляет строку состояния приложения без лишнего шума.
     function setStatus(message, { error = false, loading = true } = {}) {
+      const statusKey = `${message}|${error ? '1' : '0'}|${loading ? '1' : '0'}`;
+      if (statusKey === lastRuntimeStatusKey) return;
+      lastRuntimeStatusKey = statusKey;
       statusMessage.textContent = message;
       statusLoading.hidden = !loading;
       statusError.hidden = !error;
       statusError.textContent = error ? message : '';
+    }
+
+    function syncRuntimeStatus() {
+      if (runtimeReadiness.failed) {
+        hideGlobalDataLoading();
+        setStatus('Ошибка загрузки', { error: true, loading: false });
+        return;
+      }
+
+      const appReady = runtimeReadiness.dataReady && runtimeReadiness.mapReady && runtimeReadiness.uiReady;
+      if (appReady) {
+        hideGlobalDataLoading();
+        setStatus('Карта готова', { loading: false });
+        return;
+      }
+      const loadingMessage = runtimeReadiness.dataReady ? 'Загрузка карты...' : 'Загрузка данных...';
+      showGlobalDataLoading(loadingMessage);
+      setStatus(loadingMessage, { loading: true });
     }
 
     function createDataLoadTimeoutError(timeoutMs) {
@@ -366,9 +392,16 @@
 
     async function bootstrapApp() {
       try {
+        runtimeReadiness.dataReady = false;
+        runtimeReadiness.mapReady = false;
+        runtimeReadiness.uiReady = false;
+        runtimeReadiness.failed = false;
+        runtimeReadiness.errorMessage = '';
+        runtimeReadiness.phaseMessage = 'Загрузка данных...';
+        runtimeReadiness.readyMessage = 'Карта готова';
+
         hideGlobalDataError();
-        showGlobalDataLoading();
-        setStatus('Загрузка токена…', { loading: true });
+        syncRuntimeStatus();
         showLoading();
         try {
           await initAuth();
@@ -379,50 +412,49 @@
         }
 
         clearError();
-        setStatus('Загрузка данных…', { loading: true });
+        runtimeReadiness.phaseMessage = 'Загрузка данных...';
+        syncRuntimeStatus();
         const features = await loadFeaturesWithTimeout();
-        const sourceCount = Array.isArray(features?.features) ? features.features.length : 0;
-        const sourceLabel = USE_MAP_FEED ? '/api/map/feed' : 'data/features.geojson';
-        setStatus(
-          DEBUG_TELEMETRY_STATUS
-            ? `Данные загружены: ${sourceCount} из источника ${sourceLabel}.`
-            : 'Данные загружены.',
-          { loading: true }
-        );
+        runtimeReadiness.dataReady = true;
+        runtimeReadiness.phaseMessage = 'Загрузка карты...';
+        syncRuntimeStatus();
 
-        setStatus('Инициализация карты…', { loading: true });
+        runtimeReadiness.phaseMessage = 'Загрузка карты...';
+        syncRuntimeStatus();
         const map = initMap('map', features);
         await waitForMapBootstrap(map);
-        hideGlobalDataLoading();
+        runtimeReadiness.mapReady = true;
+        syncRuntimeStatus();
 
-        setStatus('Инициализация интерфейса…', { loading: true });
+        runtimeReadiness.phaseMessage = 'Загрузка карты...';
+        syncRuntimeStatus();
         const uiState = await initUI(map, features);
         await initUGCUI();
         await initModerationUI();
+        runtimeReadiness.uiReady = true;
 
         const foundCount = uiState?.getVisibleCounts?.().listCount ?? features.features?.length ?? 0;
         const mapCount = uiState?.getVisibleCounts?.().mapCount ?? 0;
         clearError();
         hideGlobalDataError();
-        setStatus(
-          DEBUG_TELEMETRY_STATUS
-            ? `Карта готова. Найдено: ${foundCount}, на карте: ${mapCount}.`
-            : 'Карта готова.',
-          { loading: false }
-        );
+        runtimeReadiness.readyMessage = DEBUG_TELEMETRY_STATUS
+          ? `Карта готова (${foundCount}/${mapCount}).`
+          : 'Карта готова';
+        syncRuntimeStatus();
       } catch (error) {
         console.error('Ошибка инициализации:', error);
-        hideGlobalDataLoading();
         const normalized = normalizeAppError(error, 'Unable to load application data.');
         const uiErrorMessage = error?.code === 'DATA_LOAD_TIMEOUT'
           ? 'Ошибка загрузки данных. Попробуйте обновить страницу.'
           : normalized.message;
+        runtimeReadiness.failed = true;
+        runtimeReadiness.errorMessage = uiErrorMessage;
         showError(uiErrorMessage);
         showGlobalDataError({
           message: uiErrorMessage,
           onRetry: () => bootstrapApp()
         });
-        setStatus(uiErrorMessage, { error: true, loading: false });
+        syncRuntimeStatus();
       }
     }
 

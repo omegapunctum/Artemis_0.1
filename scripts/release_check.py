@@ -33,6 +33,13 @@ def read_json(path: Path):
 
 
 def check_data_layer() -> None:
+    features_json_path = ROOT / "data/features.json"
+    if not features_json_path.exists():
+        fail("data/features.json is missing")
+    features_json_payload = read_json(features_json_path)
+    if not isinstance(features_json_payload, list):
+        fail("data/features.json must be an array")
+
     features_path = ROOT / "data/features.geojson"
     if not features_path.exists():
         fail("data/features.geojson is missing")
@@ -43,6 +50,11 @@ def check_data_layer() -> None:
         fail("data/features.geojson has invalid features array")
     if len(features) == 0:
         fail("features.geojson is empty")
+    if len(features_json_payload) != len(features):
+        fail(
+            "records mismatch: "
+            f"records_features_json={len(features_json_payload)}, records_geojson={len(features)}"
+        )
 
     export_meta_path = ROOT / "data/export_meta.json"
     if not export_meta_path.exists():
@@ -57,6 +69,11 @@ def check_data_layer() -> None:
         fail(
             "records mismatch: "
             f"records_exported={records_exported}, records_geojson={len(features)}"
+        )
+    if records_exported != len(features_json_payload):
+        fail(
+            "records mismatch: "
+            f"records_exported={records_exported}, records_features_json={len(features_json_payload)}"
         )
 
     warning_categories = export_meta.get("warning_categories") if isinstance(export_meta, dict) else None
@@ -139,6 +156,12 @@ def check_frontend() -> None:
             fail("js/data.js contains suspicious /data/* -> /api/map/feed fallback pattern")
         if has_data_ref_in_window and re.search(r"(\|\||\?\?|:).{0,80}/api/map/feed|/api/map/feed.{0,80}(\|\||\?\?|:)", window):
             fail("js/data.js contains interchangeable source pattern with /api/map/feed")
+
+    uploads_js = ROOT / "js/uploads.js"
+    if uploads_js.exists():
+        uploads_text = uploads_js.read_text(encoding="utf-8")
+        if re.search(r"/api/uploads/[\"'`$]", uploads_text):
+            fail("js/uploads.js contains legacy /api/uploads/{filename} assumption")
 
 
 def check_pwa() -> None:

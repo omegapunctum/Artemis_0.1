@@ -21,7 +21,7 @@ ORPHAN_MAX_AGE_HOURS = 24
 UPLOADS_URL_PREFIX = "/uploads/"
 
 
-def _save_file_for_user(user: User, file: UploadFile) -> str:
+def _save_file_for_user(user: User, file: UploadFile) -> tuple[str, str]:
     extension = ALLOWED_CONTENT_TYPES.get(file.content_type)
     if extension is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported image type")
@@ -41,10 +41,10 @@ def _save_file_for_user(user: User, file: UploadFile) -> str:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to allocate file name")
 
     destination.write_bytes(content)
-    return f"/uploads/{user.id}/{filename}"
+    return f"/uploads/{user.id}/{filename}", filename
 
 
-def save_uploaded_file(user: User, file: UploadFile, license_value: str | None) -> tuple[str, str]:
+def save_uploaded_file(user: User, file: UploadFile, license_value: str | None) -> tuple[str, str, str, str]:
     # Русский комментарий: лицензия обязательна для MVP и проверяется на whitelist.
     normalized_license = (license_value or "").strip()
     if not normalized_license:
@@ -52,13 +52,14 @@ def save_uploaded_file(user: User, file: UploadFile, license_value: str | None) 
     if normalized_license not in ALLOWED_LICENSES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported license")
 
-    image_url = _save_file_for_user(user, file)
-    return image_url, normalized_license
+    image_url, filename = _save_file_for_user(user, file)
+    upload_id = Path(filename).stem
+    return upload_id, image_url, filename, normalized_license
 
 
 def save_draft_image(db: Session, draft: Draft, user: User, file: UploadFile, request=None) -> str:
     before_urls = collect_draft_upload_urls(draft)
-    image_url = _save_file_for_user(user, file)
+    image_url, _ = _save_file_for_user(user, file)
     updated = update_draft(db, draft, changes={"image_url": image_url})
     after_urls = collect_draft_upload_urls(updated)
     cleanup_unreferenced_upload_urls(db, before_urls - after_urls)
@@ -116,6 +117,13 @@ def _upload_url_to_path(upload_url: str) -> Path | None:
     if root == path or root not in path.parents:
         return None
     return path
+
+
+def upload_url_exists(upload_url: str) -> bool:
+    file_path = _upload_url_to_path(upload_url)
+    if file_path is None:
+        return False
+    return file_path.exists() and file_path.is_file()
 
 
 def cleanup_unreferenced_upload_urls(db: Session, upload_urls: set[str] | list[str] | tuple[str, ...]) -> int:

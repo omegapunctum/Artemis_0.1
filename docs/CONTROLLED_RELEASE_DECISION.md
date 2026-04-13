@@ -7,6 +7,12 @@
 - Manual smoke discipline exists as documented baseline artifacts.
 - Auth/session baseline is accepted with explicit deployment constraint: single-node backend mode, explicitly configured `AUTH_SECRET_KEY`, and no multi-instance support in current cycle.
 
+Release unit (current baseline contract):
+- required artifacts: `data/features.geojson`, `data/features.json`, `data/export_meta.json`, `data/rejected.json`;
+- canonical public map dataset: `data/features.geojson`;
+- supporting/derived artifacts: `features.json`, `export_meta.json`, `rejected.json`;
+- release gate blocks if required artifacts are missing, if record counts diverge, or if warning thresholds exceed policy.
+
 ## 2. Remaining gaps and classification
 - Gap: No remaining release-blocking gaps are open after current-cycle manual evidence closure (`docs/MANUAL_SMOKE_EVIDENCE_2026-04-11.md`).
 - Classification: Remaining items are **POST-BASELINE GAP** only (continuous quality hardening, not release blockers).

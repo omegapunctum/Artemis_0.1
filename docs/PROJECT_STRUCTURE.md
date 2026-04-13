@@ -1,6 +1,6 @@
 # ARTEMIS — СТРУКТУРА ПРОЕКТА v4.0
 
-Статус: обновлённая рабочая версия перед изменениями в репозитории.
+Статус: checkpoint-обновление после завершения map exploration stabilization cycle (2026-04-13).
 Назначение документа: фиксировать canonical структуру репозитория, архитектурные boundaries и новую систему документации.
 
 ---
@@ -134,6 +134,8 @@ app/
 - `app/` — единственный backend runtime;
 - новый runtime-код в `api/` запрещён;
 - env/runtime configuration закрепляется только за `app.main:app`;
+- upload/media contract фиксируется через `POST /api/uploads` (required: `file`, `license`; optional: `title`, `description`; response: `id`, `url`, `filename`, `license`);
+- frontend upload flow обязан использовать backend-returned `url` как единственный runtime source для доступа к загруженному файлу;
 - moderation path не является direct publish path для public dataset.
 
 ---

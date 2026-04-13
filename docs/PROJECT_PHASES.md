@@ -1,6 +1,6 @@
 # ФАЗЫ ПРОЕКТА ARTEMIS v4.0
 
-Статус: обновлённая рабочая версия перед изменениями в репозитории.
+Статус: checkpoint-обновление после завершения map exploration stabilization cycle (2026-04-13).
 Назначение документа: фиксировать только текущую фазовую модель проекта и ближайшие переходы между фазами.
 
 Правило:
@@ -56,6 +56,7 @@
 - `data/features.geojson` закреплён как canonical public map source;
 - базовые слои, фильтры, список объектов и detail-поведение существуют;
 - production-default fallback карты на `/api/map/feed` запрещён;
+- `/api/map/feed` зафиксирован как runtime support read-model (non-canonical);
 - map-first логика проекта зафиксирована как ядро продукта.
 
 Остаточные замечания:
@@ -75,7 +76,8 @@
 Зафиксировано:
 - auth baseline существует;
 - drafts CRUD существует;
-- upload API существует;
+- upload API contract sync завершён (`POST /api/uploads`: required `file` + `license`, optional `title` + `description`, response `id/url/filename/license`);
+- upload contract tests и anti-drift guard зафиксированы;
 - moderation UI и lifecycle существуют;
 - базовый XSS hardening есть;
 - governance boundary против direct runtime publish уже зафиксирован кодом и тестами.
@@ -91,7 +93,7 @@
 
 ---
 
-## ФАЗА 3 — CONTROLLED RELEASE STABILIZATION [АКТИВНАЯ ФАЗА №1]
+## ФАЗА 3 — CONTROLLED RELEASE STABILIZATION [ЗАВЕРШЕНА]
 
 Цель:
 Сделать release-систему внутренне согласованной и действительно исполнимой.
@@ -120,7 +122,7 @@
 
 ---
 
-## ФАЗА 4 — PWA / UX STABILIZATION [АКТИВНАЯ ФАЗА №2]
+## ФАЗА 4 — PWA / UX STABILIZATION [ЗАВЕРШЕНА]
 
 Цель:
 Довести пользовательский runtime до устойчивого и предсказуемого состояния.
@@ -149,7 +151,7 @@
 
 ---
 
-## ФАЗА 5 — SCALING / HARDENING [ЗАПЛАНИРОВАНА]
+## ФАЗА 5 — SCALING / HARDENING [АКТИВНАЯ ФАЗА №1]
 
 Цель:
 Убрать архитектурные ограничения MVP и подготовить проект к росту.
@@ -161,6 +163,7 @@
 - performance hardening для larger datasets;
 - cleanup временных/mock runtime-слоёв;
 - дополнительные regression-checks по canonical data path.
+- синхронизация canonical docs и release-contract формулировок без competing source-of-truth.
 
 Условие старта:
 - Фаза 3 закрыта;
@@ -209,10 +212,9 @@
 ## АКТИВНЫЙ ПОРЯДОК РАБОТ
 
 На текущем цикле проект работает так:
-1. ФАЗА 3 — CONTROLLED RELEASE STABILIZATION
-2. ФАЗА 4 — PWA / UX STABILIZATION
-3. ФАЗА 5 — SCALING / HARDENING
-4. ФАЗА 6 — PRODUCT EXPANSION
+1. ФАЗА 5 — SCALING / HARDENING
+2. CANONICAL DOCS / RELEASE CONTRACT SYNCHRONIZATION (операционный трек активного цикла)
+3. RUNTIME UX/PWA STABILIZATION + contract/test hardening критических surface-слоёв
 
 Это и есть фактическая последовательность следующего цикла.
 

@@ -114,13 +114,21 @@ Vanilla JavaScript (no frameworks):
   - `GET|POST|PUT|DELETE /api/drafts`
 - Uploads:
   - `POST /api/uploads`
-  - `GET /api/uploads/{filename}`
+    - request (multipart/form-data):
+      - required: `file`, `license`
+      - optional: `title`, `description`
+    - response:
+      - `id` (string)
+      - `url` (string)
+      - `filename` (string)
+      - `license` (string)
+    - runtime usage: frontend must use backend-returned `url` as the single source of truth for uploaded file access.
 - Moderation (`/api/moderation/*`):
   - review/approve/reject runtime routes for moderation workflow
 - Auxiliary runtime feed:
-  - `GET /api/map/feed` (auxiliary/internal read-only route)
+  - `GET /api/map/feed` (runtime support read model for UI, non-canonical; not a stable source-of-truth API)
 - Canonical public map data path:
-  - `/data/*` (with `data/features.geojson` as production-default public source)
+  - `/data/*` (exported ETL datasets; `data/features.geojson` is the production-default canonical public source)
 
 ---
 

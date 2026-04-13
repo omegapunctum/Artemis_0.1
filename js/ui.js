@@ -7,6 +7,84 @@ import { DEFAULT_DISPLAY_MODE, aggregateFeaturesByDecade, createCoursesState, cr
 let globalDataErrorRetryHandler = null;
 let activeUiToastTimerId = null;
 let activeUiToastEl = null;
+const COURSES_PROGRESS_STORAGE_KEY = 'artemis_courses_progress';
+const ONBOARDING_HINT_SESSION_KEY = 'artemis_onboarding_hint_dismissed';
+
+function loadCoursesProgress(courses = []) {
+  if (typeof window === 'undefined' || !window.localStorage) return {};
+  try {
+    const raw = window.localStorage.getItem(COURSES_PROGRESS_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const validCourseIds = new Set((Array.isArray(courses) ? courses : []).map((course) => String(course?.id || '').trim()).filter(Boolean));
+    const normalized = {};
+    Object.entries(parsed).forEach(([courseId, entry]) => {
+      const normalizedCourseId = String(courseId || '').trim();
+      if (!normalizedCourseId || !validCourseIds.has(normalizedCourseId)) return;
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+      const currentStepIndex = Number(entry.currentStepIndex);
+      const completed = entry.completed === true;
+      normalized[normalizedCourseId] = {
+        currentStepIndex: Number.isInteger(currentStepIndex) && currentStepIndex >= 0 ? currentStepIndex : 0,
+        completed
+      };
+    });
+    return normalized;
+  } catch (_error) {
+    return {};
+  }
+}
+
+function saveCoursesProgress(progressByCourse) {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    const payload = progressByCourse && typeof progressByCourse === 'object' ? progressByCourse : {};
+    window.localStorage.setItem(COURSES_PROGRESS_STORAGE_KEY, JSON.stringify(payload));
+  } catch (_error) {
+    // Ignore storage write errors to keep course flow resilient.
+  }
+}
+
+function resolvePersistedCourseStepIndex(state, course) {
+  const steps = Array.isArray(course?.steps) ? course.steps : [];
+  if (!steps.length) return 0;
+  const courseId = String(course?.id || '').trim();
+  const entry = state?.coursesProgress?.[courseId];
+  const fallbackIndex = entry?.completed ? steps.length - 1 : 0;
+  const candidate = Number(entry?.currentStepIndex);
+  if (!Number.isInteger(candidate) || candidate < 0) return fallbackIndex;
+  return Math.max(0, Math.min(steps.length - 1, candidate));
+}
+
+function persistSelectedCourseProgress(state, { completed = false } = {}) {
+  const selectedCourse = getSelectedCourse(state?.coursesState);
+  const steps = Array.isArray(selectedCourse?.steps) ? selectedCourse.steps : [];
+  if (!selectedCourse || !steps.length) return;
+  const courseId = String(selectedCourse.id || '').trim();
+  if (!courseId) return;
+  const currentEntry = state.coursesProgress?.[courseId] || { currentStepIndex: 0, completed: false };
+  const stepIndex = Math.max(0, Math.min(steps.length - 1, Number(state.coursesState?.selectedCourseStepIndex) || 0));
+  state.coursesProgress = {
+    ...(state.coursesProgress || {}),
+    [courseId]: {
+      currentStepIndex: stepIndex,
+      completed: currentEntry.completed || completed
+    }
+  };
+  saveCoursesProgress(state.coursesProgress);
+}
+
+function getCourseProgressStatusText(state, course) {
+  const courseId = String(course?.id || '').trim();
+  if (!courseId) return '';
+  const entry = state?.coursesProgress?.[courseId];
+  if (!entry || typeof entry !== 'object') return '';
+  if (entry.completed === true) return 'Завершён';
+  const stepIndex = Number(entry.currentStepIndex);
+  if (!Number.isInteger(stepIndex) || stepIndex <= 0) return '';
+  return `In progress · Step ${stepIndex + 1}`;
+}
 
 function isDebugTelemetryMode() {
   if (typeof window === 'undefined') return false;
@@ -22,13 +100,21 @@ function isDebugTelemetryMode() {
     || host.endsWith('.test');
 }
 
-export function showGlobalDataLoading(message = 'Загрузка карты…') {
+export function showGlobalDataLoading(message = 'Загрузка карты...') {
   const host = document.getElementById('global-data-loading');
   const text = document.getElementById('global-data-loading-text');
   if (!host || !text) return;
   text.textContent = message;
   host.hidden = false;
   host.setAttribute('aria-hidden', 'false');
+  hideGlobalDataError();
+  const onboarding = document.getElementById('onboarding-overlay');
+  if (onboarding) {
+    onboarding.hidden = true;
+    onboarding.setAttribute('aria-hidden', 'true');
+  }
+  const noResults = document.getElementById('search-no-results-state');
+  if (noResults) noResults.hidden = true;
 }
 
 export function hideGlobalDataLoading() {
@@ -47,6 +133,14 @@ export function showGlobalDataError({ message, onRetry } = {}) {
   text.textContent = message || 'Не удалось загрузить данные карты.';
   host.hidden = false;
   host.setAttribute('aria-hidden', 'false');
+  hideGlobalDataLoading();
+  const onboarding = document.getElementById('onboarding-overlay');
+  if (onboarding) {
+    onboarding.hidden = true;
+    onboarding.setAttribute('aria-hidden', 'true');
+  }
+  const noResults = document.getElementById('search-no-results-state');
+  if (noResults) noResults.hidden = true;
 
   if (globalDataErrorRetryHandler) {
     retryBtn.removeEventListener('click', globalDataErrorRetryHandler);
@@ -117,7 +211,7 @@ export async function initUI(map, features) {
   try {
     coursesPayload = await loadCourses();
   } catch (error) {
-    coursesError = 'Courses временно недоступны. Попробуйте позже.';
+    coursesError = 'Курсы временно недоступны. Попробуйте позже.';
   }
   const normalizedCoursesResult = normalizeCoursesForRuntime(coursesPayload?.courses || []);
   coursesContractWarnings = normalizedCoursesResult.warnings;
@@ -174,6 +268,7 @@ export async function initUI(map, features) {
     detailPanelClose: document.getElementById('detail-panel-close'),
     dateFrom: document.getElementById('date-from'),
     dateTo: document.getElementById('date-to'),
+    resultsSummary: document.getElementById('results-summary'),
     resultsCount: document.getElementById('results-count'),
     mapCount: document.getElementById('map-count'),
     sourceCount: document.getElementById('source-count'),
@@ -186,6 +281,8 @@ export async function initUI(map, features) {
 
   const years = collectYearBounds(allFeatures);
   const confidenceValues = collectConfidenceValues(allFeatures);
+  const telemetryMode = isDebugTelemetryMode();
+  if (elements.resultsSummary) elements.resultsSummary.hidden = !telemetryMode;
   const state = {
     allFeatures,
     filteredFeatures: [],
@@ -193,7 +290,7 @@ export async function initUI(map, features) {
     search: '',
     currentStartYear: years.min,
     currentEndYear: years.max,
-    timelineMode: 'point',
+    timelineMode: 'range',
     timelinePointYear: years.max,
     timelineRangeStart: years.min,
     timelineRangeEnd: years.max,
@@ -227,6 +324,7 @@ export async function initUI(map, features) {
     displayMode: DEFAULT_DISPLAY_MODE,
     timeAggregation: {},
     coursesState: createCoursesState(normalizedCoursesResult.courses),
+    coursesProgress: loadCoursesProgress(normalizedCoursesResult.courses),
     coursesError,
     coursesContractWarnings,
     liveState: createLiveState(getRecentFeatures(18, { type: 'FeatureCollection', features: allFeatures })),
@@ -234,7 +332,7 @@ export async function initUI(map, features) {
   };
   state.yearBounds = years;
   initializeAnimatedPanels(elements);
-  setupOnboardingOverlay(elements);
+  const onboardingHint = setupOnboardingOverlay(elements);
   if (!state.enabledLayerIds.size) {
     allFeatures.forEach((feature) => {
       const layerId = String(normalizeProps(feature).layer_id || '').trim();
@@ -293,7 +391,14 @@ export async function initUI(map, features) {
       state.searchResults = buildSearchResults(state.filteredFeatures, state.search);
       state.lastRenderedSearchKey = searchResultsKey;
     }
-    updateSearchNoResultsState(elements, state);
+    const emptyVisible = updateSearchNoResultsState(elements, state);
+    onboardingHint?.syncVisibility?.({
+      ready: !state.loading,
+      loading: state.loading,
+      hasError: Boolean(state.error),
+      hasActiveSelection: Boolean(state.selectedFeatureId),
+      emptyVisible
+    });
     renderSearchDropdown(elements, state, map);
     renderTopPanels(elements, state, layers, confidenceValues, map, visibilityKey);
     updateFilterFeedback(elements, state);
@@ -329,6 +434,7 @@ export async function initUI(map, features) {
   toggleSearchClear(elements, state);
 
   elements.timelineStart?.addEventListener('input', () => {
+    onboardingHint?.markInteracted?.();
     applyTimelineRange(elements, state, {
       start: Number(elements.timelineStart.value),
       end: state.timelineMode === 'point' ? Number(elements.timelineStart.value) : state.currentEndYear,
@@ -338,6 +444,7 @@ export async function initUI(map, features) {
   });
   elements.timelineEnd?.addEventListener('input', () => {
     if (state.timelineMode === 'point') return;
+    onboardingHint?.markInteracted?.();
     applyTimelineRange(elements, state, {
       start: state.currentStartYear,
       end: Number(elements.timelineEnd.value),
@@ -345,8 +452,14 @@ export async function initUI(map, features) {
       commit: true
     });
   });
-  elements.timelineModePointBtn?.addEventListener('click', () => setTimelineMode(elements, state, 'point', { commit: true }));
-  elements.timelineModeRangeBtn?.addEventListener('click', () => setTimelineMode(elements, state, 'range', { commit: true }));
+  elements.timelineModePointBtn?.addEventListener('click', () => {
+    onboardingHint?.markInteracted?.();
+    setTimelineMode(elements, state, 'point', { commit: true });
+  });
+  elements.timelineModeRangeBtn?.addEventListener('click', () => {
+    onboardingHint?.markInteracted?.();
+    setTimelineMode(elements, state, 'range', { commit: true });
+  });
   setupTimelinePointerInteractions(elements, state);
 
   elements.filtersBtn?.addEventListener('click', () => togglePrimaryPanel(elements, state, 'filters', elements.filtersBtn));
@@ -379,6 +492,7 @@ export async function initUI(map, features) {
   });
 
   const featureClickHandler = (feature, coordinates) => {
+    onboardingHint?.markInteracted?.();
     selectFeature(state, elements, map, feature, {
       coordinates,
       openDetail: true,
@@ -422,7 +536,7 @@ export async function initUI(map, features) {
     if (withinMap) return;
     const withinFloating = elements.detailPanel.contains(target);
     const withinCard = target.closest?.('.ribbon-card');
-    if (!withinFloating && !withinCard) closeDetailView(state, elements);
+    if (!withinFloating && !withinCard) return;
   });
 
   document.addEventListener('keydown', (event) => {
@@ -455,19 +569,52 @@ export async function initUI(map, features) {
 function setupOnboardingOverlay(elements) {
   const overlay = elements?.onboardingOverlay;
   const dismissBtn = elements?.onboardingDismissBtn;
-  if (!overlay || !dismissBtn) return;
+  if (!overlay || !dismissBtn) return { markInteracted: () => {} };
 
-  let dismissedInPageSession = false;
-  const closeOverlay = () => {
-    if (dismissedInPageSession) return;
-    dismissedInPageSession = true;
+  let dismissed = false;
+  const persistDismissed = () => {
+    if (typeof window === 'undefined' || !window.sessionStorage) return;
+    try {
+      window.sessionStorage.setItem(ONBOARDING_HINT_SESSION_KEY, '1');
+    } catch (_error) {
+      // Ignore storage failures to avoid breaking onboarding.
+    }
+  };
+  const closeOverlay = ({ persist = false } = {}) => {
+    if (dismissed) return;
+    dismissed = true;
     overlay.hidden = true;
     overlay.setAttribute('aria-hidden', 'true');
+    if (persist) persistDismissed();
   };
+  const isDismissedInSession = (() => {
+    if (typeof window === 'undefined' || !window.sessionStorage) return false;
+    try {
+      return window.sessionStorage.getItem(ONBOARDING_HINT_SESSION_KEY) === '1';
+    } catch (_error) {
+      return false;
+    }
+  })();
 
-  overlay.hidden = false;
-  overlay.setAttribute('aria-hidden', 'false');
-  dismissBtn.addEventListener('click', closeOverlay);
+  if (isDismissedInSession) closeOverlay();
+  overlay.hidden = true;
+  overlay.setAttribute('aria-hidden', 'true');
+  dismissBtn.addEventListener('click', () => closeOverlay({ persist: true }));
+  return {
+    markInteracted: () => closeOverlay({ persist: true }),
+    syncVisibility: ({
+      ready = false,
+      loading = false,
+      hasError = false,
+      hasActiveSelection = false,
+      emptyVisible = false
+    } = {}) => {
+      if (dismissed || isDismissedInSession) return;
+      const shouldShow = ready && !loading && !hasError && !hasActiveSelection && !emptyVisible;
+      overlay.hidden = !shouldShow;
+      overlay.setAttribute('aria-hidden', String(!shouldShow));
+    }
+  };
 }
 
 function setProfileMenuOpen(elements, nextOpen = false, { returnFocus = false, focusFirstItem = false } = {}) {
@@ -503,16 +650,16 @@ function setupDisplayModeToggle(elements, state, map) {
   if (!button) return;
   const syncLabel = () => {
     const isHeatmap = state.displayMode === 'heatmap';
-    button.textContent = isHeatmap ? 'Heatmap' : 'Points';
+    button.textContent = isHeatmap ? 'Тепловая' : 'Точки';
     button.setAttribute('aria-pressed', String(isHeatmap));
-    button.setAttribute('aria-label', isHeatmap ? 'Switch to points mode' : 'Switch to heatmap mode');
+    button.setAttribute('aria-label', isHeatmap ? 'Переключить на точки' : 'Переключить на тепловую карту');
   };
   syncLabel();
   button.addEventListener('click', () => {
     state.displayMode = state.displayMode === 'points' ? 'heatmap' : 'points';
     setMapDisplayMode(map, state.displayMode);
     syncLabel();
-    showUiSystemMessage(state.displayMode === 'heatmap' ? 'Heatmap mode enabled' : 'Points mode enabled', {
+    showUiSystemMessage(state.displayMode === 'heatmap' ? 'Включён режим тепловой карты' : 'Включён режим точек', {
       variant: 'success',
       timeout: 1600
     });
@@ -869,9 +1016,22 @@ function renderCoursesPanel(elements, state, map) {
     const item = document.createElement('button');
     item.type = 'button';
     item.className = `course-item${selectedCourse?.id === course.id ? ' is-selected' : ''}`;
-    item.textContent = String(course?.title || 'Untitled course');
+    const itemTitle = document.createElement('span');
+    itemTitle.className = 'course-item-title';
+    itemTitle.textContent = String(course?.title || 'Untitled course');
+    item.appendChild(itemTitle);
+
+    const statusText = getCourseProgressStatusText(state, course);
+    if (statusText) {
+      const itemStatus = document.createElement('span');
+      itemStatus.className = 'course-item-status';
+      itemStatus.textContent = statusText;
+      item.appendChild(itemStatus);
+    }
     item.addEventListener('click', () => {
       selectCourse(state.coursesState, course?.id);
+      state.coursesState.selectedCourseStepIndex = resolvePersistedCourseStepIndex(state, course);
+      persistSelectedCourseProgress(state);
       renderCoursesPanel(elements, state, map);
       applyCourseStepMapContext(state, map);
     });
@@ -910,6 +1070,7 @@ function renderCoursesPanel(elements, state, map) {
 
   const safeStepIndex = Math.max(0, Math.min(steps.length - 1, selectedStepIndex));
   state.coursesState.selectedCourseStepIndex = safeStepIndex;
+  persistSelectedCourseProgress(state);
   const currentStep = steps[safeStepIndex];
 
   const stepInfo = document.createElement('div');
@@ -933,6 +1094,7 @@ function renderCoursesPanel(elements, state, map) {
   prevBtn.disabled = safeStepIndex <= 0;
   prevBtn.addEventListener('click', () => {
     moveCourseStep(state.coursesState, -1);
+    persistSelectedCourseProgress(state);
     renderCoursesPanel(elements, state, map);
     applyCourseStepMapContext(state, map);
   });
@@ -943,6 +1105,7 @@ function renderCoursesPanel(elements, state, map) {
   nextBtn.disabled = safeStepIndex >= steps.length - 1;
   nextBtn.addEventListener('click', () => {
     moveCourseStep(state.coursesState, 1);
+    persistSelectedCourseProgress(state);
     renderCoursesPanel(elements, state, map);
     applyCourseStepMapContext(state, map);
   });
@@ -950,6 +1113,7 @@ function renderCoursesPanel(elements, state, map) {
   courseCard.appendChild(nav);
 
   if (safeStepIndex >= steps.length - 1) {
+    persistSelectedCourseProgress(state, { completed: true });
     courseCard.appendChild(createInlineStateBlock({
       variant: 'success',
       title: 'Course complete',
@@ -1139,11 +1303,11 @@ function renderSearchDropdown(elements, state, map) {
   if (!state.searchResults.length) {
     const noResults = document.createElement('div');
     noResults.className = 'search-no-results';
-    noResults.textContent = `No matches for “${state.search}”.`;
+    noResults.textContent = `По запросу «${state.search}» ничего не найдено.`;
     const clearBtn = document.createElement('button');
     clearBtn.type = 'button';
     clearBtn.className = 'ui-button ui-button-secondary';
-    clearBtn.textContent = 'Clear search';
+    clearBtn.textContent = 'Очистить поиск';
     clearBtn.addEventListener('click', () => {
       clearSearchState(elements, state, { closePanel: true, notify: true });
       state.applyState?.();
@@ -1303,10 +1467,17 @@ function resetExploreConstraints(elements, state, { keepSearch = false } = {}) {
   state.confidenceFilter = 'all';
   restoreDefaultLayers(state);
   restoreDefaultQuickLayers(state);
-  state.currentStartYear = Number(elements.timelineStart?.min ?? state.currentStartYear);
-  state.currentEndYear = Number(elements.timelineEnd?.max ?? state.currentEndYear);
+  const minYear = Number(elements.timelineStart?.min ?? state.currentStartYear);
+  const maxYear = Number(elements.timelineEnd?.max ?? state.currentEndYear);
+  state.timelineMode = 'range';
+  state.timelineRangeStart = minYear;
+  state.timelineRangeEnd = maxYear;
+  state.timelinePointYear = maxYear;
+  state.currentStartYear = minYear;
+  state.currentEndYear = maxYear;
   if (elements.timelineStart) elements.timelineStart.value = String(state.currentStartYear);
   if (elements.timelineEnd) elements.timelineEnd.value = String(state.currentEndYear);
+  syncLegacyDateInputs(elements, state);
   updateTimelineLabel(elements, state);
   updateTimelineViz(elements, state);
 }
@@ -1344,21 +1515,26 @@ function setupSearchSuggestions(elements) {
 
 function updateSearchNoResultsState(elements, state) {
   const noResults = elements?.searchNoResultsState;
-  if (!noResults) return;
+  if (!noResults) return false;
   const noResultsText = elements?.searchNoResultsText;
   const noResultsReset = elements?.searchNoResultsReset;
 
   const hasSearch = Boolean(state?.search);
   const canMeasureResults = Array.isArray(state?.searchResults);
-  const isEmpty = canMeasureResults && state.searchResults.length === 0;
-  const shouldShow = hasSearch && canMeasureResults && isEmpty;
+  const isSearchEmpty = canMeasureResults && state.searchResults.length === 0;
+  const isPrimaryEmpty = !state?.loading
+    && !state?.error
+    && Array.isArray(state?.filteredFeatures)
+    && state.filteredFeatures.length === 0;
+  const shouldShow = isPrimaryEmpty && hasSearch && canMeasureResults && isSearchEmpty;
   noResults.hidden = !shouldShow;
   if (shouldShow) {
-    if (noResultsText) noResultsText.textContent = `Ничего не найдено для «${state.search}».`;
+    if (noResultsText) noResultsText.textContent = `По запросу «${state.search}» ничего не найдено. Измените поиск, фильтры или период.`;
     if (noResultsReset) noResultsReset.hidden = false;
   } else if (noResultsReset) {
     noResultsReset.hidden = true;
   }
+  return shouldShow;
 }
 
 function renderCards(elements, state, map) {
@@ -1395,7 +1571,7 @@ function renderCards(elements, state, map) {
     item.setAttribute('aria-selected', String(state.selectedFeatureId === featureId));
     item.tabIndex = 0;
 
-    const image = buildImageNode(props, 'Object image');
+    const image = buildImageNode(props, 'Изображение объекта');
 
     const meta = document.createElement('div');
     meta.className = 'meta';
@@ -1505,7 +1681,6 @@ function showDetailPanel(state, elements, map, feature, options = {}) {
     ? buildFullDetailContent(state, props, feature)
     : buildPreviewDetailContent(state, elements, map, feature, props);
 
-  elements.detailPanelBody.replaceChildren();
   elements.detailPanel.dataset.mode = viewMode;
   elements.detailPanelBody.dataset.mode = viewMode;
   elements.detailPanel.classList.toggle('is-preview-mode', viewMode === 'preview');
@@ -1524,13 +1699,11 @@ function showDetailPanel(state, elements, map, feature, options = {}) {
   document.dispatchEvent(new CustomEvent('artemis:overlay-open', { detail: { source: 'detail' } }));
   if (Number.isInteger(state.detailRenderFrameId)) {
     window.cancelAnimationFrame(state.detailRenderFrameId);
+    state.detailRenderFrameId = null;
   }
   state.detailOpenFeatureId = featureId;
-  state.detailRenderFrameId = window.requestAnimationFrame(() => {
-    elements.detailPanelBody.replaceChildren(detail);
-    focusDetailPanelEntry(elements, viewMode);
-    state.detailRenderFrameId = null;
-  });
+  elements.detailPanelBody.replaceChildren(detail);
+  focusDetailPanelEntry(elements, viewMode);
 }
 
 function hideDetailPanel(elements, state = null) {
@@ -1562,8 +1735,8 @@ function renderCardsState(elements, state) {
   if (state.loading) {
     elements.cardsState.appendChild(createInlineStateBlock({
       variant: 'info',
-      title: 'Loading',
-      message: 'Loading events…'
+      title: 'Загрузка',
+      message: 'Загрузка событий…'
     }));
     renderCardsSkeleton(elements, 4);
     return;
@@ -1572,7 +1745,7 @@ function renderCardsState(elements, state) {
   if (state.error) {
     elements.cardsState.appendChild(createInlineStateBlock({
       variant: 'error',
-      title: 'Data unavailable',
+      title: 'Данные недоступны',
       message: state.error
     }));
     if (elements.cardsRibbon) elements.cardsRibbon.replaceChildren();
@@ -1601,6 +1774,18 @@ function renderCardsState(elements, state) {
     return;
   }
 
+  const ribbonLimit = 80;
+  const isRibbonTruncated = state.filteredFeatures.length > ribbonLimit;
+  if (isRibbonTruncated) {
+    elements.cardsState.classList.add('cards-inline-note');
+    elements.cardsState.appendChild(createInlineStateBlock({
+      variant: 'info',
+      title: 'Лента ограничена',
+      message: `Показаны первые ${ribbonLimit} из ${state.filteredFeatures.length} объектов.`
+    }));
+    return;
+  }
+
   elements.cardsState.textContent = buildResultFeedbackLabel(state);
 }
 
@@ -1613,8 +1798,8 @@ function hydrateTimeline(elements, years, state) {
   state.timelineRangeStart = years.min;
   state.timelineRangeEnd = years.max;
   state.timelinePointYear = years.max;
-  state.currentStartYear = state.timelinePointYear;
-  state.currentEndYear = state.timelinePointYear;
+  state.currentStartYear = state.timelineRangeStart;
+  state.currentEndYear = state.timelineRangeEnd;
   elements.timelineStart.value = String(state.currentStartYear);
   elements.timelineEnd.value = String(state.currentEndYear);
   renderTimelineAxis(elements, years);
@@ -1783,12 +1968,12 @@ function setupTimelinePointerInteractions(elements, state) {
     elements.timelineKnobEnd?.classList.toggle('is-active', state.timelineMode !== 'point' && isDragging && activeHandle === 'end');
   };
 
-  const startDrag = (handle, event) => {
+  const startDrag = (handle, event, { queue = true } = {}) => {
     activeHandle = handle;
     activePointerId = event.pointerId;
     track.setPointerCapture?.(event.pointerId);
     setDraggingState(true);
-    queueByPointer(event.clientX);
+    if (queue) queueByPointer(event.clientX);
   };
 
   const stopDrag = () => {
@@ -1817,17 +2002,16 @@ function setupTimelinePointerInteractions(elements, state) {
 
   [elements.timelineStart, elements.timelineEnd].forEach((input) => {
     input.style.pointerEvents = 'none';
-    input.tabIndex = -1;
   });
 
   elements.timelineKnobStart?.addEventListener('pointerdown', (event) => {
     event.preventDefault();
-    startDrag('start', event);
+    startDrag('start', event, { queue: false });
   });
   elements.timelineKnobEnd?.addEventListener('pointerdown', (event) => {
     if (state.timelineMode === 'point') return;
     event.preventDefault();
-    startDrag('end', event);
+    startDrag('end', event, { queue: false });
   });
 
   track.addEventListener('pointerdown', (event) => {
@@ -1949,6 +2133,7 @@ function renderQuickLayerFilter(elements, state) {
 }
 
 function updateCounters(elements, state, map) {
+  if (!isDebugTelemetryMode()) return;
   const diagnostics = getMapBuildDiagnostics(map);
   if (elements.resultsCount) elements.resultsCount.textContent = String(state.filteredFeatures.length);
   if (elements.mapCount) elements.mapCount.textContent = String(getMapFeatureCount(map));
@@ -1961,12 +2146,12 @@ function updateCounters(elements, state, map) {
 function updateStatus(elements, state, map) {
   if (!elements.statusMessage) return;
   if (!isDebugTelemetryMode()) {
-    elements.statusMessage.textContent = 'Карта готова.';
+    elements.statusMessage.textContent = 'Карта готова';
     return;
   }
   const diagnostics = getMapBuildDiagnostics(map);
   const bucketCount = Object.keys(state.timeAggregation || {}).length;
-  elements.statusMessage.textContent = `Карта готова. Загружено ${diagnostics.inputTotal}, отображается ${getMapFeatureCount(map)}, в выборке ${state.filteredFeatures.length}, временных бакетов: ${bucketCount}.`;
+  elements.statusMessage.textContent = `Карта готова (${diagnostics.inputTotal}/${getMapFeatureCount(map)}; выборка ${state.filteredFeatures.length}; бакеты ${bucketCount}).`;
 }
 
 function selectFeature(state, elements, map, feature, options = {}) {
@@ -2363,6 +2548,18 @@ function applyResponsiveLayout(elements, state, map) {
   const mode = width <= 720 ? 'mobile' : (width <= 1080 ? 'tablet' : 'desktop');
   state.viewport = { mode, isMobile: mode === 'mobile', isTablet: mode === 'tablet' };
   document.body.dataset.viewport = mode;
+  const rootStyle = document.documentElement?.style;
+  if (rootStyle && elements.topHeader) {
+    const headerHeight = Math.max(44, Math.round(elements.topHeader.getBoundingClientRect().height));
+    rootStyle.setProperty('--top-header-height', `${headerHeight}px`);
+  }
+  if (rootStyle) {
+    const bottomPanel = document.getElementById('bottom-panel');
+    if (bottomPanel) {
+      const panelHeight = Math.max(72, Math.round(bottomPanel.getBoundingClientRect().height));
+      rootStyle.setProperty('--bottom-panel-height', `${panelHeight}px`);
+    }
+  }
   if (elements.topActions) {
     elements.topActions.classList.toggle('is-collapsed', mode !== 'desktop');
     if (mode === 'desktop') elements.topActions.classList.remove('is-expanded');
@@ -2407,14 +2604,14 @@ function syncDetailSheetState(state, elements) {
   if (expandBtn) {
     expandBtn.setAttribute('aria-expanded', String(Boolean(state.detailSheetExpanded)));
     expandBtn.textContent = state.detailSheetExpanded ? '⇩' : '⇧';
-    expandBtn.setAttribute('aria-label', state.detailSheetExpanded ? 'Collapse detail panel' : 'Expand detail panel');
+    expandBtn.setAttribute('aria-label', state.detailSheetExpanded ? 'Свернуть панель деталей' : 'Развернуть панель деталей');
   }
 }
 
 function updateDetailPanelHeading(elements, mode = 'preview') {
   const heading = elements?.detailPanel?.querySelector('.detail-panel-heading');
   if (!heading) return;
-  heading.textContent = mode === 'full' ? 'Детали объекта' : 'Быстрый просмотр';
+  heading.textContent = mode === 'full' ? 'Детали объекта' : 'Объект · Быстрый просмотр';
 }
 
 function buildPreviewDetailContent(state, elements, map, feature, props) {
@@ -2431,6 +2628,10 @@ function buildPreviewDetailContent(state, elements, map, feature, props) {
 
   const titleSection = document.createElement('section');
   titleSection.className = 'detail-section detail-title-block';
+  const objectLabel = document.createElement('p');
+  objectLabel.className = 'detail-subtitle';
+  objectLabel.textContent = 'Исторический объект';
+  titleSection.appendChild(objectLabel);
   const titleNode = document.createElement('h3');
   titleNode.className = 'detail-title';
   titleNode.textContent = title;
@@ -2665,7 +2866,7 @@ function buildResultFeedbackLabel(state) {
 
 function buildEmptyStateContext(state, elements) {
   if (!state?.applyState) {
-    return { title: 'No results', message: 'Подходящие объекты не найдены.', actionLabel: '', onAction: null };
+    return { title: 'Ничего не найдено', message: 'Измените фильтры, поиск или период на таймлайне.', actionLabel: '', onAction: null };
   }
   if (!state.enabledLayerIds.size) {
     return {
@@ -2682,7 +2883,7 @@ function buildEmptyStateContext(state, elements) {
   if (state.search) {
     return {
       title: 'Ничего не найдено',
-      message: `Запрос «${state.search}» не дал результатов в текущих ограничениях.`,
+      message: `По запросу «${state.search}» ничего не найдено. Измените поиск, фильтры или период.`,
       actionLabel: 'Очистить поиск',
       onAction: () => {
         clearSearchState(elements, state, { closePanel: false, notify: false });
@@ -2692,8 +2893,8 @@ function buildEmptyStateContext(state, elements) {
     };
   }
   return {
-    title: 'Нет объектов в выборке',
-    message: 'Сужение фильтрами/таймлайном исключило все объекты.',
+    title: 'Ничего не найдено',
+    message: 'Текущий период или фильтры не показывают объекты. Измените период на таймлайне или сбросьте ограничения.',
     actionLabel: 'Сбросить ограничения',
     onAction: () => {
       resetExploreConstraints(elements, state);

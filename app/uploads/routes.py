@@ -8,7 +8,7 @@ from app.auth.service import User, get_current_user, get_db
 from app.drafts.service import get_user_draft
 from app.observability import internal_error_response, log_event
 from app.security.rate_limit import rate_limit
-from app.uploads.service import cleanup_orphan_uploads, save_draft_image, save_uploaded_file
+from app.uploads.service import cleanup_orphan_uploads, save_draft_image, save_uploaded_file, upload_url_exists
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
@@ -18,17 +18,17 @@ class UploadImageResponse(BaseModel):
 
 
 class UploadResponse(BaseModel):
+    id: str
     url: str
-    width: int | None = None
-    height: int | None = None
+    filename: str
     license: str
 
 
 @router.post("", response_model=UploadResponse, status_code=status.HTTP_201_CREATED)
 def upload_file(
     request: Request,
-    file: UploadFile = File(...),
-    license: str = Form(...),
+    file: UploadFile | None = File(None),
+    license: str | None = Form(None),
     _: None = Depends(rate_limit(10, 60, prefix="upload-file", include_path=True)),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -39,14 +39,21 @@ def upload_file(
         if removed:
             log_event(logging.INFO, 'upload.cleanup.orphans_removed', path=request.url.path, request_id=request.state.request_id, removed=removed)
 
-        image_url, normalized_license = save_uploaded_file(current_user, file, license)
+        if file is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is required")
+        if license is None or not license.strip():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="License is required")
+
+        upload_id, image_url, filename, normalized_license = save_uploaded_file(current_user, file, license)
+        if not upload_url_exists(image_url):
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Uploaded file is not accessible")
     except HTTPException:
         raise
     except Exception as exc:
         log_event(logging.ERROR, 'upload.error', path=request.url.path, request_id=request.state.request_id, user_id=current_user.id, error=str(exc))
         return internal_error_response(request)
 
-    return {"url": image_url, "width": None, "height": None, "license": normalized_license}
+    return {"id": upload_id, "url": image_url, "filename": filename, "license": normalized_license}
 
 
 @router.post("/image", response_model=UploadImageResponse, status_code=status.HTTP_201_CREATED)

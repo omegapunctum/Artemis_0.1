@@ -22,25 +22,25 @@ const FORM_FIELDS = [
 ];
 
 const STATUS_TEXT = {
-  pristine: 'pristine',
-  editing: 'editing',
-  saving: 'saving',
-  saved: 'saved as draft',
-  submitting: 'submitting to pending',
-  validation: 'validation error',
-  server: 'server error',
-  draft: 'draft',
-  pending: 'pending',
-  approved: 'approved',
-  rejected: 'rejected'
+  pristine: 'новый',
+  editing: 'редактирование',
+  saving: 'сохранение',
+  saved: 'сохранено как черновик',
+  submitting: 'отправка на проверку',
+  validation: 'ошибка валидации',
+  server: 'ошибка сервера',
+  draft: 'черновик',
+  pending: 'на проверке',
+  approved: 'одобрено',
+  rejected: 'отклонено'
 };
 
 const DRAFT_STATUS_LABELS = {
-  draft: 'Draft',
-  pending: 'Pending review',
-  approved: 'Approved',
-  rejected: 'Rejected',
-  unknown: 'Unknown status'
+  draft: 'Черновик',
+  pending: 'На проверке',
+  approved: 'Одобрено',
+  rejected: 'Отклонено',
+  unknown: 'Неизвестный статус'
 };
 
 const CONFIDENCE_ALLOWED = new Set(['exact', 'approximate', 'conditional']);
@@ -99,6 +99,7 @@ function getElements() {
     loginForm: document.getElementById('login-form'),
 
     createBtn: document.getElementById('ugc-create-btn'),
+    menuCreateBtn: document.getElementById('ugc-create-menu-btn'),
     fallbackCreateBtn: document.getElementById('open-draft-editor-btn'),
     refreshLegacyBtn: document.getElementById('refresh-drafts-btn'),
 
@@ -166,7 +167,7 @@ function bindAuth(els) {
         uiState.pendingAfterLogin = null;
       }
     } catch (error) {
-      const message = normalizeAppError(error, 'Authentication failed.').message;
+      const message = normalizeAppError(error, 'Ошибка аутентификации.').message;
       setGlobalError(els, message);
       showSystemMessage(message, { variant: 'warning' });
     } finally {
@@ -189,6 +190,7 @@ function bindUgcPanel(els) {
     openUgcPanel(els);
   };
   els.createBtn?.addEventListener('click', openHandler);
+  els.menuCreateBtn?.addEventListener('click', openHandler);
   els.fallbackCreateBtn?.addEventListener('click', openHandler);
 
   els.refreshLegacyBtn?.addEventListener('click', async () => {
@@ -208,7 +210,7 @@ function bindUgcPanel(els) {
     if (els.ugcPanel.hidden) return;
     const target = event.target;
     const insidePanel = els.ugcPanel.contains(target);
-    const opener = target?.closest?.('#ugc-create-btn, #open-draft-editor-btn');
+    const opener = target?.closest?.('#ugc-create-btn, #ugc-create-menu-btn, #open-draft-editor-btn');
     if (!insidePanel && !opener) closeUgcPanel(els);
   });
 }
@@ -279,9 +281,9 @@ function openUgcPanel(els) {
     els.ugcAuthCta.replaceChildren();
     const ctaBlock = createInlineStateBlock({
       variant: 'info',
-      title: 'Authentication required',
-      message: 'Please log in to create and manage drafts.',
-      actionLabel: 'Login',
+      title: 'Требуется вход',
+      message: 'Войдите, чтобы создавать и управлять черновиками.',
+      actionLabel: 'Вход',
       onAction: () => {
       uiState.pendingAfterLogin = 'open-ugc';
       openModal(els.loginModal);
@@ -357,16 +359,16 @@ async function refreshDrafts(els) {
   setGlobalError(els, '');
   toggleDraftsEmptyState(els, true, {
     variant: 'info',
-    title: 'Loading drafts',
-    message: 'Fetching your latest drafts…'
+    title: 'Загрузка черновиков',
+    message: 'Получаем ваши последние черновики…'
   });
   try {
-    const data = await requestDraftApi('/api/drafts/my', { method: 'GET' }, 'Failed to load drafts.');
+    const data = await requestDraftApi('/api/drafts/my', { method: 'GET' }, 'Не удалось загрузить черновики.');
     uiState.drafts = Array.isArray(data) ? data : [];
     renderDraftList(els);
     clearError();
   } catch (error) {
-    const normalized = normalizeAppError(error, 'Failed to load drafts.');
+    const normalized = normalizeAppError(error, 'Не удалось загрузить черновики.');
     const message = handleAuthError(error, els) || normalized.message;
     setGlobalError(els, message, { retry: () => refreshDrafts(els) });
     showSystemMessage(message, { variant: 'warning' });
@@ -389,8 +391,8 @@ function renderDraftList(els) {
     const hasError = Boolean(String(els.ugcGlobalError?.textContent || '').trim());
     toggleDraftsEmptyState(els, !hasError, {
       variant: 'info',
-      title: 'No drafts yet',
-      message: 'Start with “Create draft”, then save your progress to see it here.'
+      title: 'Черновиков пока нет',
+      message: 'Нажмите «Создать черновик», затем сохраните прогресс — и он появится здесь.'
     });
     return;
   }
@@ -402,7 +404,7 @@ function renderDraftList(els) {
     item.className = 'ugc-draft-item';
 
     const title = document.createElement('strong');
-    setText(title, draft?.title_short || draft?.name_ru || 'Untitled draft');
+    setText(title, draft?.title_short || draft?.name_ru || 'Черновик без названия');
 
     const meta = document.createElement('div');
     meta.className = 'ugc-draft-meta';
@@ -417,7 +419,7 @@ function renderDraftList(els) {
 
     const openBtn = document.createElement('button');
     openBtn.type = 'button';
-    setText(openBtn, 'Open');
+    setText(openBtn, 'Открыть');
     openBtn.addEventListener('click', () => {
       openEditMode(els, draft);
       if (els.ugcPanel.hidden) openUgcPanel(els);
@@ -437,11 +439,11 @@ function toggleDraftsEmptyState(els, visible, options = {}) {
   emptyNode.hidden = !visible;
   if (!visible) return;
   const config = typeof options === 'string'
-    ? { variant: 'info', title: 'Empty state', message: options }
+    ? { variant: 'info', title: 'Пусто', message: options }
     : {
       variant: options.variant || 'info',
-      title: options.title || 'Empty state',
-      message: options.message || 'No drafts yet.'
+      title: options.title || 'Пусто',
+      message: options.message || 'Черновиков пока нет.'
     };
   emptyNode.replaceChildren(createInlineStateBlock({
     variant: config.variant,
@@ -484,13 +486,14 @@ function renderStatusBadge(draft) {
 
 function syncModeUI(els, draft = null) {
   const isEdit = uiState.mode === 'edit';
-  const title = isEdit ? 'Edit draft' : 'Create draft';
+  const title = isEdit ? 'Редактировать черновик' : 'Создать черновик';
   setText(els.ugcTitle, title);
 
   if (uiState.readOnly) {
-    setText(els.ugcSubtitle, `Draft status: ${normalizeDraftStatus(draft?.status || 'pending')} (read-only)`);
+    const statusLabel = DRAFT_STATUS_LABELS[normalizeDraftStatus(draft?.status || 'pending')] || DRAFT_STATUS_LABELS.unknown;
+    setText(els.ugcSubtitle, `Статус черновика: ${statusLabel} (только чтение)`);
   } else {
-    setText(els.ugcSubtitle, `Draft status: ${STATUS_TEXT[uiState.formState] || uiState.formState}`);
+    setText(els.ugcSubtitle, `Статус черновика: ${STATUS_TEXT[uiState.formState] || uiState.formState}`);
   }
 
   const disableEdit = uiState.readOnly || uiState.ugcBusy;
@@ -509,8 +512,8 @@ function syncModeUI(els, draft = null) {
 function setFormState(els, nextState) {
   uiState.formState = nextState;
   const label = STATUS_TEXT[nextState] || nextState;
-  const suffix = uiState.readOnly ? ' (read-only)' : '';
-  setText(els.ugcSubtitle, `Draft status: ${label}${suffix}`);
+  const suffix = uiState.readOnly ? ' (только чтение)' : '';
+  setText(els.ugcSubtitle, `Статус черновика: ${label}${suffix}`);
   const pending = nextState === 'saving' || nextState === 'submitting';
   const disableEdit = uiState.readOnly || uiState.ugcBusy;
   els.saveBtn.disabled = disableEdit || pending;
@@ -536,7 +539,7 @@ function getDraftRejectionReason(draft) {
 async function saveDraft(els) {
   if (uiState.ugcBusy) return;
   if (!ensureOnlineAction()) {
-    setGlobalError(els, 'You are offline. Draft save needs connection.');
+    setGlobalError(els, 'Нет подключения к сети. Для сохранения черновика нужен интернет.');
     return;
   }
 
@@ -545,8 +548,8 @@ async function saveDraft(els) {
   renderFieldErrors(els.form, els.fieldErrors, validation.errors);
   if (!validation.valid) {
     setFormState(els, 'validation');
-    setGlobalError(els, 'Please fix highlighted fields before saving.');
-    showSystemMessage('Validation failed. Check highlighted fields.', { variant: 'warning' });
+    setGlobalError(els, 'Исправьте выделенные поля перед сохранением.');
+    showSystemMessage('Ошибка валидации. Проверьте выделенные поля.', { variant: 'warning' });
     return;
   }
 
@@ -565,7 +568,7 @@ async function saveDraft(els) {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(validation.data)
-    }, 'Failed to save draft.');
+    }, 'Не удалось сохранить черновик.');
 
     if (saved?.id) {
       uiState.activeDraftId = saved.id;
@@ -576,10 +579,10 @@ async function saveDraft(els) {
 
     setFormState(els, 'saved');
     setGlobalError(els, '');
-    showSystemMessage('Draft saved', { variant: 'success' });
+    showSystemMessage('Черновик сохранён', { variant: 'success' });
     await refreshDrafts(els);
   } catch (error) {
-    const message = resolveUgcActionErrorMessage(error, els, 'Failed to save draft.');
+    const message = resolveUgcActionErrorMessage(error, els, 'Не удалось сохранить черновик.');
     setGlobalError(els, message, { retry: () => saveDraft(els) });
     setFormState(els, 'server');
     showSystemMessage(message, { variant: 'warning' });
@@ -592,12 +595,12 @@ async function saveDraft(els) {
 async function submitDraft(els) {
   if (uiState.ugcBusy) return;
   if (!ensureOnlineAction()) {
-    setGlobalError(els, 'You are offline. Cannot submit for review.');
+    setGlobalError(els, 'Нет подключения к сети. Невозможно отправить на проверку.');
     return;
   }
 
   if (!uiState.activeDraftId) {
-    setGlobalError(els, 'Save draft first.');
+    setGlobalError(els, 'Сначала сохраните черновик.');
     return;
   }
 
@@ -616,7 +619,7 @@ async function submitDraft(els) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'pending' })
-      }, 'Failed to submit draft.');
+      }, 'Не удалось отправить черновик.');
     } catch (error) {
       const patchPayload = { ...collectDraftPayload(els.form), status: 'pending' };
       const fallback = validateClientPayload(patchPayload);
@@ -624,16 +627,16 @@ async function submitDraft(els) {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fallback.data)
-      }, error.message || 'Failed to submit draft.');
+      }, error.message || 'Не удалось отправить черновик.');
     }
 
     upsertDraft(submitted);
     openEditMode(els, { ...submitted, status: 'pending' });
     setGlobalError(els, '');
-    showSystemMessage('Submitted for review', { variant: 'success' });
+    showSystemMessage('Отправлено на проверку', { variant: 'success' });
     await refreshDrafts(els);
   } catch (error) {
-    const message = resolveUgcActionErrorMessage(error, els, 'Failed to submit draft.');
+    const message = resolveUgcActionErrorMessage(error, els, 'Не удалось отправить черновик.');
     setGlobalError(els, message, { retry: () => submitDraft(els) });
     setFormState(els, 'server');
     showSystemMessage(message, { variant: 'warning' });
@@ -646,7 +649,7 @@ async function submitDraft(els) {
 async function deleteActiveDraft(els) {
   if (uiState.ugcBusy) return;
   if (!ensureOnlineAction()) {
-    setGlobalError(els, 'You are offline. Cannot delete draft.');
+    setGlobalError(els, 'Нет подключения к сети. Невозможно удалить черновик.');
     return;
   }
 
@@ -657,14 +660,14 @@ async function deleteActiveDraft(els) {
   setGlobalError(els, '');
   showLoading();
   try {
-    await requestDraftApi(`/api/drafts/${id}`, { method: 'DELETE' }, 'Failed to delete draft.');
+    await requestDraftApi(`/api/drafts/${id}`, { method: 'DELETE' }, 'Не удалось удалить черновик.');
     uiState.drafts = uiState.drafts.filter((draft) => String(draft.id) !== String(id));
     openCreateMode(els);
     renderDraftList(els);
     setGlobalError(els, '');
-    showSystemMessage('Draft deleted', { variant: 'success' });
+    showSystemMessage('Черновик удалён', { variant: 'success' });
   } catch (error) {
-    const message = resolveUgcActionErrorMessage(error, els, 'Failed to delete draft.');
+    const message = resolveUgcActionErrorMessage(error, els, 'Не удалось удалить черновик.');
     setGlobalError(els, message, { retry: () => deleteActiveDraft(els) });
     showSystemMessage(message, { variant: 'warning' });
   } finally {
@@ -686,44 +689,44 @@ function requireAuthForUgc(els) {
   if (getCurrentUser()) return true;
   uiState.pendingAfterLogin = 'open-ugc';
   openModal(els.loginModal);
-  setGlobalError(els, 'Please login to continue.');
-  showSystemMessage('Please login to continue.', { variant: 'warning' });
+  setGlobalError(els, 'Войдите, чтобы продолжить.');
+  showSystemMessage('Войдите, чтобы продолжить.', { variant: 'warning' });
   return false;
 }
 
 function validateClientPayload(payload) {
   const errors = {};
 
-  if (!payload.name_ru) errors.name_ru = 'name_ru is required';
-  if (!payload.date_start) errors.date_start = 'date_start is required';
-  if (!payload.source_url) errors.source_url = 'source_url is required';
+  if (!payload.name_ru) errors.name_ru = 'Поле name_ru обязательно';
+  if (!payload.date_start) errors.date_start = 'Поле date_start обязательно';
+  if (!payload.source_url) errors.source_url = 'Поле source_url обязательно';
 
   const latitude = parseOptionalNumber(payload.latitude);
   const longitude = parseOptionalNumber(payload.longitude);
 
   if ((latitude === null) !== (longitude === null)) {
-    errors.latitude = 'latitude and longitude should be filled together';
-    errors.longitude = 'latitude and longitude should be filled together';
+    errors.latitude = 'Широта и долгота заполняются вместе';
+    errors.longitude = 'Широта и долгота заполняются вместе';
   }
 
   if (latitude !== null && (Number.isNaN(latitude) || latitude < -90 || latitude > 90)) {
-    errors.latitude = 'latitude should be in range -90..90';
+    errors.latitude = 'Широта должна быть в диапазоне -90..90';
   }
 
   if (longitude !== null && (Number.isNaN(longitude) || longitude < -180 || longitude > 180)) {
-    errors.longitude = 'longitude should be in range -180..180';
+    errors.longitude = 'Долгота должна быть в диапазоне -180..180';
   }
 
   if (payload.title_short.length > 120) {
-    errors.title_short = 'title_short must be <= 120';
+    errors.title_short = 'title_short должно быть не длиннее 120 символов';
   }
 
   if (payload.description.length > 2000) {
-    errors.description = 'description must be <= 2000';
+    errors.description = 'description должно быть не длиннее 2000 символов';
   }
 
   if (payload.coordinates_confidence && !CONFIDENCE_ALLOWED.has(payload.coordinates_confidence)) {
-    errors.coordinates_confidence = 'coordinates_confidence must be exact/approximate/conditional';
+    errors.coordinates_confidence = 'coordinates_confidence должно быть exact/approximate/conditional';
   }
 
   if (Object.keys(errors).length > 0) {
@@ -930,7 +933,7 @@ function handleAuthError(error, els) {
 
   uiState.pendingAfterLogin = 'open-ugc';
   openModal(els.loginModal);
-  return 'Session expired. Please sign in again.';
+  return 'Сессия истекла. Войдите снова.';
 }
 
 function upsertDraft(draft) {
@@ -944,8 +947,8 @@ function upsertDraft(draft) {
 }
 
 function formatUpdatedAt(value) {
-  if (!value) return 'updated_at: —';
+  if (!value) return 'Обновлено: —';
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return `updated_at: ${String(value)}`;
-  return `updated_at: ${date.toISOString().slice(0, 16).replace('T', ' ')}`;
+  if (Number.isNaN(date.getTime())) return `Обновлено: ${String(value)}`;
+  return `Обновлено: ${date.toISOString().slice(0, 16).replace('T', ' ')}`;
 }

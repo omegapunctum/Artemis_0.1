@@ -138,6 +138,15 @@ def get_map_feed(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    """
+    Runtime map feed (NON-CANONICAL).
+
+    This endpoint provides a runtime-optimized read model for UI usage.
+    It is NOT the source of truth for map data.
+
+    Canonical data is defined by exported datasets (e.g. GeoJSON via ETL pipeline).
+    Do not rely on this endpoint as a stable public API contract.
+    """
     request.state.user_id = current_user.id
     try:
         parsed_bbox = parse_bbox(bbox)

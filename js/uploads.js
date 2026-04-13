@@ -19,21 +19,23 @@ function validateUpload(file) {
   return null;
 }
 
-export async function uploadFile(file) {
+export async function uploadFile(file, license) {
   const validationError = validateUpload(file);
   if (validationError) throw new Error(validationError);
+  if (!license || !String(license).trim()) throw new Error('Не указана лицензия.');
 
   if (window.ARTEMIS_DRY_RUN) {
     return {
+      id: 'dry-run',
       url: URL.createObjectURL(file),
-      width: null,
-      height: null,
-      license: ''
+      filename: file.name,
+      license: String(license).trim()
     };
   }
 
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('license', String(license).trim());
 
   const response = await apiFetch('/api/uploads', {
     method: 'POST',
@@ -41,14 +43,21 @@ export async function uploadFile(file) {
   });
 
   if (!response.ok) {
-    throw new Error('Ошибка загрузки файла на сервер.');
+    let detail = `Ошибка загрузки файла на сервер (HTTP ${response.status}).`;
+    try {
+      const payload = await response.json();
+      if (payload?.detail) detail = `${detail} ${payload.detail}`;
+    } catch (_) {
+      // noop: keep default message
+    }
+    throw new Error(detail);
   }
 
   const data = await response.json();
   return {
+    id: data.id,
     url: data.url,
-    width: data.width,
-    height: data.height,
+    filename: data.filename,
     license: data.license || ''
   };
 }
@@ -56,5 +65,5 @@ export async function uploadFile(file) {
 // Чеклист:
 // - [ ] отклоняются не-image mime и недопустимые расширения
 // - [ ] отклоняются файлы > 5 MB
-// - [ ] успешный ответ возвращает {url,width,height,license}
+// - [ ] успешный ответ возвращает {id,url,filename,license}
 // - [ ] при пустой license UI показывает предупреждение

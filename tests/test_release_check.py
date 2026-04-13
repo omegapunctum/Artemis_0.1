@@ -30,6 +30,10 @@ def _build_fixture(
         json.dumps({"type": "FeatureCollection", "features": features}),
     )
     _write(
+        root / "data" / "features.json",
+        json.dumps([{"id": "f1"} for _ in features]),
+    )
+    _write(
         root / "data" / "export_meta.json",
         json.dumps(
             {
@@ -133,6 +137,15 @@ def test_release_check_fails_on_empty_geojson(tmp_path: Path) -> None:
     assert "[FAIL] Data layer: features.geojson is empty" in result.stdout
 
 
+def test_release_check_fails_when_features_json_missing(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    (tmp_path / "data" / "features.json").unlink()
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 1
+    assert "[FAIL] Data layer: data/features.json is missing" in result.stdout
+
+
 def test_release_check_fails_on_frontend_fallback_pattern(tmp_path: Path) -> None:
     _build_fixture(tmp_path, frontend_fallback=True)
     result = _run_release_check(tmp_path)
@@ -171,3 +184,15 @@ def test_release_check_fails_when_data_quality_exceeds_threshold(tmp_path: Path)
 
     assert result.returncode == 1
     assert "[FAIL] Data layer: data_quality warnings exceed threshold (1 > 0)" in result.stdout
+
+
+def test_release_check_fails_on_legacy_upload_path_assumption(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    _write(
+        tmp_path / "js" / "uploads.js",
+        "const legacy = `/api/uploads/${filename}`;\n",
+    )
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 1
+    assert "[FAIL] Frontend: js/uploads.js contains legacy /api/uploads/{filename} assumption" in result.stdout
