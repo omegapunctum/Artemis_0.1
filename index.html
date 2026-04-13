@@ -64,8 +64,8 @@
         </nav>
       </div>
       <div class="search-shell">
-        <input id="global-search" type="search" placeholder="Search events, people, places, dates..." autocomplete="off" />
-        <button id="search-clear-btn" class="icon-btn search-clear-btn" type="button" aria-label="Clear search" hidden>×</button>
+        <input id="global-search" type="search" placeholder="Поиск объектов, людей, мест и дат..." autocomplete="off" />
+        <button id="search-clear-btn" class="icon-btn search-clear-btn" type="button" aria-label="Очистить поиск" title="Очистить поиск" hidden>×</button>
         <div id="search-no-results-state" class="search-no-results-state" hidden aria-live="polite">
           <span id="search-no-results-text">Ничего не найдено. Попробуйте изменить запрос.</span>
           <button id="search-no-results-reset" type="button" class="ui-button ui-button-secondary">Сбросить поиск</button>
@@ -91,10 +91,10 @@
         </div>
         <div class="map-tools-shell" role="group" aria-label="Map tools">
           <div class="top-actions-cluster" role="group" aria-label="Map controls">
-            <button id="filters-btn" type="button" aria-label="Toggle filters" aria-expanded="false">Filters</button>
-            <button id="layers-btn" type="button" aria-label="Toggle layers" aria-expanded="false">Layers</button>
-            <button id="bookmarks-btn" type="button" aria-label="Toggle bookmarks" aria-expanded="false">Bookmarks</button>
-            <button id="courses-btn" type="button" aria-label="Toggle courses" aria-expanded="false">Courses</button>
+            <button id="filters-btn" type="button" aria-label="Открыть фильтры объектов" title="Фильтры объектов" aria-expanded="false">Фильтры</button>
+            <button id="layers-btn" type="button" aria-label="Открыть слои карты" title="Слои карты" aria-expanded="false">Слои</button>
+            <button id="bookmarks-btn" type="button" aria-label="Открыть закладки" title="Закладки" aria-expanded="false">Закладки</button>
+            <button id="courses-btn" type="button" aria-label="Открыть курсы" title="Курсы" aria-expanded="false">Курсы</button>
             <button id="map-theme-toggle" type="button" aria-label="Сменить тему карты">Серая</button>
             <button id="live-btn" type="button" aria-label="Toggle live feed" aria-expanded="false">LIVE</button>
             <div id="quick-layer-filter" class="quick-layer-filter" role="group" aria-label="Быстрый фильтр категорий"></div>
@@ -114,15 +114,9 @@
       <div id="map"></div>
     </main>
     <section id="onboarding-overlay" class="onboarding-overlay" aria-live="polite">
-      <div class="onboarding-card glass-panel" role="note" aria-label="Подсказка для первого входа">
-        <h2 class="onboarding-title">Быстрый старт</h2>
-        <ul class="onboarding-list">
-          <li>Исследуйте карту и перемещайтесь по ней.</li>
-          <li>Используйте поиск для быстрого перехода к объектам.</li>
-          <li>Переключайте слои, чтобы сравнивать данные.</li>
-          <li>Меняйте период на таймлайне внизу экрана.</li>
-        </ul>
-        <button id="onboarding-dismiss-btn" class="ui-button ui-button-primary" type="button">Понятно</button>
+      <div class="onboarding-card glass-panel" role="note" aria-label="Подсказка первого шага">
+        <p class="onboarding-title">Выберите объект на карте или измените период на таймлайне внизу.</p>
+        <button id="onboarding-dismiss-btn" class="icon-btn onboarding-dismiss-btn" type="button" aria-label="Закрыть подсказку">×</button>
       </div>
     </section>
     <section id="global-data-loading" class="global-data-loading glass-panel" aria-live="polite" aria-hidden="false">
@@ -136,6 +130,7 @@
     <section id="bottom-panel" class="glass-panel" aria-label="Timeline">
       <div id="timeline" class="timeline-row">
         <div class="timeline-head">
+          <div class="timeline-helper-label">Период отображения объектов</div>
           <div id="timeline-range-label">Выбранная точка</div>
           <div class="timeline-mode-toggle" role="group" aria-label="Режим времени">
             <button id="timeline-mode-point" class="timeline-mode-btn is-active" type="button" aria-pressed="true">Точка</button>
