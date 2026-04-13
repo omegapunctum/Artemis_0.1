@@ -1608,6 +1608,18 @@ function renderCardsState(elements, state) {
     return;
   }
 
+  const ribbonLimit = 80;
+  const isRibbonTruncated = state.filteredFeatures.length > ribbonLimit;
+  if (isRibbonTruncated) {
+    elements.cardsState.classList.add('cards-inline-note');
+    elements.cardsState.appendChild(createInlineStateBlock({
+      variant: 'info',
+      title: 'Лента ограничена',
+      message: `Показаны первые ${ribbonLimit} из ${state.filteredFeatures.length} объектов.`
+    }));
+    return;
+  }
+
   elements.cardsState.textContent = buildResultFeedbackLabel(state);
 }
 
