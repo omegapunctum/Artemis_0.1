@@ -1303,11 +1303,11 @@ function renderSearchDropdown(elements, state, map) {
   if (!state.searchResults.length) {
     const noResults = document.createElement('div');
     noResults.className = 'search-no-results';
-    noResults.textContent = `No matches for “${state.search}”.`;
+    noResults.textContent = `По запросу «${state.search}» ничего не найдено.`;
     const clearBtn = document.createElement('button');
     clearBtn.type = 'button';
     clearBtn.className = 'ui-button ui-button-secondary';
-    clearBtn.textContent = 'Clear search';
+    clearBtn.textContent = 'Очистить поиск';
     clearBtn.addEventListener('click', () => {
       clearSearchState(elements, state, { closePanel: true, notify: true });
       state.applyState?.();
@@ -1529,7 +1529,7 @@ function updateSearchNoResultsState(elements, state) {
   const shouldShow = isPrimaryEmpty && hasSearch && canMeasureResults && isSearchEmpty;
   noResults.hidden = !shouldShow;
   if (shouldShow) {
-    if (noResultsText) noResultsText.textContent = `Ничего не найдено для «${state.search}».`;
+    if (noResultsText) noResultsText.textContent = `По запросу «${state.search}» ничего не найдено. Измените поиск, фильтры или период.`;
     if (noResultsReset) noResultsReset.hidden = false;
   } else if (noResultsReset) {
     noResultsReset.hidden = true;
@@ -2866,7 +2866,7 @@ function buildResultFeedbackLabel(state) {
 
 function buildEmptyStateContext(state, elements) {
   if (!state?.applyState) {
-    return { title: 'Объекты не найдены', message: 'Начните с клика по карте или измените период на таймлайне.', actionLabel: '', onAction: null };
+    return { title: 'Ничего не найдено', message: 'Измените фильтры, поиск или период на таймлайне.', actionLabel: '', onAction: null };
   }
   if (!state.enabledLayerIds.size) {
     return {
@@ -2883,7 +2883,7 @@ function buildEmptyStateContext(state, elements) {
   if (state.search) {
     return {
       title: 'Ничего не найдено',
-      message: `Запрос «${state.search}» не дал результатов. Попробуйте другой запрос или расширьте период.`,
+      message: `По запросу «${state.search}» ничего не найдено. Измените поиск, фильтры или период.`,
       actionLabel: 'Очистить поиск',
       onAction: () => {
         clearSearchState(elements, state, { closePanel: false, notify: false });
@@ -2893,8 +2893,8 @@ function buildEmptyStateContext(state, elements) {
     };
   }
   return {
-    title: 'Пока ничего не отображается',
-    message: 'Измените период на таймлайне или сбросьте ограничения, чтобы увидеть объекты на карте.',
+    title: 'Ничего не найдено',
+    message: 'Текущий период или фильтры не показывают объекты. Измените период на таймлайне или сбросьте ограничения.',
     actionLabel: 'Сбросить ограничения',
     onAction: () => {
       resetExploreConstraints(elements, state);

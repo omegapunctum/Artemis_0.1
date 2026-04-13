@@ -337,9 +337,9 @@ body { overflow: hidden; }
   margin: 6px 0 0;
   padding: 8px 12px;
   border-radius: var(--radius-md);
-  border: 1px solid var(--state-warning-border);
-  background: var(--state-warning-bg);
-  color: var(--state-warning-text);
+  border: 1px solid var(--state-info-border);
+  background: var(--state-info-bg);
+  color: var(--state-info-text);
   font: var(--font-meta);
   display: grid;
   gap: 8px;
@@ -2023,7 +2023,11 @@ button:focus-visible {
 @media (max-width: 720px) {
   .quick-layer-filter { max-width: 132px; }
   #top-header { left: calc(8px + var(--safe-left)); right: calc(8px + var(--safe-right)); top: calc(8px + var(--safe-top)); min-height: 50px; padding: 6px 8px; }
-  #top-header { grid-template-columns: minmax(132px, 1fr) minmax(120px, 1fr) auto; }
+  #top-header { grid-template-columns: minmax(0, 1fr) auto; column-gap: 6px; min-height: 46px; padding: 5px 8px; }
+  .top-shell-left { grid-template-columns: 1fr; gap: 0; }
+  .project-nav,
+  .search-shell { display: none; }
+  .top-actions { grid-template-columns: auto auto; gap: 4px; }
   .brand { font-size: 12px; }
   #bottom-panel {
     left: calc(8px + var(--safe-left));
