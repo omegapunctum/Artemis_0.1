@@ -1,6 +1,6 @@
 # ТЕКУЩИЕ ПРИОРИТЕТЫ ARTEMIS v4.0
 
-Статус: обновлённая рабочая версия перед изменениями в репозитории.
+Статус: checkpoint-обновление после завершения map exploration stabilization cycle (2026-04-13).
 Назначение документа: фиксировать только актуальные load-bearing приоритеты проекта.
 
 Правило:
@@ -20,6 +20,21 @@
 - снижает риск тихой деградации.
 
 Если задача не влияет на эти четыре пункта, она не должна быть в top-priority списке.
+
+---
+
+## CHECKPOINT 2026-04-13 (фикс статуса)
+
+Закрытые циклы, снятые из активного top-priority:
+- contract sync / release-discipline fix;
+- data layer stabilization;
+- UI/UX stabilization;
+- courses stabilization;
+- map exploration stabilization.
+
+Следующий load-bearing фокус:
+- scaling/hardening трек (auth/session масштабирование, storage/runtime устойчивость);
+- release-quality мониторинг без возврата к уже закрытым exploration/UI mini-cycles.
 
 ---
 
