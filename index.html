@@ -56,7 +56,7 @@
       <div class="top-shell-left">
         <div class="brand" aria-label="ARTEMIS logo">ARTEMIS</div>
         <nav class="project-nav" aria-label="Основная навигация проекта">
-          <a href="#" class="project-nav-link">Главная</a>
+          <a href="#" class="project-nav-link" aria-current="page">Главная</a>
           <a href="#" class="project-nav-link">О проекте</a>
           <a href="#" class="project-nav-link">Курсы</a>
           <a href="#" class="project-nav-link">Коллекции</a>
@@ -126,7 +126,7 @@
       </div>
     </section>
     <section id="global-data-loading" class="global-data-loading glass-panel" aria-live="polite" aria-hidden="false">
-      <p id="global-data-loading-text" class="global-data-loading-text">Загрузка карты…</p>
+      <p id="global-data-loading-text" class="global-data-loading-text">Загрузка карты...</p>
     </section>
     <section id="global-data-error" class="global-data-error glass-panel" hidden aria-hidden="true" aria-live="assertive">
       <p id="global-data-error-text" class="global-data-error-text">Не удалось загрузить данные карты.</p>
@@ -323,10 +323,11 @@
       mapReady: false,
       uiReady: false,
       failed: false,
-      phaseMessage: 'Инициализация приложения…',
-      readyMessage: 'Карта готова.',
+      phaseMessage: 'Загрузка данных...',
+      readyMessage: 'Карта готова',
       errorMessage: ''
     };
+    let lastRuntimeStatusKey = '';
     const DEBUG_TELEMETRY_STATUS = (() => {
       const debugParam = new URLSearchParams(window.location.search).get('debug');
       if (typeof debugParam === 'string' && ['1', 'true', 'on'].includes(debugParam.trim().toLowerCase())) {
@@ -342,6 +343,9 @@
 
     // Обновляет строку состояния приложения без лишнего шума.
     function setStatus(message, { error = false, loading = true } = {}) {
+      const statusKey = `${message}|${error ? '1' : '0'}|${loading ? '1' : '0'}`;
+      if (statusKey === lastRuntimeStatusKey) return;
+      lastRuntimeStatusKey = statusKey;
       statusMessage.textContent = message;
       statusLoading.hidden = !loading;
       statusError.hidden = !error;
@@ -351,19 +355,19 @@
     function syncRuntimeStatus() {
       if (runtimeReadiness.failed) {
         hideGlobalDataLoading();
-        setStatus(runtimeReadiness.errorMessage || 'Ошибка загрузки данных. Попробуйте обновить страницу.', { error: true, loading: false });
+        setStatus('Ошибка загрузки', { error: true, loading: false });
         return;
       }
 
       const appReady = runtimeReadiness.dataReady && runtimeReadiness.mapReady && runtimeReadiness.uiReady;
       if (appReady) {
         hideGlobalDataLoading();
-        setStatus(runtimeReadiness.readyMessage, { loading: false });
+        setStatus('Карта готова', { loading: false });
         return;
       }
-
-      showGlobalDataLoading(runtimeReadiness.phaseMessage || 'Загрузка карты…');
-      setStatus(runtimeReadiness.phaseMessage || 'Инициализация приложения…', { loading: true });
+      const loadingMessage = runtimeReadiness.dataReady ? 'Загрузка карты...' : 'Загрузка данных...';
+      showGlobalDataLoading(loadingMessage);
+      setStatus(loadingMessage, { loading: true });
     }
 
     function createDataLoadTimeoutError(timeoutMs) {
@@ -398,8 +402,8 @@
         runtimeReadiness.uiReady = false;
         runtimeReadiness.failed = false;
         runtimeReadiness.errorMessage = '';
-        runtimeReadiness.phaseMessage = 'Загрузка токена…';
-        runtimeReadiness.readyMessage = 'Карта готова.';
+        runtimeReadiness.phaseMessage = 'Загрузка данных...';
+        runtimeReadiness.readyMessage = 'Карта готова';
 
         hideGlobalDataError();
         syncRuntimeStatus();
@@ -413,27 +417,21 @@
         }
 
         clearError();
-        runtimeReadiness.phaseMessage = 'Загрузка данных…';
+        runtimeReadiness.phaseMessage = 'Загрузка данных...';
         syncRuntimeStatus();
         const features = await loadFeaturesWithTimeout();
         runtimeReadiness.dataReady = true;
-        const sourceCount = Array.isArray(features?.features) ? features.features.length : 0;
-        const sourceLabel = USE_MAP_FEED ? '/api/map/feed' : 'data/features.geojson';
-        runtimeReadiness.phaseMessage = (
-          DEBUG_TELEMETRY_STATUS
-            ? `Данные загружены: ${sourceCount} из источника ${sourceLabel}.`
-            : 'Данные загружены.'
-        );
+        runtimeReadiness.phaseMessage = 'Загрузка карты...';
         syncRuntimeStatus();
 
-        runtimeReadiness.phaseMessage = 'Инициализация карты…';
+        runtimeReadiness.phaseMessage = 'Загрузка карты...';
         syncRuntimeStatus();
         const map = initMap('map', features);
         await waitForMapBootstrap(map);
         runtimeReadiness.mapReady = true;
         syncRuntimeStatus();
 
-        runtimeReadiness.phaseMessage = 'Инициализация интерфейса…';
+        runtimeReadiness.phaseMessage = 'Загрузка карты...';
         syncRuntimeStatus();
         const uiState = await initUI(map, features);
         await initUGCUI();
@@ -444,11 +442,9 @@
         const mapCount = uiState?.getVisibleCounts?.().mapCount ?? 0;
         clearError();
         hideGlobalDataError();
-        runtimeReadiness.readyMessage = (
-          DEBUG_TELEMETRY_STATUS
-            ? `Карта готова. Найдено: ${foundCount}, на карте: ${mapCount}.`
-            : 'Карта готова.'
-        );
+        runtimeReadiness.readyMessage = DEBUG_TELEMETRY_STATUS
+          ? `Карта готова (${foundCount}/${mapCount}).`
+          : 'Карта готова';
         syncRuntimeStatus();
       } catch (error) {
         console.error('Ошибка инициализации:', error);
