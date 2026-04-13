@@ -7,6 +7,83 @@ import { DEFAULT_DISPLAY_MODE, aggregateFeaturesByDecade, createCoursesState, cr
 let globalDataErrorRetryHandler = null;
 let activeUiToastTimerId = null;
 let activeUiToastEl = null;
+const COURSES_PROGRESS_STORAGE_KEY = 'artemis_courses_progress';
+
+function loadCoursesProgress(courses = []) {
+  if (typeof window === 'undefined' || !window.localStorage) return {};
+  try {
+    const raw = window.localStorage.getItem(COURSES_PROGRESS_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const validCourseIds = new Set((Array.isArray(courses) ? courses : []).map((course) => String(course?.id || '').trim()).filter(Boolean));
+    const normalized = {};
+    Object.entries(parsed).forEach(([courseId, entry]) => {
+      const normalizedCourseId = String(courseId || '').trim();
+      if (!normalizedCourseId || !validCourseIds.has(normalizedCourseId)) return;
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+      const currentStepIndex = Number(entry.currentStepIndex);
+      const completed = entry.completed === true;
+      normalized[normalizedCourseId] = {
+        currentStepIndex: Number.isInteger(currentStepIndex) && currentStepIndex >= 0 ? currentStepIndex : 0,
+        completed
+      };
+    });
+    return normalized;
+  } catch (_error) {
+    return {};
+  }
+}
+
+function saveCoursesProgress(progressByCourse) {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    const payload = progressByCourse && typeof progressByCourse === 'object' ? progressByCourse : {};
+    window.localStorage.setItem(COURSES_PROGRESS_STORAGE_KEY, JSON.stringify(payload));
+  } catch (_error) {
+    // Ignore storage write errors to keep course flow resilient.
+  }
+}
+
+function resolvePersistedCourseStepIndex(state, course) {
+  const steps = Array.isArray(course?.steps) ? course.steps : [];
+  if (!steps.length) return 0;
+  const courseId = String(course?.id || '').trim();
+  const entry = state?.coursesProgress?.[courseId];
+  const fallbackIndex = entry?.completed ? steps.length - 1 : 0;
+  const candidate = Number(entry?.currentStepIndex);
+  if (!Number.isInteger(candidate) || candidate < 0) return fallbackIndex;
+  return Math.max(0, Math.min(steps.length - 1, candidate));
+}
+
+function persistSelectedCourseProgress(state, { completed = false } = {}) {
+  const selectedCourse = getSelectedCourse(state?.coursesState);
+  const steps = Array.isArray(selectedCourse?.steps) ? selectedCourse.steps : [];
+  if (!selectedCourse || !steps.length) return;
+  const courseId = String(selectedCourse.id || '').trim();
+  if (!courseId) return;
+  const currentEntry = state.coursesProgress?.[courseId] || { currentStepIndex: 0, completed: false };
+  const stepIndex = Math.max(0, Math.min(steps.length - 1, Number(state.coursesState?.selectedCourseStepIndex) || 0));
+  state.coursesProgress = {
+    ...(state.coursesProgress || {}),
+    [courseId]: {
+      currentStepIndex: stepIndex,
+      completed: currentEntry.completed || completed
+    }
+  };
+  saveCoursesProgress(state.coursesProgress);
+}
+
+function getCourseProgressStatusText(state, course) {
+  const courseId = String(course?.id || '').trim();
+  if (!courseId) return '';
+  const entry = state?.coursesProgress?.[courseId];
+  if (!entry || typeof entry !== 'object') return '';
+  if (entry.completed === true) return 'Completed';
+  const stepIndex = Number(entry.currentStepIndex);
+  if (!Number.isInteger(stepIndex) || stepIndex <= 0) return '';
+  return `In progress · Step ${stepIndex + 1}`;
+}
 
 function isDebugTelemetryMode() {
   if (typeof window === 'undefined') return false;
@@ -227,6 +304,7 @@ export async function initUI(map, features) {
     displayMode: DEFAULT_DISPLAY_MODE,
     timeAggregation: {},
     coursesState: createCoursesState(normalizedCoursesResult.courses),
+    coursesProgress: loadCoursesProgress(normalizedCoursesResult.courses),
     coursesError,
     coursesContractWarnings,
     liveState: createLiveState(getRecentFeatures(18, { type: 'FeatureCollection', features: allFeatures })),
@@ -869,9 +947,22 @@ function renderCoursesPanel(elements, state, map) {
     const item = document.createElement('button');
     item.type = 'button';
     item.className = `course-item${selectedCourse?.id === course.id ? ' is-selected' : ''}`;
-    item.textContent = String(course?.title || 'Untitled course');
+    const itemTitle = document.createElement('span');
+    itemTitle.className = 'course-item-title';
+    itemTitle.textContent = String(course?.title || 'Untitled course');
+    item.appendChild(itemTitle);
+
+    const statusText = getCourseProgressStatusText(state, course);
+    if (statusText) {
+      const itemStatus = document.createElement('span');
+      itemStatus.className = 'course-item-status';
+      itemStatus.textContent = statusText;
+      item.appendChild(itemStatus);
+    }
     item.addEventListener('click', () => {
       selectCourse(state.coursesState, course?.id);
+      state.coursesState.selectedCourseStepIndex = resolvePersistedCourseStepIndex(state, course);
+      persistSelectedCourseProgress(state);
       renderCoursesPanel(elements, state, map);
       applyCourseStepMapContext(state, map);
     });
@@ -910,6 +1001,7 @@ function renderCoursesPanel(elements, state, map) {
 
   const safeStepIndex = Math.max(0, Math.min(steps.length - 1, selectedStepIndex));
   state.coursesState.selectedCourseStepIndex = safeStepIndex;
+  persistSelectedCourseProgress(state);
   const currentStep = steps[safeStepIndex];
 
   const stepInfo = document.createElement('div');
@@ -933,6 +1025,7 @@ function renderCoursesPanel(elements, state, map) {
   prevBtn.disabled = safeStepIndex <= 0;
   prevBtn.addEventListener('click', () => {
     moveCourseStep(state.coursesState, -1);
+    persistSelectedCourseProgress(state);
     renderCoursesPanel(elements, state, map);
     applyCourseStepMapContext(state, map);
   });
@@ -943,6 +1036,7 @@ function renderCoursesPanel(elements, state, map) {
   nextBtn.disabled = safeStepIndex >= steps.length - 1;
   nextBtn.addEventListener('click', () => {
     moveCourseStep(state.coursesState, 1);
+    persistSelectedCourseProgress(state);
     renderCoursesPanel(elements, state, map);
     applyCourseStepMapContext(state, map);
   });
@@ -950,6 +1044,7 @@ function renderCoursesPanel(elements, state, map) {
   courseCard.appendChild(nav);
 
   if (safeStepIndex >= steps.length - 1) {
+    persistSelectedCourseProgress(state, { completed: true });
     courseCard.appendChild(createInlineStateBlock({
       variant: 'success',
       title: 'Course complete',

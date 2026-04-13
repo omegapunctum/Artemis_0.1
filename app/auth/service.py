@@ -1,3 +1,4 @@
+import os
 from uuid import uuid4
 
 from fastapi import Cookie, Depends, HTTPException, status
@@ -16,7 +17,7 @@ from .utils import (
     verify_password,
 )
 
-DATABASE_URL = "sqlite:///./artemis_auth.db"
+DATABASE_URL = os.getenv("AUTH_DATABASE_URL", "sqlite:///./artemis_auth.db")
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
