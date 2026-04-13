@@ -99,7 +99,7 @@ function isDebugTelemetryMode() {
     || host.endsWith('.test');
 }
 
-export function showGlobalDataLoading(message = 'Загрузка карты…') {
+export function showGlobalDataLoading(message = 'Загрузка карты...') {
   const host = document.getElementById('global-data-loading');
   const text = document.getElementById('global-data-loading-text');
   if (!host || !text) return;
@@ -500,7 +500,7 @@ export async function initUI(map, features) {
     if (withinMap) return;
     const withinFloating = elements.detailPanel.contains(target);
     const withinCard = target.closest?.('.ribbon-card');
-    if (!withinFloating && !withinCard) closeDetailView(state, elements);
+    if (!withinFloating && !withinCard) return;
   });
 
   document.addEventListener('keydown', (event) => {
@@ -1607,7 +1607,6 @@ function showDetailPanel(state, elements, map, feature, options = {}) {
     ? buildFullDetailContent(state, props, feature)
     : buildPreviewDetailContent(state, elements, map, feature, props);
 
-  elements.detailPanelBody.replaceChildren();
   elements.detailPanel.dataset.mode = viewMode;
   elements.detailPanelBody.dataset.mode = viewMode;
   elements.detailPanel.classList.toggle('is-preview-mode', viewMode === 'preview');
@@ -1626,13 +1625,11 @@ function showDetailPanel(state, elements, map, feature, options = {}) {
   document.dispatchEvent(new CustomEvent('artemis:overlay-open', { detail: { source: 'detail' } }));
   if (Number.isInteger(state.detailRenderFrameId)) {
     window.cancelAnimationFrame(state.detailRenderFrameId);
+    state.detailRenderFrameId = null;
   }
   state.detailOpenFeatureId = featureId;
-  state.detailRenderFrameId = window.requestAnimationFrame(() => {
-    elements.detailPanelBody.replaceChildren(detail);
-    focusDetailPanelEntry(elements, viewMode);
-    state.detailRenderFrameId = null;
-  });
+  elements.detailPanelBody.replaceChildren(detail);
+  focusDetailPanelEntry(elements, viewMode);
 }
 
 function hideDetailPanel(elements, state = null) {
@@ -1897,12 +1894,12 @@ function setupTimelinePointerInteractions(elements, state) {
     elements.timelineKnobEnd?.classList.toggle('is-active', state.timelineMode !== 'point' && isDragging && activeHandle === 'end');
   };
 
-  const startDrag = (handle, event) => {
+  const startDrag = (handle, event, { queue = true } = {}) => {
     activeHandle = handle;
     activePointerId = event.pointerId;
     track.setPointerCapture?.(event.pointerId);
     setDraggingState(true);
-    queueByPointer(event.clientX);
+    if (queue) queueByPointer(event.clientX);
   };
 
   const stopDrag = () => {
@@ -1935,12 +1932,12 @@ function setupTimelinePointerInteractions(elements, state) {
 
   elements.timelineKnobStart?.addEventListener('pointerdown', (event) => {
     event.preventDefault();
-    startDrag('start', event);
+    startDrag('start', event, { queue: false });
   });
   elements.timelineKnobEnd?.addEventListener('pointerdown', (event) => {
     if (state.timelineMode === 'point') return;
     event.preventDefault();
-    startDrag('end', event);
+    startDrag('end', event, { queue: false });
   });
 
   track.addEventListener('pointerdown', (event) => {
@@ -2074,12 +2071,12 @@ function updateCounters(elements, state, map) {
 function updateStatus(elements, state, map) {
   if (!elements.statusMessage) return;
   if (!isDebugTelemetryMode()) {
-    elements.statusMessage.textContent = 'Карта готова.';
+    elements.statusMessage.textContent = 'Карта готова';
     return;
   }
   const diagnostics = getMapBuildDiagnostics(map);
   const bucketCount = Object.keys(state.timeAggregation || {}).length;
-  elements.statusMessage.textContent = `Карта готова. Загружено ${diagnostics.inputTotal}, отображается ${getMapFeatureCount(map)}, в выборке ${state.filteredFeatures.length}, временных бакетов: ${bucketCount}.`;
+  elements.statusMessage.textContent = `Карта готова (${diagnostics.inputTotal}/${getMapFeatureCount(map)}; выборка ${state.filteredFeatures.length}; бакеты ${bucketCount}).`;
 }
 
 function selectFeature(state, elements, map, feature, options = {}) {
@@ -2476,6 +2473,18 @@ function applyResponsiveLayout(elements, state, map) {
   const mode = width <= 720 ? 'mobile' : (width <= 1080 ? 'tablet' : 'desktop');
   state.viewport = { mode, isMobile: mode === 'mobile', isTablet: mode === 'tablet' };
   document.body.dataset.viewport = mode;
+  const rootStyle = document.documentElement?.style;
+  if (rootStyle && elements.topHeader) {
+    const headerHeight = Math.max(44, Math.round(elements.topHeader.getBoundingClientRect().height));
+    rootStyle.setProperty('--top-header-height', `${headerHeight}px`);
+  }
+  if (rootStyle) {
+    const bottomPanel = document.getElementById('bottom-panel');
+    if (bottomPanel) {
+      const panelHeight = Math.max(72, Math.round(bottomPanel.getBoundingClientRect().height));
+      rootStyle.setProperty('--bottom-panel-height', `${panelHeight}px`);
+    }
+  }
   if (elements.topActions) {
     elements.topActions.classList.toggle('is-collapsed', mode !== 'desktop');
     if (mode === 'desktop') elements.topActions.classList.remove('is-expanded');
