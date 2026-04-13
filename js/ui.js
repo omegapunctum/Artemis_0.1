@@ -8,6 +8,7 @@ let globalDataErrorRetryHandler = null;
 let activeUiToastTimerId = null;
 let activeUiToastEl = null;
 const COURSES_PROGRESS_STORAGE_KEY = 'artemis_courses_progress';
+const ONBOARDING_HINT_SESSION_KEY = 'artemis_onboarding_hint_dismissed';
 
 function loadCoursesProgress(courses = []) {
   if (typeof window === 'undefined' || !window.localStorage) return {};
@@ -312,7 +313,7 @@ export async function initUI(map, features) {
   };
   state.yearBounds = years;
   initializeAnimatedPanels(elements);
-  setupOnboardingOverlay(elements);
+  const onboardingHint = setupOnboardingOverlay(elements);
   if (!state.enabledLayerIds.size) {
     allFeatures.forEach((feature) => {
       const layerId = String(normalizeProps(feature).layer_id || '').trim();
@@ -407,6 +408,7 @@ export async function initUI(map, features) {
   toggleSearchClear(elements, state);
 
   elements.timelineStart?.addEventListener('input', () => {
+    onboardingHint?.markInteracted?.();
     applyTimelineRange(elements, state, {
       start: Number(elements.timelineStart.value),
       end: state.timelineMode === 'point' ? Number(elements.timelineStart.value) : state.currentEndYear,
@@ -416,6 +418,7 @@ export async function initUI(map, features) {
   });
   elements.timelineEnd?.addEventListener('input', () => {
     if (state.timelineMode === 'point') return;
+    onboardingHint?.markInteracted?.();
     applyTimelineRange(elements, state, {
       start: state.currentStartYear,
       end: Number(elements.timelineEnd.value),
@@ -423,8 +426,14 @@ export async function initUI(map, features) {
       commit: true
     });
   });
-  elements.timelineModePointBtn?.addEventListener('click', () => setTimelineMode(elements, state, 'point', { commit: true }));
-  elements.timelineModeRangeBtn?.addEventListener('click', () => setTimelineMode(elements, state, 'range', { commit: true }));
+  elements.timelineModePointBtn?.addEventListener('click', () => {
+    onboardingHint?.markInteracted?.();
+    setTimelineMode(elements, state, 'point', { commit: true });
+  });
+  elements.timelineModeRangeBtn?.addEventListener('click', () => {
+    onboardingHint?.markInteracted?.();
+    setTimelineMode(elements, state, 'range', { commit: true });
+  });
   setupTimelinePointerInteractions(elements, state);
 
   elements.filtersBtn?.addEventListener('click', () => togglePrimaryPanel(elements, state, 'filters', elements.filtersBtn));
@@ -457,6 +466,7 @@ export async function initUI(map, features) {
   });
 
   const featureClickHandler = (feature, coordinates) => {
+    onboardingHint?.markInteracted?.();
     selectFeature(state, elements, map, feature, {
       coordinates,
       openDetail: true,
@@ -533,19 +543,43 @@ export async function initUI(map, features) {
 function setupOnboardingOverlay(elements) {
   const overlay = elements?.onboardingOverlay;
   const dismissBtn = elements?.onboardingDismissBtn;
-  if (!overlay || !dismissBtn) return;
+  if (!overlay || !dismissBtn) return { markInteracted: () => {} };
 
-  let dismissedInPageSession = false;
-  const closeOverlay = () => {
-    if (dismissedInPageSession) return;
-    dismissedInPageSession = true;
+  let dismissed = false;
+  const persistDismissed = () => {
+    if (typeof window === 'undefined' || !window.sessionStorage) return;
+    try {
+      window.sessionStorage.setItem(ONBOARDING_HINT_SESSION_KEY, '1');
+    } catch (_error) {
+      // Ignore storage failures to avoid breaking onboarding.
+    }
+  };
+  const closeOverlay = ({ persist = false } = {}) => {
+    if (dismissed) return;
+    dismissed = true;
     overlay.hidden = true;
     overlay.setAttribute('aria-hidden', 'true');
+    if (persist) persistDismissed();
   };
+  const isDismissedInSession = (() => {
+    if (typeof window === 'undefined' || !window.sessionStorage) return false;
+    try {
+      return window.sessionStorage.getItem(ONBOARDING_HINT_SESSION_KEY) === '1';
+    } catch (_error) {
+      return false;
+    }
+  })();
 
-  overlay.hidden = false;
-  overlay.setAttribute('aria-hidden', 'false');
-  dismissBtn.addEventListener('click', closeOverlay);
+  if (isDismissedInSession) {
+    closeOverlay();
+  } else {
+    overlay.hidden = false;
+    overlay.setAttribute('aria-hidden', 'false');
+  }
+  dismissBtn.addEventListener('click', () => closeOverlay({ persist: true }));
+  return {
+    markInteracted: () => closeOverlay({ persist: true })
+  };
 }
 
 function setProfileMenuOpen(elements, nextOpen = false, { returnFocus = false, focusFirstItem = false } = {}) {
@@ -2536,7 +2570,7 @@ function syncDetailSheetState(state, elements) {
 function updateDetailPanelHeading(elements, mode = 'preview') {
   const heading = elements?.detailPanel?.querySelector('.detail-panel-heading');
   if (!heading) return;
-  heading.textContent = mode === 'full' ? 'Детали объекта' : 'Быстрый просмотр';
+  heading.textContent = mode === 'full' ? 'Детали объекта' : 'Объект · Быстрый просмотр';
 }
 
 function buildPreviewDetailContent(state, elements, map, feature, props) {
@@ -2553,6 +2587,10 @@ function buildPreviewDetailContent(state, elements, map, feature, props) {
 
   const titleSection = document.createElement('section');
   titleSection.className = 'detail-section detail-title-block';
+  const objectLabel = document.createElement('p');
+  objectLabel.className = 'detail-subtitle';
+  objectLabel.textContent = 'Исторический объект';
+  titleSection.appendChild(objectLabel);
   const titleNode = document.createElement('h3');
   titleNode.className = 'detail-title';
   titleNode.textContent = title;
@@ -2787,7 +2825,7 @@ function buildResultFeedbackLabel(state) {
 
 function buildEmptyStateContext(state, elements) {
   if (!state?.applyState) {
-    return { title: 'No results', message: 'Подходящие объекты не найдены.', actionLabel: '', onAction: null };
+    return { title: 'Объекты не найдены', message: 'Начните с клика по карте или измените период на таймлайне.', actionLabel: '', onAction: null };
   }
   if (!state.enabledLayerIds.size) {
     return {
@@ -2804,7 +2842,7 @@ function buildEmptyStateContext(state, elements) {
   if (state.search) {
     return {
       title: 'Ничего не найдено',
-      message: `Запрос «${state.search}» не дал результатов в текущих ограничениях.`,
+      message: `Запрос «${state.search}» не дал результатов. Попробуйте другой запрос или расширьте период.`,
       actionLabel: 'Очистить поиск',
       onAction: () => {
         clearSearchState(elements, state, { closePanel: false, notify: false });
@@ -2814,8 +2852,8 @@ function buildEmptyStateContext(state, elements) {
     };
   }
   return {
-    title: 'Нет объектов в выборке',
-    message: 'Сужение фильтрами/таймлайном исключило все объекты.',
+    title: 'Пока ничего не отображается',
+    message: 'Измените период на таймлайне или сбросьте ограничения, чтобы увидеть объекты на карте.',
     actionLabel: 'Сбросить ограничения',
     onAction: () => {
       resetExploreConstraints(elements, state);
