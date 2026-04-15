@@ -88,6 +88,7 @@
 Ограничения фазы:
 - auth/session слой всё ещё single-instance oriented;
 - SQLite и process-local refresh registry не считаются production-grade масштабируемой моделью;
+- baseline auth/session upgraded: memory default + redis-capable путь существует, но это ещё не эквивалент production-hardened multi-instance архитектуры;
 - эти ограничения не отменяют закрытие baseline-фазы, но запрещают считать контур готовым к multi-node production.
 
 Выход фазы:
@@ -100,6 +101,8 @@
 
 Цель:
 Сделать release-систему внутренне согласованной и действительно исполнимой.
+
+Статус-обновление (2026-04-15): **baseline stabilized; release gate hardened; фаза переведена в режим завершения**.
 
 Фаза включает:
 - синхронизацию `export_meta.json` и `scripts/release_check.py`;
@@ -126,6 +129,18 @@
 
 Выход фазы:
 - проект получает предсказуемый release baseline.
+- Текущий статус (2026-04-15): baseline stabilized; release gate hardened (data + runtime); auth/session baseline upgraded (memory default + redis-capable).
+
+Явные ограничения после стабилизации:
+- multi-instance всё ещё NOT production-ready;
+- Redis path exists but not fully production-hardened.
+
+Remaining gaps before production scaling:
+- доказать Redis/session путь на реальной инфраструктуре e2e;
+- перейти от process-local assumptions к устойчивой multi-node session модели;
+- определить production-grade storage/migration/session persistence контур;
+- добавить production runbook для moderation/runtime операций;
+- закрепить регулярный scaling-focused regression цикл.
 
 ---
 

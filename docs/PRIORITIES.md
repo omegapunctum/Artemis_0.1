@@ -27,6 +27,7 @@
 ## КРИТИЧЕСКИЕ ПРИОРИТЕТЫ
 
 ### 1. Закрыть data-contract drift между `data/export_meta.json` и `scripts/release_check.py`
+Статус: **COMPLETED / CLOSED (2026-04-15)**.
 Что нужно:
 - привести checked-in export metadata к формату, который реально ожидает release gate;
 - зафиксировать один актуальный формат warning categories;
@@ -34,14 +35,18 @@
 
 Почему это важно:
 - это текущий главный внутренний конфликт release-системы.
+- Итог: data/export/release-check contract синхронизирован и закреплён в текущем baseline.
 
 ### 2. Собрать единый release contract
+Статус: **COMPLETED / CLOSED (2026-04-15)**.
 Что нужно:
 - синхронизировать `export_meta.json`, `features.json`, `features.geojson`, `rejected.json`, release-check, workflow и readiness docs;
 - зафиксировать, что release unit — пакетная публикация набора данных.
 
 Почему это важно:
 - проект уже имеет controlled release baseline, но он ещё не доведён до единой исполнимой системы.
+- Итог: release gate и checked-in artifacts работают как единый исполнимый release unit.
+- Дополнение: release gate runtime guards (implemented) зафиксированы как часть baseline release reliability.
 
 ### 3. Перевести документацию на новую иерархию и закрепить Foundational Pack
 Что нужно:
@@ -56,6 +61,7 @@
 - без зафиксированного Foundational Pack проект остаётся технически описанным, но концептуально размытым.
 
 ### 4. Досинхронизировать README с реальным runtime/API surface
+Статус: **COMPLETED / CLOSED (2026-04-15)**.
 Что нужно:
 - привести root-level описание проекта к фактическому backend/runtime surface;
 - убрать укороченный и частично устаревший API summary;
@@ -64,6 +70,7 @@
 Почему это важно:
 - README должен быть первой точкой входа в проект, а не источником drift;
 - сейчас именно в этой зоне наиболее вероятны ложные интеграционные ожидания.
+- Итог: upload API summary и формулировки по `/api/map/feed` синхронизированы с фактическим backend/runtime surface.
 
 ### 5. Устранить PWA semantic drift
 Что нужно:
@@ -94,15 +101,22 @@
 - явно отделить internal/tooling runtime read-model от публичного data layer.
 
 ### 9. Закрыть single-instance auth/scaling risk как документированный технический долг
+Статус: **BASELINE CLOSED / SCALING OPEN (2026-04-15)**.
 Что нужно:
 - зафиксировать архитектурное ограничение явно;
 - подготовить отдельный scaling-cycle: session store, refresh registry, storage model.
 
 ### 10. Подтвердить release/readiness/manual smoke одной терминологией
+Статус: **COMPLETED / CLOSED (2026-04-15)**.
 Что нужно:
 - унифицировать язык release docs;
 - исключить документы, которые создают ложное ощущение полного production green при существующих ограничениях;
 - добавить coverage для upload/runtime contract, чтобы критичный drift не проходил между frontend и backend без тестового сигнала.
+
+Короткие baseline-additions:
+- Redis-backed session store (baseline ready): путь внедрён и доступен как baseline-capable режим.
+- Release gate runtime guards (implemented): env/runtime invariants добавлены в release discipline.
+- Test suite stabilization (completed): критичные release/static checks стабилизированы для текущего цикла.
 
 ---
 
