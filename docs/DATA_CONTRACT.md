@@ -33,3 +33,8 @@ Contract rules:
 - `features.json`, `export_meta.json`, and `rejected.json` are supporting/derived release artifacts;
 - `records_exported` in `export_meta.json` must match record counts in both `features.geojson` and `features.json`;
 - release gate blocks on missing required artifacts, mismatched record counts, invalid warning categories, or warning threshold violations.
+
+Clarification (raw/source diagnostics vs release-quality signals):
+- `data/features.json` is a raw/supporting source artifact and may include source-side diagnostic metadata from Airtable;
+- raw diagnostic metadata (including `fields.id_status`) is not release-gating by itself;
+- release warnings/rejections are derived from ETL validation/export pipeline signals (e.g., `export_meta.json` + `rejected.json`), not from raw source metadata alone.

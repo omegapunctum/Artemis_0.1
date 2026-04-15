@@ -23,8 +23,18 @@ def _build_fixture(
     unsafe_sw: bool = False,
     expected_fallback_warnings: int = 0,
     data_quality_warnings: int = 0,
+    records_total_source: int | None = None,
+    records_rejected: int | None = None,
+    rejected_items: list[dict] | None = None,
 ) -> None:
     features = [] if empty_features else [{"type": "Feature", "geometry": None, "properties": {}}]
+    rejected_payload = rejected_items or []
+    resolved_records_rejected = len(rejected_payload) if records_rejected is None else records_rejected
+    resolved_records_total_source = (
+        len(features) + resolved_records_rejected
+        if records_total_source is None
+        else records_total_source
+    )
     _write(
         root / "data" / "features.geojson",
         json.dumps({"type": "FeatureCollection", "features": features}),
@@ -38,6 +48,8 @@ def _build_fixture(
         json.dumps(
             {
                 "records_exported": len(features),
+                "records_rejected": resolved_records_rejected,
+                "records_total_source": resolved_records_total_source,
                 "warning_categories": {
                     "expected_fallback": expected_fallback_warnings,
                     "data_quality": data_quality_warnings,
@@ -45,7 +57,7 @@ def _build_fixture(
             }
         ),
     )
-    _write(root / "data" / "rejected.json", "[]")
+    _write(root / "data" / "rejected.json", json.dumps(rejected_payload))
 
     if frontend_fallback:
         data_js = """
@@ -198,3 +210,21 @@ def test_release_check_fails_on_legacy_upload_path_assumption(tmp_path: Path) ->
 
     assert result.returncode == 1
     assert "[FAIL] Frontend: js/uploads.js contains legacy /api/uploads/{filename} assumption" in result.stdout
+
+
+def test_release_check_fails_when_records_rejected_mismatches_rejected_json(tmp_path: Path) -> None:
+    _build_fixture(tmp_path, records_rejected=2, rejected_items=[{"id": "r1"}])
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 1
+    assert "[FAIL] Data layer: records mismatch:" in result.stdout
+    assert "records_rejected=2, rejected_json=1" in result.stdout
+
+
+def test_release_check_fails_when_records_total_source_arithmetic_mismatch(tmp_path: Path) -> None:
+    _build_fixture(tmp_path, records_total_source=99)
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 1
+    assert "[FAIL] Data layer: records mismatch:" in result.stdout
+    assert "records_total_source=99, records_exported_plus_rejected=1" in result.stdout

@@ -101,6 +101,30 @@ def check_data_layer() -> None:
     rejected_path = ROOT / "data/rejected.json"
     if not rejected_path.exists():
         fail("data/rejected.json is missing")
+    rejected_payload = read_json(rejected_path)
+    if not isinstance(rejected_payload, list):
+        fail("data/rejected.json must be an array")
+
+    records_rejected = export_meta.get("records_rejected") if isinstance(export_meta, dict) else None
+    if records_rejected is not None:
+        if not isinstance(records_rejected, int):
+            fail("data/export_meta.json records_rejected must be integer")
+        if records_rejected != len(rejected_payload):
+            fail(
+                "records mismatch: "
+                f"records_rejected={records_rejected}, rejected_json={len(rejected_payload)}"
+            )
+
+    records_total_source = export_meta.get("records_total_source") if isinstance(export_meta, dict) else None
+    if records_total_source is not None:
+        if not isinstance(records_total_source, int):
+            fail("data/export_meta.json records_total_source must be integer")
+        expected_total_source = records_exported + (records_rejected if isinstance(records_rejected, int) else len(rejected_payload))
+        if records_total_source != expected_total_source:
+            fail(
+                "records mismatch: "
+                f"records_total_source={records_total_source}, records_exported_plus_rejected={expected_total_source}"
+            )
 
 
 def check_backend() -> None:
