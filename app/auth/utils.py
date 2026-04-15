@@ -9,13 +9,19 @@ from jose import JWTError, jwt
 
 logger = logging.getLogger(__name__)
 
+APP_ENV = (os.getenv("APP_ENV") or os.getenv("ENV") or "development").strip().lower()
+_DEV_TEST_ENVS = {"development", "dev", "test", "testing"}
+
 # Русский комментарий: секрет вшитым значением не используем — только env или временный ключ для dev.
 _SECRET_FROM_ENV = os.getenv("AUTH_SECRET_KEY")
 if _SECRET_FROM_ENV:
     SECRET_KEY = _SECRET_FROM_ENV
 else:
-    SECRET_KEY = secrets.token_urlsafe(48)
-    logger.warning("AUTH_SECRET_KEY is not set. Generated ephemeral key for current process only.")
+    if APP_ENV in _DEV_TEST_ENVS:
+        SECRET_KEY = secrets.token_urlsafe(48)
+        logger.warning("AUTH_SECRET_KEY is not set. Generated ephemeral key for current process only.")
+    else:
+        raise RuntimeError("AUTH_SECRET_KEY is required outside development/test environments")
 
 ALGORITHM = os.getenv("AUTH_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
@@ -30,7 +36,6 @@ def _env_bool(name: str, default: bool) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
-APP_ENV = (os.getenv("APP_ENV") or os.getenv("ENV") or "development").strip().lower()
 COOKIE_HTTPONLY = _env_bool("COOKIE_HTTPONLY", True)
 COOKIE_SECURE = _env_bool("COOKIE_SECURE", APP_ENV == "production")
 COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "lax")

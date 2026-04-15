@@ -1,6 +1,8 @@
 import os
 import unittest
 
+from fastapi import HTTPException
+
 os.environ.setdefault('AUTH_SECRET_KEY', 'test-secret-for-tests-only')
 os.environ.setdefault('COOKIE_SECURE', 'false')
 
@@ -15,6 +17,7 @@ from app.auth.service import (  # noqa: E402
     register_user,
     rotate_refresh_token,
 )
+from app.auth.session_store import InMemoryRefreshSessionStore  # noqa: E402
 from app.observability import health_payload  # noqa: E402
 
 
@@ -47,6 +50,27 @@ class AuthContractTests(unittest.TestCase):
 
         health = health_payload()
         self.assertIn('counts', health)
+
+    def test_refresh_fails_after_registry_clear(self):
+        register_user(self.db, 'restart-like@example.com', 'password123')
+        _, refresh_token = login_user(self.db, 'restart-like@example.com', 'password123')
+
+        _, rotated_refresh_token = rotate_refresh_token(refresh_token, self.db)
+        active_refresh_tokens.clear()
+
+        with self.assertRaises(HTTPException) as exc:
+            rotate_refresh_token(rotated_refresh_token, self.db)
+        self.assertEqual(exc.exception.status_code, 401)
+        self.assertEqual(exc.exception.detail, 'Invalid refresh token')
+
+    def test_two_inmemory_stores_do_not_share_sessions(self):
+        store_a = InMemoryRefreshSessionStore()
+        store_b = InMemoryRefreshSessionStore()
+
+        store_a.store_refresh_session('jti-a', 'user-a')
+
+        self.assertEqual(store_a.get_refresh_session_user('jti-a'), 'user-a')
+        self.assertIsNone(store_b.get_refresh_session_user('jti-a'))
 
 
 if __name__ == '__main__':

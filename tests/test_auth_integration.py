@@ -12,6 +12,7 @@ os.environ.setdefault("COOKIE_SAMESITE", "lax")
 os.environ.setdefault("APP_ENV", "development")
 
 from app.auth.service import SessionLocal, User, active_refresh_tokens, init_db  # noqa: E402
+from app.security.rate_limit import login_block_store, login_failure_store, rate_limit_store  # noqa: E402
 
 
 class AuthIntegrationTests(unittest.TestCase):
@@ -57,6 +58,9 @@ class AuthIntegrationTests(unittest.TestCase):
         self.db = SessionLocal()
         self.db.query(User).delete()
         self.db.commit()
+        rate_limit_store.clear()
+        login_failure_store.clear()
+        login_block_store.clear()
         active_refresh_tokens.clear()
         self.session = requests.Session()
         ip_seed = uuid4().hex
@@ -66,6 +70,9 @@ class AuthIntegrationTests(unittest.TestCase):
 
     def tearDown(self):
         self.db.close()
+        rate_limit_store.clear()
+        login_failure_store.clear()
+        login_block_store.clear()
         active_refresh_tokens.clear()
         self.session.close()
 

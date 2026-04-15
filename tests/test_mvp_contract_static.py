@@ -3,26 +3,64 @@ import json
 import logging
 from pathlib import Path
 
+from fastapi.routing import APIRoute
+
+from app.main import app
+from app.drafts.schemas import DraftResponse
 from scripts.export_airtable import build_geojson_features, get_canonical_publish_id, get_dedupe_key, get_origin_key, validate_feature
 
 
 class MvpContractStaticTests(unittest.TestCase):
     def test_backend_contract_paths_present(self):
-        main_source = Path('app/main.py').read_text(encoding='utf-8')
-        auth_routes = Path('app/auth/routes.py').read_text(encoding='utf-8')
-        drafts_routes = Path('app/drafts/routes.py').read_text(encoding='utf-8')
-        drafts_schemas = Path('app/drafts/schemas.py').read_text(encoding='utf-8')
+        path_to_methods: dict[str, set[str]] = {}
+        for route in app.routes:
+            if not isinstance(route, APIRoute):
+                continue
+            path_to_methods[route.path] = set(route.methods or set())
 
-        for required_path in ['/api/health', '/api/me']:
-            self.assertIn(required_path, main_source)
+        expected_paths = {
+            '/api/health',
+            '/api/me',
+            '/api/auth/register',
+            '/api/auth/login',
+            '/api/auth/refresh',
+            '/api/auth/logout',
+        }
+        self.assertTrue(expected_paths.issubset(path_to_methods.keys()))
 
-        for required_auth_path in ['/register', '/login', '/refresh', '/logout']:
-            self.assertIn(required_auth_path, auth_routes)
+        for auth_path in ['/api/auth/register', '/api/auth/login', '/api/auth/refresh', '/api/auth/logout']:
+            self.assertIn('POST', path_to_methods[auth_path])
 
-        self.assertIn('def serialize_draft_for_ui', drafts_routes)
-        for flat_field in ['"name_ru"', '"layer_id"', '"date_start"', '"coords"']:
-            self.assertIn(flat_field, drafts_routes)
-        self.assertIn('status: Literal["draft", "pending", "approved", "rejected"]', drafts_schemas)
+        schema = DraftResponse.model_json_schema()
+        properties = schema.get('properties', {})
+        self.assertIn('status', properties)
+
+        status_schema = properties.get('status', {})
+        enum_values: set[str] = set()
+
+        def collect_enum_values(node):
+            if isinstance(node, dict):
+                enum = node.get('enum')
+                if isinstance(enum, list):
+                    enum_values.update(str(item) for item in enum)
+
+                ref = node.get('$ref')
+                if isinstance(ref, str) and ref.startswith('#/$defs/'):
+                    def_name = ref.split('/')[-1]
+                    collect_enum_values(schema.get('$defs', {}).get(def_name, {}))
+
+                for composite_key in ('anyOf', 'oneOf', 'allOf'):
+                    variants = node.get(composite_key)
+                    if isinstance(variants, list):
+                        for variant in variants:
+                            collect_enum_values(variant)
+            elif isinstance(node, list):
+                for item in node:
+                    collect_enum_values(item)
+
+        collect_enum_values(status_schema)
+        self.assertTrue(enum_values)
+        self.assertTrue({'draft', 'pending', 'approved', 'rejected'}.issubset(enum_values))
 
     def test_frontend_refresh_retry_is_single_attempt(self):
         auth_js = Path('js/auth.js').read_text(encoding='utf-8')

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 from app.observability import set_user_context
 
+from .session_store import default_refresh_session_store
 from .utils import (
     REFRESH_COOKIE_NAME,
     create_access_token,
@@ -22,7 +23,8 @@ engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-active_refresh_tokens: dict[str, str] = {}
+# Backward-compatible testing alias; service flow uses default_refresh_session_store methods.
+active_refresh_tokens = default_refresh_session_store.raw_sessions
 
 
 class User(Base):
@@ -69,23 +71,23 @@ def login_user(db: Session, email: str, password: str) -> tuple[str, str]:
 
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
-    active_refresh_tokens[decode_token(refresh_token, "refresh")["jti"]] = user.id
+    default_refresh_session_store.store_refresh_session(decode_token(refresh_token, "refresh")["jti"], user.id)
     return access_token, refresh_token
 
 
 def rotate_refresh_token(refresh_token: str, db: Session) -> tuple[str, str]:
     payload = decode_token(refresh_token, "refresh")
-    if active_refresh_tokens.get(payload["jti"]) != payload["user_id"]:
+    if default_refresh_session_store.get_refresh_session_user(payload["jti"]) != payload["user_id"]:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     user = db.query(User).filter(User.id == payload["user_id"]).first()
     if not user:
-        active_refresh_tokens.pop(payload["jti"], None)
+        default_refresh_session_store.delete_refresh_session(payload["jti"])
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-    active_refresh_tokens.pop(payload["jti"], None)
+    default_refresh_session_store.delete_refresh_session(payload["jti"])
     new_refresh_token = create_refresh_token(user.id)
-    active_refresh_tokens[decode_token(new_refresh_token, "refresh")["jti"]] = user.id
+    default_refresh_session_store.store_refresh_session(decode_token(new_refresh_token, "refresh")["jti"], user.id)
     return create_access_token(user.id), new_refresh_token
 
 
@@ -93,7 +95,7 @@ def logout_user(refresh_token: str | None) -> None:
     if refresh_token:
         try:
             payload = decode_token(refresh_token, "refresh")
-            active_refresh_tokens.pop(payload["jti"], None)
+            default_refresh_session_store.delete_refresh_session(payload["jti"])
         except ValueError:
             pass
 

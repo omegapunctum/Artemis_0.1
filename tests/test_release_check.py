@@ -152,6 +152,8 @@ def test_release_check_fails_on_frontend_fallback_pattern(tmp_path: Path) -> Non
 
     assert result.returncode == 1
     assert "[FAIL] Frontend:" in result.stdout
+    assert "js/data.js contains fallback marker" in result.stdout
+    assert '"fallbacktomapfeed"' in result.stdout
 
 
 def test_release_check_fails_when_sw_missing(tmp_path: Path) -> None:

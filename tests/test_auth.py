@@ -14,6 +14,7 @@ os.environ.setdefault("APP_ENV", "development")
 from app.auth.service import SessionLocal, User, active_refresh_tokens, init_db  # noqa: E402
 from app.auth.utils import hash_password  # noqa: E402
 from app.drafts.service import Draft, init_db as init_drafts_db  # noqa: E402
+from app.security.rate_limit import login_block_store, login_failure_store, rate_limit_store  # noqa: E402
 
 
 class AuthApiTests(unittest.TestCase):
@@ -61,12 +62,21 @@ class AuthApiTests(unittest.TestCase):
         self.db.query(Draft).delete()
         self.db.query(User).delete()
         self.db.commit()
+        rate_limit_store.clear()
+        login_failure_store.clear()
+        login_block_store.clear()
         active_refresh_tokens.clear()
         self.session = requests.Session()
-        self.session.headers.update({"x-forwarded-for": f"10.0.1.{int(uuid4().hex[:2], 16)}"})
+        ip_seed = uuid4().hex
+        self.session.headers.update(
+            {"x-forwarded-for": f"10.{int(ip_seed[0:2], 16)}.{int(ip_seed[2:4], 16)}.{int(ip_seed[4:6], 16)}"}
+        )
 
     def tearDown(self):
         self.db.close()
+        rate_limit_store.clear()
+        login_failure_store.clear()
+        login_block_store.clear()
         active_refresh_tokens.clear()
         self.session.close()
 
