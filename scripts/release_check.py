@@ -246,6 +246,24 @@ def check_governance() -> None:
                 fail(f'direct runtime publish found outside moderation: "{rel.as_posix()}"')
 
 
+def check_runtime_deployment() -> None:
+    app_env = os.environ.get("APP_ENV", "dev").strip().lower()
+    auth_secret_key = os.environ.get("AUTH_SECRET_KEY", "").strip()
+    session_backend = os.environ.get("AUTH_SESSION_BACKEND", "memory").strip().lower()
+
+    if app_env not in {"dev", "test"} and not auth_secret_key:
+        fail("AUTH_SECRET_KEY is required outside dev/test")
+
+    if session_backend not in {"memory", "redis"}:
+        fail('AUTH_SESSION_BACKEND must be "memory" or "redis"')
+
+    if session_backend == "redis" and not os.environ.get("REDIS_URL", "").strip():
+        fail("REDIS_URL is required when AUTH_SESSION_BACKEND=redis")
+
+    if session_backend == "memory":
+        print("[WARN] Runtime/deployment: memory session backend -> single-node baseline only")
+
+
 def run_check(name: str, func) -> None:
     try:
         func()
@@ -258,6 +276,7 @@ def run_check(name: str, func) -> None:
 def main() -> None:
     run_check("Data layer", check_data_layer)
     run_check("Backend", check_backend)
+    run_check("Runtime/deployment", check_runtime_deployment)
     run_check("Frontend", check_frontend)
     run_check("PWA", check_pwa)
     run_check("Governance", check_governance)

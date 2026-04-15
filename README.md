@@ -72,7 +72,7 @@ Vanilla JavaScript (no frameworks):
 - Refresh token stored in **httpOnly cookie**
 - **GeoJSON is the single source of truth** for the map
 - Canonical public dataset for map rendering: **`data/features.geojson`** (served from `/data/*`)
-- `/api/map/feed` is an auxiliary internal/read-only runtime route, not the production-default public map source
+- `/api/map/feed` is an auxiliary, non-canonical runtime support/read-model route (not the production-default public map source)
 - No direct Airtable access from frontend
 - Minimal, clean code (no overengineering)
 
@@ -114,6 +114,8 @@ Vanilla JavaScript (no frameworks):
   - `GET|POST|PUT|DELETE /api/drafts`
 - Uploads:
   - `POST /api/uploads`
+  - `POST /api/uploads/image`
+    - both upload routes are runtime endpoints; use backend-returned file URL in responses as source of truth
     - request (multipart/form-data):
       - required: `file`, `license`
       - optional: `title`, `description`
@@ -126,7 +128,7 @@ Vanilla JavaScript (no frameworks):
 - Moderation (`/api/moderation/*`):
   - review/approve/reject runtime routes for moderation workflow
 - Auxiliary runtime feed:
-  - `GET /api/map/feed` (runtime support read model for UI, non-canonical; not a stable source-of-truth API)
+  - `GET /api/map/feed` (auxiliary, non-canonical runtime support/read-model endpoint for UI; canonical public map source remains `data/features.geojson`)
 - Canonical public map data path:
   - `/data/*` (exported ETL datasets; `data/features.geojson` is the production-default canonical public source)
 

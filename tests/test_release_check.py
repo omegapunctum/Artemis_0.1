@@ -115,10 +115,16 @@ self.addEventListener('fetch', (event) => {
     _write(root / "scripts" / "export_airtable.py", "# fixture export script\n")
 
 
-def _run_release_check(root: Path) -> subprocess.CompletedProcess[str]:
+def _run_release_check(
+    root: Path,
+    *,
+    env_overrides: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     env["RELEASE_CHECK_ROOT"] = str(root)
     env.pop("PYTHONPATH", None)
+    if env_overrides:
+        env.update(env_overrides)
     return subprocess.run(
         [sys.executable, str(SCRIPT)],
         cwd=str(REPO_ROOT),
@@ -228,3 +234,75 @@ def test_release_check_fails_when_records_total_source_arithmetic_mismatch(tmp_p
     assert result.returncode == 1
     assert "[FAIL] Data layer: records mismatch:" in result.stdout
     assert "records_total_source=99, records_exported_plus_rejected=1" in result.stdout
+
+
+def test_release_check_fails_without_auth_secret_key_outside_dev_test(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    result = _run_release_check(
+        tmp_path,
+        env_overrides={
+            "APP_ENV": "prod",
+            "AUTH_SECRET_KEY": "",
+        },
+    )
+
+    assert result.returncode == 1
+    assert "[FAIL] Runtime/deployment: AUTH_SECRET_KEY is required outside dev/test" in result.stdout
+
+
+def test_release_check_fails_when_redis_backend_without_redis_url(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    result = _run_release_check(
+        tmp_path,
+        env_overrides={
+            "APP_ENV": "prod",
+            "AUTH_SECRET_KEY": "super-secret",
+            "AUTH_SESSION_BACKEND": "redis",
+            "REDIS_URL": "",
+        },
+    )
+
+    assert result.returncode == 1
+    assert "[FAIL] Runtime/deployment: REDIS_URL is required when AUTH_SESSION_BACKEND=redis" in result.stdout
+
+
+def test_release_check_fails_when_session_backend_invalid(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    result = _run_release_check(
+        tmp_path,
+        env_overrides={
+            "AUTH_SESSION_BACKEND": "sqlite",
+        },
+    )
+
+    assert result.returncode == 1
+    assert '[FAIL] Runtime/deployment: AUTH_SESSION_BACKEND must be "memory" or "redis"' in result.stdout
+
+
+def test_release_check_passes_with_valid_runtime_deployment_config(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    result = _run_release_check(
+        tmp_path,
+        env_overrides={
+            "APP_ENV": "prod",
+            "AUTH_SECRET_KEY": "super-secret",
+            "AUTH_SESSION_BACKEND": "redis",
+            "REDIS_URL": "redis://localhost:6379/0",
+        },
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "[PASS] Runtime/deployment" in result.stdout
+
+
+def test_release_check_warns_for_memory_backend(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    result = _run_release_check(
+        tmp_path,
+        env_overrides={
+            "AUTH_SESSION_BACKEND": "memory",
+        },
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "[WARN] Runtime/deployment: memory session backend -> single-node baseline only" in result.stdout
