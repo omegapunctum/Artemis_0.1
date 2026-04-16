@@ -6,8 +6,15 @@ from pathlib import Path
 from types import SimpleNamespace
 
 
-def rebind_test_db(db_path: Path, *, reload_app_main: bool = False) -> SimpleNamespace:
+def rebind_test_db(
+    db_path: Path,
+    *,
+    reload_app_main: bool = False,
+    session_backend: str | None = None,
+) -> SimpleNamespace:
     os.environ["AUTH_DATABASE_URL"] = f"sqlite:///{db_path}"
+    if session_backend is not None:
+        os.environ["AUTH_SESSION_BACKEND"] = session_backend
 
     import app.auth.session_store as auth_session_store
     import app.auth.service as auth_service

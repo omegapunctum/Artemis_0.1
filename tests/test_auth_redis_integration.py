@@ -5,6 +5,8 @@ from uuid import uuid4
 
 import requests
 
+from tests.db_rebind_helper import rebind_test_db
+
 
 SERVER_PORT = 8013
 BASE_URL = f"http://127.0.0.1:{SERVER_PORT}"
@@ -30,6 +32,7 @@ def _wait_for_server_ready(session: requests.Session, server: subprocess.Popen |
 
 def test_auth_refresh_lifecycle_with_real_redis_backend(tmp_path) -> None:
     auth_db_path = tmp_path / "auth-redis-integration.db"
+    rebind_test_db(auth_db_path, session_backend="memory")
 
     env = os.environ.copy()
     env.update(

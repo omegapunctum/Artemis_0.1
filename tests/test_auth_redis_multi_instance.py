@@ -5,6 +5,8 @@ from uuid import uuid4
 
 import requests
 
+from tests.db_rebind_helper import rebind_test_db
+
 
 INSTANCE_A_PORT = 8014
 INSTANCE_B_PORT = 8015
@@ -47,6 +49,7 @@ def _start_server(*, port: int, env: dict[str, str]) -> subprocess.Popen:
 
 def test_refresh_token_shared_between_instances_with_real_redis(tmp_path) -> None:
     auth_db_path = tmp_path / "auth-redis-multi-instance.db"
+    rebind_test_db(auth_db_path, session_backend="memory")
 
     common_env = os.environ.copy()
     common_env.update(
