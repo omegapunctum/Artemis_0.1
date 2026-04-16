@@ -52,7 +52,9 @@ class SerializationContractTests(unittest.TestCase):
         cls._tmpdir.cleanup()
 
     def setUp(self):
-        rebind_test_db(self._db_path)
+        rebound = rebind_test_db(self._db_path)
+        self.auth_service = rebound.auth_service
+        self.drafts_service = rebound.drafts_service
         self.db = self.auth_service.SessionLocal()
         self.db.query(self.drafts_service.Draft).delete()
         self.db.query(self.auth_service.User).delete()

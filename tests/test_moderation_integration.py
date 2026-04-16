@@ -1,5 +1,4 @@
 import os
-import sqlite3
 import threading
 import time
 from pathlib import Path
@@ -8,6 +7,7 @@ from uuid import uuid4
 import requests
 import uvicorn
 from fastapi import HTTPException
+from sqlalchemy import text
 
 from tests.db_rebind_helper import rebind_test_db
 
@@ -111,9 +111,11 @@ def test_moderation_failure_failed_state_and_stable_retry_signal(monkeypatch, tm
         moderator_email = f"moderator-{uuid4().hex}@example.com"
         _register_and_login(mod_session, moderator_email)
 
-        with sqlite3.connect(db_path) as conn:
-            conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (moderator_email,))
-            conn.commit()
+        with auth_service.engine.begin() as conn:
+            conn.execute(
+                text("UPDATE users SET is_admin = 1 WHERE email = :email"),
+                {"email": moderator_email},
+            )
 
         relogin = mod_session.post(
             f"{BASE_URL}/api/auth/login",
@@ -126,9 +128,10 @@ def test_moderation_failure_failed_state_and_stable_retry_signal(monkeypatch, tm
         approve_fail = mod_session.post(f"{BASE_URL}/api/moderation/{draft_id}/approve", headers=mod_headers, timeout=5)
         assert approve_fail.status_code == 502
 
-        with sqlite3.connect(db_path) as conn:
+        with auth_service.engine.begin() as conn:
             publish_status, airtable_record_id = conn.execute(
-                "SELECT publish_status, airtable_record_id FROM drafts WHERE id = ?", (draft_id,)
+                text("SELECT publish_status, airtable_record_id FROM drafts WHERE id = :draft_id"),
+                {"draft_id": draft_id},
             ).fetchone()
         assert publish_status == "failed"
         assert airtable_record_id is None
@@ -141,9 +144,10 @@ def test_moderation_failure_failed_state_and_stable_retry_signal(monkeypatch, tm
         assert approve_stable.status_code == 200
         assert approve_stable.headers.get("X-Moderation-Result") == "approved_already_published"
 
-        with sqlite3.connect(db_path) as conn:
+        with auth_service.engine.begin() as conn:
             status_value, publish_status, airtable_record_id = conn.execute(
-                "SELECT status, publish_status, airtable_record_id FROM drafts WHERE id = ?", (draft_id,)
+                text("SELECT status, publish_status, airtable_record_id FROM drafts WHERE id = :draft_id"),
+                {"draft_id": draft_id},
             ).fetchone()
         assert status_value == "approved"
         assert publish_status == "published"

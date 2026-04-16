@@ -65,11 +65,13 @@ def test_refresh_token_shared_between_instances_with_real_redis(tmp_path) -> Non
     )
 
     server_a = _start_server(port=INSTANCE_A_PORT, env=common_env)
-    server_b = _start_server(port=INSTANCE_B_PORT, env=common_env)
+    server_b: subprocess.Popen | None = None
 
     session = requests.Session()
     try:
         _wait_for_server_ready(BASE_URL_A, session, server_a)
+
+        server_b = _start_server(port=INSTANCE_B_PORT, env=common_env)
         _wait_for_server_ready(BASE_URL_B, session, server_b)
 
         email = f"redis-multi-{uuid4().hex}@example.com"
@@ -111,7 +113,9 @@ def test_refresh_token_shared_between_instances_with_real_redis(tmp_path) -> Non
         assert replay_error == "Invalid refresh token"
     finally:
         session.close()
-        server_a.terminate()
-        server_b.terminate()
-        server_a.wait(timeout=5)
-        server_b.wait(timeout=5)
+        if server_a.poll() is None:
+            server_a.terminate()
+            server_a.wait(timeout=5)
+        if server_b is not None and server_b.poll() is None:
+            server_b.terminate()
+            server_b.wait(timeout=5)
