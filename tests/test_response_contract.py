@@ -1,18 +1,19 @@
 import os
 import subprocess
+import tempfile
 import time
 import unittest
+from pathlib import Path
 from uuid import uuid4
 
 import requests
+
+from tests.db_rebind_helper import rebind_test_db
 
 os.environ.setdefault("AUTH_SECRET_KEY", "test-secret-response-contract")
 os.environ.setdefault("COOKIE_HTTPONLY", "true")
 os.environ.setdefault("COOKIE_SAMESITE", "lax")
 os.environ.setdefault("APP_ENV", "development")
-
-from app.auth.service import SessionLocal, User, reset_refresh_sessions_for_tests, init_db as init_auth_db  # noqa: E402
-from app.drafts.service import Draft, init_db as init_drafts_db  # noqa: E402
 
 
 EXPECTED_ITEM_KEYS = {
@@ -51,8 +52,11 @@ class ResponseContractTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        init_auth_db()
-        init_drafts_db()
+        cls._tmpdir = tempfile.TemporaryDirectory(prefix="response-contract-")
+        cls._db_path = Path(cls._tmpdir.name) / "response-contract.db"
+        rebound = rebind_test_db(cls._db_path)
+        cls.auth_service = rebound.auth_service
+        cls.drafts_service = rebound.drafts_service
         env = os.environ.copy()
         cls.server = subprocess.Popen(
             ["uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(cls.SERVER_PORT), "--log-level", "warning"],
@@ -75,16 +79,18 @@ class ResponseContractTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.server.terminate()
         cls.server.wait(timeout=5)
+        cls._tmpdir.cleanup()
 
     def setUp(self):
-        init_auth_db()
-        init_drafts_db()
-        db = SessionLocal()
-        db.query(Draft).delete()
-        db.query(User).delete()
+        rebound = rebind_test_db(self._db_path)
+        self.auth_service = rebound.auth_service
+        self.drafts_service = rebound.drafts_service
+        db = self.auth_service.SessionLocal()
+        db.query(self.drafts_service.Draft).delete()
+        db.query(self.auth_service.User).delete()
         db.commit()
         db.close()
-        reset_refresh_sessions_for_tests()
+        self.auth_service.reset_refresh_sessions_for_tests()
         self.user_session = requests.Session()
         self.mod_session = requests.Session()
         seed_a = uuid4().hex
@@ -97,7 +103,7 @@ class ResponseContractTests(unittest.TestCase):
         )
 
     def tearDown(self):
-        reset_refresh_sessions_for_tests()
+        self.auth_service.reset_refresh_sessions_for_tests()
         self.user_session.close()
         self.mod_session.close()
 
@@ -109,9 +115,9 @@ class ResponseContractTests(unittest.TestCase):
         return login.json()["access_token"]
 
     def _promote_admin(self, email: str):
-        db = SessionLocal()
+        db = self.auth_service.SessionLocal()
         try:
-            user = db.query(User).filter(User.email == email).first()
+            user = db.query(self.auth_service.User).filter(self.auth_service.User.email == email).first()
             self.assertIsNotNone(user)
             user.is_admin = True
             db.commit()

@@ -4,10 +4,12 @@ from uuid import uuid4
 from fastapi import Cookie, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import Boolean, Column, String, create_engine, text
+from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 from app.observability import set_user_context
 
+from .migrations import apply_versioned_migrations
 from .session_store import default_refresh_session_store
 from .utils import (
     REFRESH_COOKIE_NAME,
@@ -34,13 +36,22 @@ class User(Base):
     is_admin = Column(Boolean, default=False, nullable=False)
 
 
+def _migration_users_add_is_admin(connection: Connection) -> None:
+    columns = {row[1] for row in connection.execute(text("PRAGMA table_info(users)"))}
+    if "is_admin" not in columns:
+        connection.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+
+
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
 
     with engine.begin() as connection:
-        columns = {row[1] for row in connection.execute(text("PRAGMA table_info(users)"))}
-        if "is_admin" not in columns:
-            connection.execute(text("ALTER TABLE users ADD COLUMN is_admin BOOLEAN DEFAULT 0"))
+        apply_versioned_migrations(
+            connection,
+            [
+                (1, "users_add_is_admin", _migration_users_add_is_admin),
+            ],
+        )
 
 
 def get_db():

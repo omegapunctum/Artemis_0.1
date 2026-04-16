@@ -89,11 +89,12 @@
 ## ВЫСОКИЙ ПРИОРИТЕТ
 
 ### 6. Досинхронизировать canonical documentation framework в репозитории
-Статус: **MOSTLY COMPLETED / BASELINE-ALIGNED (2026-04-16)**.
+Статус: **MOSTLY COMPLETED / BASELINE-ALIGNED (2026-04-16); PHASE-5 EVIDENCE SYNC REQUIRED**.
 Что нужно:
 - привести `README.md`, `docs/ARTEMIS_MASTER_PROMPT.md`, `docs/PROJECT_STRUCTURE.md`, `docs/PROJECT_PHASES.md`, `docs/PRIORITIES.md`, `docs/DATA_CONTRACT.md` и `docs/CONTROLLED_RELEASE_DECISION.md` к одному и тому же набору правил;
 - убрать из canonical-описаний старые целевые имена документов (`ARCHITECTURE.md`, `RELEASE_SYSTEM.md`, `ROADMAP.md`), если они не являются действующими source-of-truth файлами;
 - перевести старые документы в archive/reference-слой только как historical reference.
+- дополнительная синхронизация текущего цикла: явно развести `proven strongly`, `proven baseline` и `still remaining` для scaling/hardening контуров, чтобы не допускать policy/evidence drift после новых integration proofs.
 
 ### 7. Удержать canonical public map source без повторного drift
 Что нужно:
@@ -106,11 +107,12 @@
 - явно отделить internal/tooling runtime read-model от публичного data layer.
 
 ### 9. Закрыть single-instance auth/scaling risk как документированный технический долг
-Статус: **BASELINE CLOSED / SCALING OPEN (2026-04-15)**.
+Статус: **BASELINE CLOSED / SCALING OPEN (2026-04-15); HARDENING EVIDENCE PARTIALLY CLOSED (2026-04-16)**.
 Что нужно:
 - зафиксировать архитектурное ограничение явно;
 - подготовить отдельный scaling-cycle: session store, refresh registry, storage model.
 - Уточнение статуса (2026-04-16): это не unresolved baseline blocker; риск официально перенесён в контур ФАЗЫ 5 / Scaling-Hardening.
+- Уточнение после текущего hardening-цикла (2026-04-16): Redis continuity (single-instance / multi-instance / restart) и consume-once invalidation уже подтверждены интеграционно; незакрытая часть риска смещается в production-grade persistence/ops envelope, а не в отсутствие базового Redis proof.
 
 ### 10. Подтвердить release/readiness/manual smoke одной терминологией
 Статус: **COMPLETED / CLOSED (2026-04-15)**.
@@ -123,6 +125,7 @@
 - Redis-backed session store (baseline ready): путь внедрён и доступен как baseline-capable режим.
 - Release gate runtime guards (implemented): env/runtime invariants добавлены в release discipline.
 - Test suite stabilization (completed): критичные release/static checks стабилизированы для текущего цикла.
+- Hardening evidence additions (2026-04-16): Redis real infra proofs (single-instance/multi-instance/restart), moderation integration proof и moderation runbook считаются зафиксированными на текущем baseline/hardening уровне.
 
 ---
 

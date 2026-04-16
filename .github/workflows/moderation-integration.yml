@@ -1,0 +1,28 @@
+name: Moderation Integration
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  moderation-integration:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest
+
+      - name: Run moderation external-dependency integration test
+        env:
+          APP_ENV: test
+          AUTH_SECRET_KEY: ci-moderation-integration-secret
+          AUTH_SESSION_BACKEND: memory
+        run: pytest tests/test_moderation_integration.py -q

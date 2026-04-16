@@ -17,11 +17,16 @@ Release unit (current baseline contract):
 ## 2. Remaining gaps and classification
 - Gap: No remaining release-blocking gaps are open for entry into the controlled baseline scope after current-cycle manual evidence closure (`docs/MANUAL_SMOKE_EVIDENCE_2026-04-11.md`); architectural/scaling hardening limitations remain open outside this gate.
 - Classification: Remaining items are **POST-BASELINE GAP** only (continuous quality hardening, not release blockers).
-- Clarification: baseline decision is intentionally controlled-release (not a broad production-ready claim); multi-instance/session-scaling/infra-proof limitations remain next-phase items.
+- Clarification: baseline decision is intentionally controlled-release (not a broad production-ready claim); production-grade multi-node envelope remains next-phase hardening scope.
+
+Status sync after current hardening evidence (2026-04-16):
+- already proven strongly: release/runtime baseline integrity, Redis auth/session continuity proofs (single-instance + multi-instance + restart), consume-once refresh invalidation;
+- proven at baseline level: migration discipline (minimal version registry + idempotent apply), moderation failure/retry behavior with operator runbook support;
+- still remaining: production-grade persistence model/governance depth, broader environment-level scaling matrix, and deeper observability/ops hardening tails.
 
 ## 3. Decision
 **MOVE TO CONTROLLED RELEASE BASELINE**
 
 ## 4. Required next action
 Start controlled release baseline execution under current governance/release gate model; track only post-baseline quality improvements in regular release cycles.
-Auth/scaling hardening for multi-instance-safe session continuity is a dedicated next cycle, not part of current baseline execution.
+Auth/scaling hardening beyond already-proven session continuity (persistence governance + operational scaling envelope) is a dedicated next cycle, not part of current baseline execution.

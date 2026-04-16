@@ -144,6 +144,18 @@ Remaining gaps before production scaling:
 - добавить production runbook для moderation/runtime операций;
 - закрепить регулярный scaling-focused regression цикл.
 
+Статус-синхронизация после текущего hardening-цикла (2026-04-16):
+- Redis/session real infra proof для single-instance, multi-instance и restart continuity уже получен и зафиксирован тестами/CI;
+- consume-once invalidation для refresh-сессий считается доказанным на baseline+integration уровне;
+- moderation failure/retry path и операторский runbook уже существуют и подтверждены integration evidence;
+- baseline migration discipline (минимальный registry + idempotent apply) считается закрытым на baseline уровне;
+- при этом production-grade persistence discipline, расширенная environment matrix и более глубокий observability/ops слой остаются задачами следующего hardening-шагa.
+
+Уточнение к списку выше:
+- пункты про Redis real infra proof и moderation runbook/integration считать **закрытыми в текущем цикле hardening**;
+- пункты про production-grade storage/migration/session persistence контур и регулярный scaling-focused regression цикл считать **открытыми**;
+- пункт про переход от process-local assumptions трактуется как **частично закрытый**: continuity уже доказана, но полный production multi-node operational envelope ещё не зафиксирован.
+
 Классификация этих хвостов:
 - это **не blockers** для закрытия ФАЗЫ 3;
 - это следующий класс задач для ФАЗЫ 5 — SCALING / HARDENING;

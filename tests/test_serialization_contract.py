@@ -1,18 +1,19 @@
 import os
 import subprocess
+import tempfile
 import time
 import unittest
+from pathlib import Path
 from uuid import uuid4
 
 import requests
+
+from tests.db_rebind_helper import rebind_test_db
 
 os.environ.setdefault("AUTH_SECRET_KEY", "test-secret-serialization-contract")
 os.environ.setdefault("COOKIE_HTTPONLY", "true")
 os.environ.setdefault("COOKIE_SAMESITE", "lax")
 os.environ.setdefault("APP_ENV", "development")
-
-from app.auth.service import SessionLocal, User, reset_refresh_sessions_for_tests, init_db as init_auth_db  # noqa: E402
-from app.drafts.service import Draft, init_db as init_drafts_db  # noqa: E402
 
 
 class SerializationContractTests(unittest.TestCase):
@@ -21,8 +22,11 @@ class SerializationContractTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        init_auth_db()
-        init_drafts_db()
+        cls._tmpdir = tempfile.TemporaryDirectory(prefix="serialization-contract-")
+        cls._db_path = Path(cls._tmpdir.name) / "serialization-contract.db"
+        rebound = rebind_test_db(cls._db_path)
+        cls.auth_service = rebound.auth_service
+        cls.drafts_service = rebound.drafts_service
         env = os.environ.copy()
         cls.server = subprocess.Popen(
             ["uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(cls.SERVER_PORT), "--log-level", "warning"],
@@ -45,21 +49,23 @@ class SerializationContractTests(unittest.TestCase):
     def tearDownClass(cls):
         cls.server.terminate()
         cls.server.wait(timeout=5)
+        cls._tmpdir.cleanup()
 
     def setUp(self):
-        init_auth_db()
-        init_drafts_db()
-        self.db = SessionLocal()
-        self.db.query(Draft).delete()
-        self.db.query(User).delete()
+        rebound = rebind_test_db(self._db_path)
+        self.auth_service = rebound.auth_service
+        self.drafts_service = rebound.drafts_service
+        self.db = self.auth_service.SessionLocal()
+        self.db.query(self.drafts_service.Draft).delete()
+        self.db.query(self.auth_service.User).delete()
         self.db.commit()
-        reset_refresh_sessions_for_tests()
+        self.auth_service.reset_refresh_sessions_for_tests()
         self.user_session = requests.Session()
         self.mod_session = requests.Session()
 
     def tearDown(self):
         self.db.close()
-        reset_refresh_sessions_for_tests()
+        self.auth_service.reset_refresh_sessions_for_tests()
         self.user_session.close()
         self.mod_session.close()
 
@@ -71,7 +77,7 @@ class SerializationContractTests(unittest.TestCase):
         return login.json()["access_token"]
 
     def _promote_admin(self, email: str):
-        user = self.db.query(User).filter(User.email == email).first()
+        user = self.db.query(self.auth_service.User).filter(self.auth_service.User.email == email).first()
         self.assertIsNotNone(user)
         user.is_admin = True
         self.db.commit()

@@ -2,8 +2,10 @@ from datetime import datetime
 
 from fastapi import HTTPException, status
 from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, text
+from sqlalchemy.engine import Connection
 from sqlalchemy.orm import Session
 
+from app.auth.migrations import apply_versioned_migrations
 from app.auth.service import Base, User, engine
 
 
@@ -29,23 +31,55 @@ class Draft(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+def _draft_columns(connection: Connection) -> set[str]:
+    return {row[1] for row in connection.execute(text("PRAGMA table_info(drafts)"))}
+
+
+def _migration_drafts_add_image_url(connection: Connection) -> None:
+    if "image_url" not in _draft_columns(connection):
+        connection.execute(text("ALTER TABLE drafts ADD COLUMN image_url VARCHAR"))
+
+
+def _migration_drafts_add_status(connection: Connection) -> None:
+    if "status" not in _draft_columns(connection):
+        connection.execute(text("ALTER TABLE drafts ADD COLUMN status VARCHAR DEFAULT 'draft'"))
+
+
+def _migration_drafts_add_publish_status(connection: Connection) -> None:
+    if "publish_status" not in _draft_columns(connection):
+        connection.execute(text("ALTER TABLE drafts ADD COLUMN publish_status VARCHAR DEFAULT 'pending'"))
+
+
+def _migration_drafts_add_airtable_record_id(connection: Connection) -> None:
+    if "airtable_record_id" not in _draft_columns(connection):
+        connection.execute(text("ALTER TABLE drafts ADD COLUMN airtable_record_id VARCHAR"))
+
+
+def _migration_drafts_add_published_at(connection: Connection) -> None:
+    if "published_at" not in _draft_columns(connection):
+        connection.execute(text("ALTER TABLE drafts ADD COLUMN published_at DATETIME"))
+
+
+def _migration_drafts_add_payload(connection: Connection) -> None:
+    if "payload" not in _draft_columns(connection):
+        connection.execute(text("ALTER TABLE drafts ADD COLUMN payload JSON"))
+
+
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
 
     with engine.begin() as connection:
-        columns = {row[1] for row in connection.execute(text("PRAGMA table_info(drafts)"))}
-        if "image_url" not in columns:
-            connection.execute(text("ALTER TABLE drafts ADD COLUMN image_url VARCHAR"))
-        if "status" not in columns:
-            connection.execute(text("ALTER TABLE drafts ADD COLUMN status VARCHAR DEFAULT 'draft'"))
-        if "publish_status" not in columns:
-            connection.execute(text("ALTER TABLE drafts ADD COLUMN publish_status VARCHAR DEFAULT 'pending'"))
-        if "airtable_record_id" not in columns:
-            connection.execute(text("ALTER TABLE drafts ADD COLUMN airtable_record_id VARCHAR"))
-        if "published_at" not in columns:
-            connection.execute(text("ALTER TABLE drafts ADD COLUMN published_at DATETIME"))
-        if "payload" not in columns:
-            connection.execute(text("ALTER TABLE drafts ADD COLUMN payload JSON"))
+        apply_versioned_migrations(
+            connection,
+            [
+                (101, "drafts_add_image_url", _migration_drafts_add_image_url),
+                (102, "drafts_add_status", _migration_drafts_add_status),
+                (103, "drafts_add_publish_status", _migration_drafts_add_publish_status),
+                (104, "drafts_add_airtable_record_id", _migration_drafts_add_airtable_record_id),
+                (105, "drafts_add_published_at", _migration_drafts_add_published_at),
+                (106, "drafts_add_payload", _migration_drafts_add_payload),
+            ],
+        )
 
 
 def list_drafts(db: Session, user: User) -> list[Draft]:

@@ -1,0 +1,106 @@
+name: Auth Redis Integration
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  auth-redis-integration:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest
+
+      - name: Run Redis auth integration test
+        env:
+          APP_ENV: test
+          AUTH_SECRET_KEY: ci-redis-auth-secret
+          AUTH_SESSION_BACKEND: redis
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: pytest tests/test_auth_redis_integration.py -q
+
+  auth-redis-multi-instance:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest
+
+      - name: Run Redis multi-instance auth integration test
+        env:
+          APP_ENV: test
+          AUTH_SECRET_KEY: ci-redis-auth-secret
+          AUTH_SESSION_BACKEND: redis
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: pytest tests/test_auth_redis_multi_instance.py -q
+
+
+  auth-redis-restart:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest
+
+      - name: Run Redis restart auth integration test
+        env:
+          APP_ENV: test
+          AUTH_SECRET_KEY: ci-redis-auth-secret
+          AUTH_SESSION_BACKEND: redis
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: pytest tests/test_auth_redis_restart.py -q
