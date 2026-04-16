@@ -4,6 +4,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+from scripts import release_check
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = REPO_ROOT / "scripts" / "release_check.py"
@@ -306,3 +310,40 @@ def test_release_check_warns_for_memory_backend(tmp_path: Path) -> None:
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert "[WARN] Runtime/deployment: memory session backend -> single-node baseline only" in result.stdout
+
+
+def test_release_check_invokes_pwa_behavioral_pytest(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    behavioral_test = tmp_path / "tests" / "test_sw_fetch_behavior.py"
+    _write(behavioral_test, "def test_placeholder():\n    assert True\n")
+    monkeypatch.setattr(release_check, "BEHAVIORAL_PWA_TEST_PATH", behavioral_test)
+
+    calls: list[tuple[list[str], str]] = []
+
+    def _fake_run(cmd, **kwargs):
+        calls.append((cmd, kwargs.get("cwd", "")))
+        return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
+
+    monkeypatch.setattr(release_check.subprocess, "run", _fake_run)
+
+    release_check.check_pwa_behavioral()
+
+    assert calls, "behavioral PWA subprocess must be invoked"
+    cmd, cwd = calls[0]
+    assert cmd[0] == sys.executable
+    assert cmd[1:3] == ["-m", "pytest"]
+    assert str(behavioral_test) in cmd
+    assert cwd == str(REPO_ROOT)
+
+
+def test_release_check_fails_when_behavioral_pwa_verification_fails(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    behavioral_test = tmp_path / "tests" / "test_sw_fetch_behavior.py"
+    _write(behavioral_test, "def test_placeholder():\n    assert True\n")
+    monkeypatch.setattr(release_check, "BEHAVIORAL_PWA_TEST_PATH", behavioral_test)
+
+    def _fake_run(cmd, **_kwargs):
+        return subprocess.CompletedProcess(cmd, 1, stdout="failure", stderr="")
+
+    monkeypatch.setattr(release_check.subprocess, "run", _fake_run)
+
+    with pytest.raises(release_check.CheckFailed, match="PWA behavioral verification failed"):
+        release_check.check_pwa_behavioral()

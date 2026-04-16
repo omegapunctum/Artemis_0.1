@@ -5,13 +5,16 @@ import importlib
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
 
-ROOT = Path(os.environ.get("RELEASE_CHECK_ROOT", Path(__file__).resolve().parents[1])).resolve()
+REPO_ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("RELEASE_CHECK_ROOT", REPO_ROOT)).resolve()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+BEHAVIORAL_PWA_TEST_PATH = REPO_ROOT / "tests" / "test_sw_fetch_behavior.py"
 
 MAX_EXPECTED_FALLBACK_WARNINGS = 10
 MAX_DATA_QUALITY_WARNINGS = 0
@@ -225,6 +228,21 @@ def check_pwa() -> None:
             fail("sw.js contains explicit cache.put for private/auth route")
 
 
+def check_pwa_behavioral() -> None:
+    if not BEHAVIORAL_PWA_TEST_PATH.exists():
+        fail("missing behavioral PWA verification test: tests/test_sw_fetch_behavior.py")
+
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", str(BEHAVIORAL_PWA_TEST_PATH), "-q"],
+        cwd=str(REPO_ROOT),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        fail("PWA behavioral verification failed (tests/test_sw_fetch_behavior.py). Release is blocked.")
+
+
 def check_governance() -> None:
     export_script = ROOT / "scripts/export_airtable.py"
     if not export_script.exists():
@@ -279,6 +297,7 @@ def main() -> None:
     run_check("Runtime/deployment", check_runtime_deployment)
     run_check("Frontend", check_frontend)
     run_check("PWA", check_pwa)
+    run_check("PWA behavioral", check_pwa_behavioral)
     run_check("Governance", check_governance)
 
 

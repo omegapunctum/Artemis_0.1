@@ -49,6 +49,7 @@
 - Дополнение: release gate runtime guards (implemented) зафиксированы как часть baseline release reliability.
 
 ### 3. Перевести документацию на новую иерархию и закрепить Foundational Pack
+Статус: **MOSTLY COMPLETED / CLOSED FOR PHASE 3 BASELINE (2026-04-16)**.
 Что нужно:
 - отделить canonical docs от working docs, audits и archive;
 - убрать ситуацию, когда reference и старые snapshots воспринимаются как актуальные;
@@ -59,6 +60,7 @@
 Почему это важно:
 - сейчас документация информативна, но неустойчива как система управления;
 - без зафиксированного Foundational Pack проект остаётся технически описанным, но концептуально размытым.
+- Уточнение статуса: source-of-truth/readiness drift для controlled-release baseline закрыт; остаточные улучшения относятся к регулярной docs hygiene, а не к baseline blockers.
 
 ### 4. Досинхронизировать README с реальным runtime/API surface
 Статус: **COMPLETED / CLOSED (2026-04-15)**.
@@ -73,18 +75,21 @@
 - Итог: upload API summary и формулировки по `/api/map/feed` синхронизированы с фактическим backend/runtime surface.
 
 ### 5. Устранить PWA semantic drift
+Статус: **COMPLETED / CLOSED (2026-04-16)**.
 Что нужно:
 - проверять фактический bypass/no-cache private/auth requests;
 - перестать опираться на грубую логику "строка встречается / не встречается" в `sw.js`.
 
 Почему это важно:
 - иначе release/readiness слой может давать ложные выводы о корректности private caching behavior.
+- Итог: behavioral PWA proof подключён в release-gating path (через release_check), static/pattern guards сохранены как дополнительный уровень контроля.
 
 ---
 
 ## ВЫСОКИЙ ПРИОРИТЕТ
 
 ### 6. Досинхронизировать canonical documentation framework в репозитории
+Статус: **MOSTLY COMPLETED / BASELINE-ALIGNED (2026-04-16)**.
 Что нужно:
 - привести `README.md`, `docs/ARTEMIS_MASTER_PROMPT.md`, `docs/PROJECT_STRUCTURE.md`, `docs/PROJECT_PHASES.md`, `docs/PRIORITIES.md`, `docs/DATA_CONTRACT.md` и `docs/CONTROLLED_RELEASE_DECISION.md` к одному и тому же набору правил;
 - убрать из canonical-описаний старые целевые имена документов (`ARCHITECTURE.md`, `RELEASE_SYSTEM.md`, `ROADMAP.md`), если они не являются действующими source-of-truth файлами;
@@ -105,6 +110,7 @@
 Что нужно:
 - зафиксировать архитектурное ограничение явно;
 - подготовить отдельный scaling-cycle: session store, refresh registry, storage model.
+- Уточнение статуса (2026-04-16): это не unresolved baseline blocker; риск официально перенесён в контур ФАЗЫ 5 / Scaling-Hardening.
 
 ### 10. Подтвердить release/readiness/manual smoke одной терминологией
 Статус: **COMPLETED / CLOSED (2026-04-15)**.
