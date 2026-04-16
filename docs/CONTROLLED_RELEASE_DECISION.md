@@ -3,6 +3,7 @@
 ## 1. Current verified baseline
 - Automated verification chain is currently passing in baseline runs: `python scripts/release_check.py` and `python -m pytest` pass, with intermittent backend/integration pytest instability tracked as a post-baseline hardening signal.
 - Release gate is enforced in CI and before export in ETL workflow.
+- Release gate now includes behavioral PWA verification (in addition to static/pattern checks), so private/auth bypass/no-cache semantics are verified by executable behavior in gating path.
 - Governance boundary is explicit and aligned across docs/code/tests/workflows (canonical `data/*`, auxiliary `/api/map/feed`, no direct runtime publish path).
 - Manual smoke discipline exists as documented baseline artifacts.
 - Auth/session baseline is accepted with explicit deployment constraint: single-node backend mode, explicitly configured `AUTH_SECRET_KEY`, and no multi-instance support in current cycle.
@@ -16,6 +17,7 @@ Release unit (current baseline contract):
 ## 2. Remaining gaps and classification
 - Gap: No remaining release-blocking gaps are open for entry into the controlled baseline scope after current-cycle manual evidence closure (`docs/MANUAL_SMOKE_EVIDENCE_2026-04-11.md`); architectural/scaling hardening limitations remain open outside this gate.
 - Classification: Remaining items are **POST-BASELINE GAP** only (continuous quality hardening, not release blockers).
+- Clarification: baseline decision is intentionally controlled-release (not a broad production-ready claim); multi-instance/session-scaling/infra-proof limitations remain next-phase items.
 
 ## 3. Decision
 **MOVE TO CONTROLLED RELEASE BASELINE**

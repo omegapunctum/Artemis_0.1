@@ -103,6 +103,7 @@
 Сделать release-систему внутренне согласованной и действительно исполнимой.
 
 Статус-обновление (2026-04-15): **baseline stabilized; release gate hardened; фаза переведена в режим завершения**.
+Статус-обновление (2026-04-16): **COMPLETED / CLOSED** в рамках controlled-release scope после green release-gate.
 
 Фаза включает:
 - синхронизацию `export_meta.json` и `scripts/release_check.py`;
@@ -130,6 +131,7 @@
 Выход фазы:
 - проект получает предсказуемый release baseline.
 - Текущий статус (2026-04-15): baseline stabilized; release gate hardened (data + runtime); auth/session baseline upgraded (memory default + redis-capable).
+- Текущий статус (2026-04-16): release gate включает behavioral PWA verification (дополнительно к static/pattern guards), baseline считается стабилизированным в текущем scope.
 
 Явные ограничения после стабилизации:
 - multi-instance всё ещё NOT production-ready;
@@ -141,6 +143,11 @@ Remaining gaps before production scaling:
 - определить production-grade storage/migration/session persistence контур;
 - добавить production runbook для moderation/runtime операций;
 - закрепить регулярный scaling-focused regression цикл.
+
+Классификация этих хвостов:
+- это **не blockers** для закрытия ФАЗЫ 3;
+- это следующий класс задач для ФАЗЫ 5 — SCALING / HARDENING;
+- PWA/UX runtime polish и installability/smoke относятся к ФАЗЕ 4.
 
 ---
 
@@ -242,6 +249,11 @@ Remaining gaps before production scaling:
 2. ФАЗА 4 — PWA / UX STABILIZATION
 3. ФАЗА 5 — SCALING / HARDENING
 4. ФАЗА 6 — PRODUCT EXPANSION
+
+Статус-уточнение (после закрытия ФАЗЫ 3):
+- следующий активный рабочий контур: ФАЗА 4;
+- параллельный следующий технический контур: ФАЗА 5;
+- ФАЗА 3 остаётся закрытой baseline-фазой и не требует reopen без нового contract drift.
 
 Внутренний порядок работ внутри ФАЗЫ 6 заранее ограничен:
 1. research slices / saved state
