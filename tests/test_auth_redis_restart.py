@@ -106,7 +106,8 @@ def test_refresh_survives_restart_with_real_redis(tmp_path) -> None:
             timeout=5,
         )
         assert replay_old.status_code == 401
-        assert replay_old.json().get("detail") == "Invalid refresh token"
+        replay_error = replay_old.json().get("error") or replay_old.json().get("detail")
+        assert replay_error == "Invalid refresh token"
     finally:
         session.close()
         if server_a.poll() is None:
