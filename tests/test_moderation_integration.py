@@ -9,6 +9,8 @@ import requests
 import uvicorn
 from fastapi import HTTPException
 
+from tests.db_rebind_helper import rebind_test_db
+
 SERVER_PORT = 8024
 BASE_URL = f"http://127.0.0.1:{SERVER_PORT}"
 
@@ -46,13 +48,11 @@ def test_moderation_failure_failed_state_and_stable_retry_signal(monkeypatch, tm
     os.environ["COOKIE_HTTPONLY"] = "true"
     os.environ["COOKIE_SAMESITE"] = "lax"
 
-    import app.auth.service as auth_service
-    import app.drafts.service as drafts_service
-    import app.moderation.service as moderation_service
-    import app.main as app_main
-
-    auth_service.init_db()
-    drafts_service.init_db()
+    rebound = rebind_test_db(db_path, reload_app_main=True)
+    auth_service = rebound.auth_service
+    drafts_service = rebound.drafts_service
+    moderation_service = rebound.moderation_service
+    app_main = rebound.app_main
 
     db = auth_service.SessionLocal()
     try:

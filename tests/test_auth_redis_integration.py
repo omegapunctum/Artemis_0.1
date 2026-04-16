@@ -10,7 +10,7 @@ SERVER_PORT = 8013
 BASE_URL = f"http://127.0.0.1:{SERVER_PORT}"
 
 
-def _wait_for_server_ready(session: requests.Session) -> None:
+def _wait_for_server_ready(session: requests.Session, server: subprocess.Popen | None = None) -> None:
     for _ in range(60):
         try:
             response = session.get(f"{BASE_URL}/api/health", timeout=0.5)
@@ -19,7 +19,13 @@ def _wait_for_server_ready(session: requests.Session) -> None:
         except requests.RequestException:
             pass
         time.sleep(0.2)
-    raise RuntimeError("Failed to start auth redis integration test server")
+    stderr_tail = ""
+    if server is not None and server.poll() is not None and server.stderr is not None:
+        stderr_tail = server.stderr.read().decode("utf-8", errors="replace").strip()
+    raise RuntimeError(
+        "Failed to start auth redis integration test server"
+        + (f"; uvicorn stderr: {stderr_tail}" if stderr_tail else "")
+    )
 
 
 def test_auth_refresh_lifecycle_with_real_redis_backend(tmp_path) -> None:
@@ -51,12 +57,12 @@ def test_auth_refresh_lifecycle_with_real_redis_backend(tmp_path) -> None:
         ],
         env=env,
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
     )
 
     session = requests.Session()
     try:
-        _wait_for_server_ready(session)
+        _wait_for_server_ready(session, server)
 
         email = f"redis-int-{uuid4().hex}@example.com"
         password = "password123"

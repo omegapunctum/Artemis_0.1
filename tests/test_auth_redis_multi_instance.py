@@ -12,7 +12,7 @@ BASE_URL_A = f"http://127.0.0.1:{INSTANCE_A_PORT}"
 BASE_URL_B = f"http://127.0.0.1:{INSTANCE_B_PORT}"
 
 
-def _wait_for_server_ready(base_url: str, session: requests.Session) -> None:
+def _wait_for_server_ready(base_url: str, session: requests.Session, server: subprocess.Popen | None = None) -> None:
     for _ in range(60):
         try:
             response = session.get(f"{base_url}/api/health", timeout=0.5)
@@ -21,7 +21,10 @@ def _wait_for_server_ready(base_url: str, session: requests.Session) -> None:
         except requests.RequestException:
             pass
         time.sleep(0.2)
-    raise RuntimeError(f"Failed to start server on {base_url}")
+    stderr_tail = ""
+    if server is not None and server.poll() is not None and server.stderr is not None:
+        stderr_tail = server.stderr.read().decode("utf-8", errors="replace").strip()
+    raise RuntimeError(f"Failed to start server on {base_url}" + (f"; uvicorn stderr: {stderr_tail}" if stderr_tail else ""))
 
 
 def _start_server(*, port: int, env: dict[str, str]) -> subprocess.Popen:
@@ -38,7 +41,7 @@ def _start_server(*, port: int, env: dict[str, str]) -> subprocess.Popen:
         ],
         env=env,
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
     )
 
 
@@ -63,8 +66,8 @@ def test_refresh_token_shared_between_instances_with_real_redis(tmp_path) -> Non
 
     session = requests.Session()
     try:
-        _wait_for_server_ready(BASE_URL_A, session)
-        _wait_for_server_ready(BASE_URL_B, session)
+        _wait_for_server_ready(BASE_URL_A, session, server_a)
+        _wait_for_server_ready(BASE_URL_B, session, server_b)
 
         email = f"redis-multi-{uuid4().hex}@example.com"
         password = "password123"
