@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import requests
 
-from tests.db_rebind_helper import rebind_test_db
+from tests.db_rebind_helper import build_clean_test_env, rebind_test_db, restore_rebind_env
 
 
 SERVER_PORT = 8013
@@ -32,18 +32,14 @@ def _wait_for_server_ready(session: requests.Session, server: subprocess.Popen |
 
 def test_auth_refresh_lifecycle_with_real_redis_backend(tmp_path) -> None:
     auth_db_path = tmp_path / "auth-redis-integration.db"
-    rebind_test_db(auth_db_path, session_backend="memory")
+    rebound = rebind_test_db(auth_db_path, session_backend="memory")
 
-    env = os.environ.copy()
-    env.update(
+    env = build_clean_test_env(
         {
-            "APP_ENV": "test",
             "AUTH_SECRET_KEY": "test-secret-auth-redis-integration",
             "AUTH_SESSION_BACKEND": "redis",
             "REDIS_URL": os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0"),
             "AUTH_DATABASE_URL": f"sqlite:///{auth_db_path}",
-            "COOKIE_HTTPONLY": "true",
-            "COOKIE_SAMESITE": "lax",
         }
     )
 
@@ -108,3 +104,4 @@ def test_auth_refresh_lifecycle_with_real_redis_backend(tmp_path) -> None:
         session.close()
         server.terminate()
         server.wait(timeout=5)
+        restore_rebind_env(rebound.original_env)

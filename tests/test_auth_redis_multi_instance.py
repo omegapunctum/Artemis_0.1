@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import requests
 
-from tests.db_rebind_helper import rebind_test_db
+from tests.db_rebind_helper import build_clean_test_env, rebind_test_db, restore_rebind_env
 
 
 INSTANCE_A_PORT = 8014
@@ -49,18 +49,14 @@ def _start_server(*, port: int, env: dict[str, str]) -> subprocess.Popen:
 
 def test_refresh_token_shared_between_instances_with_real_redis(tmp_path) -> None:
     auth_db_path = tmp_path / "auth-redis-multi-instance.db"
-    rebind_test_db(auth_db_path, session_backend="memory")
+    rebound = rebind_test_db(auth_db_path, session_backend="memory")
 
-    common_env = os.environ.copy()
-    common_env.update(
+    common_env = build_clean_test_env(
         {
-            "APP_ENV": "test",
             "AUTH_SECRET_KEY": "test-secret-auth-redis-multi-instance",
             "AUTH_SESSION_BACKEND": "redis",
             "REDIS_URL": os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0"),
             "AUTH_DATABASE_URL": f"sqlite:///{auth_db_path}",
-            "COOKIE_HTTPONLY": "true",
-            "COOKIE_SAMESITE": "lax",
         }
     )
 
@@ -118,3 +114,4 @@ def test_refresh_token_shared_between_instances_with_real_redis(tmp_path) -> Non
         if server_b is not None and server_b.poll() is None:
             server_b.terminate()
             server_b.wait(timeout=5)
+        restore_rebind_env(rebound.original_env)
