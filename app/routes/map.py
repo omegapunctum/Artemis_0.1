@@ -103,10 +103,22 @@ def map_entities(entity_type: str, entities: list[Any]) -> list[MapFeedItem]:
         raise ValueError(f"Unsupported entity_type: {entity_type}")
     return [adapter(entity) for entity in entities]
 
-def build_item_sort_key(item: MapFeedItem) -> tuple[int, str, str]:
+TYPE_ORDER: dict[str, int] = {
+    "draft": 0,
+    "event": 1,
+    "place": 2,
+}
+
+
+def build_item_sort_key(item: MapFeedItem) -> tuple[int, str, int, str]:
     has_name = bool(item.name and item.name.strip())
     normalized_name = item.name.strip().casefold() if has_name else ""
-    return (0 if has_name else 1, normalized_name, item.id)
+    return (
+        0 if has_name else 1,
+        normalized_name,
+        TYPE_ORDER.get(item.entity_type, 99),
+        str(item.id or ""),
+    )
 
 
 def parse_bbox(bbox: str | None) -> tuple[float, float, float, float] | None:

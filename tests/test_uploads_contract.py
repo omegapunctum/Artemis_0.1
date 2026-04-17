@@ -1,3 +1,4 @@
+import os
 import subprocess
 import time
 import unittest
@@ -6,6 +7,9 @@ from uuid import uuid4
 
 import requests
 
+from app.auth.service import DATABASE_URL
+from tests.db_rebind_helper import build_clean_test_env
+
 
 class UploadsContractTests(unittest.TestCase):
     SERVER_PORT = 8012
@@ -13,6 +17,14 @@ class UploadsContractTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        env = build_clean_test_env(
+            {
+                "APP_ENV": "development",
+                "AUTH_SECRET_KEY": os.environ.get("AUTH_SECRET_KEY", "test-secret-uploads-contract"),
+                "AUTH_DATABASE_URL": DATABASE_URL,
+                "AUTH_SESSION_BACKEND": "memory",
+            }
+        )
         cls.server = subprocess.Popen(
             [
                 "uvicorn",
@@ -24,6 +36,7 @@ class UploadsContractTests(unittest.TestCase):
                 "--log-level",
                 "warning",
             ],
+            env=env,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )

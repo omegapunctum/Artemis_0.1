@@ -43,7 +43,7 @@ def _migration_users_add_is_admin(connection: Connection) -> None:
 
 
 def init_db() -> None:
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=engine, checkfirst=True)
 
     with engine.begin() as connection:
         apply_versioned_migrations(

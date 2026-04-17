@@ -6,8 +6,9 @@ from uuid import uuid4
 
 import requests
 
-from app.auth.service import SessionLocal
+from app.auth.service import DATABASE_URL, SessionLocal
 from app.drafts.service import Draft
+from tests.db_rebind_helper import build_clean_test_env
 
 os.environ.setdefault("AUTH_SECRET_KEY", "test-secret-map-feed-multi-entity")
 os.environ.setdefault("COOKIE_HTTPONLY", "true")
@@ -21,7 +22,14 @@ class MapFeedMultiEntityTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        env = os.environ.copy()
+        env = build_clean_test_env(
+            {
+                "APP_ENV": "development",
+                "AUTH_SECRET_KEY": os.environ.get("AUTH_SECRET_KEY", "test-secret-map-feed-multi-entity"),
+                "AUTH_DATABASE_URL": DATABASE_URL,
+                "AUTH_SESSION_BACKEND": "memory",
+            }
+        )
         cls.server = subprocess.Popen(
             ["uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(cls.SERVER_PORT), "--log-level", "warning"],
             env=env,

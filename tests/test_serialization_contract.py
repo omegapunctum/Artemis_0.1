@@ -8,7 +8,7 @@ from uuid import uuid4
 
 import requests
 
-from tests.db_rebind_helper import rebind_test_db
+from tests.db_rebind_helper import build_clean_test_env, rebind_test_db, snapshot_rebind_env, restore_rebind_env
 
 os.environ.setdefault("AUTH_SECRET_KEY", "test-secret-serialization-contract")
 os.environ.setdefault("COOKIE_HTTPONLY", "true")
@@ -22,12 +22,20 @@ class SerializationContractTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls._original_env = snapshot_rebind_env()
         cls._tmpdir = tempfile.TemporaryDirectory(prefix="serialization-contract-")
         cls._db_path = Path(cls._tmpdir.name) / "serialization-contract.db"
         rebound = rebind_test_db(cls._db_path)
         cls.auth_service = rebound.auth_service
         cls.drafts_service = rebound.drafts_service
-        env = os.environ.copy()
+        env = build_clean_test_env(
+            {
+                "APP_ENV": "development",
+                "AUTH_SECRET_KEY": os.environ.get("AUTH_SECRET_KEY", "test-secret-serialization-contract"),
+                "AUTH_DATABASE_URL": f"sqlite:///{cls._db_path}",
+                "AUTH_SESSION_BACKEND": "memory",
+            }
+        )
         cls.server = subprocess.Popen(
             ["uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(cls.SERVER_PORT), "--log-level", "warning"],
             env=env,
@@ -50,6 +58,7 @@ class SerializationContractTests(unittest.TestCase):
         cls.server.terminate()
         cls.server.wait(timeout=5)
         cls._tmpdir.cleanup()
+        restore_rebind_env(cls._original_env)
 
     def setUp(self):
         rebound = rebind_test_db(self._db_path)

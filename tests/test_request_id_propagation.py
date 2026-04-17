@@ -7,6 +7,7 @@ import requests
 from starlette.requests import Request
 
 from app.observability import internal_error_response
+from tests.db_rebind_helper import build_clean_test_env
 
 
 class RequestIdPropagationTests(unittest.TestCase):
@@ -15,7 +16,7 @@ class RequestIdPropagationTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        env = os.environ.copy()
+        env = build_clean_test_env({})
         cls.server = subprocess.Popen(
             [
                 'uvicorn',

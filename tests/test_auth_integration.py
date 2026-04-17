@@ -6,12 +6,14 @@ from uuid import uuid4
 
 import requests
 
+from tests.db_rebind_helper import build_clean_test_env
+
 os.environ.setdefault("AUTH_SECRET_KEY", "test-secret-for-integration")
 os.environ.setdefault("COOKIE_HTTPONLY", "true")
 os.environ.setdefault("COOKIE_SAMESITE", "lax")
 os.environ.setdefault("APP_ENV", "development")
 
-from app.auth.service import SessionLocal, User, reset_refresh_sessions_for_tests, init_db  # noqa: E402
+from app.auth.service import DATABASE_URL, SessionLocal, User, reset_refresh_sessions_for_tests, init_db  # noqa: E402
 from app.security.rate_limit import login_block_store, login_failure_store, rate_limit_store  # noqa: E402
 
 
@@ -21,7 +23,14 @@ class AuthIntegrationTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        env = os.environ.copy()
+        env = build_clean_test_env(
+            {
+                "APP_ENV": "development",
+                "AUTH_SECRET_KEY": os.environ.get("AUTH_SECRET_KEY", "test-secret-for-integration"),
+                "AUTH_DATABASE_URL": DATABASE_URL,
+                "AUTH_SESSION_BACKEND": "memory",
+            }
+        )
         cls.server = subprocess.Popen(
             [
                 "uvicorn",
