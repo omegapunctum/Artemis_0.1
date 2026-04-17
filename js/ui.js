@@ -3,6 +3,7 @@ import { updateMapData, setLayerLookup, focusFeatureOnMap, getMapFeatureCount, g
 import { debounce, createInlineStateBlock } from './ux.js';
 import { normalizeSafeUrl, setSafeImageSource, setSafeLink, toSafeText } from './safe-dom.js';
 import { DEFAULT_DISPLAY_MODE, aggregateFeaturesByDecade, createCoursesState, createLiveState, getSelectedCourse, moveCourseStep, selectCourse } from './state.js';
+import { buildResearchSlicePayload, normalizeSliceForRestore, listResearchSlices, getResearchSlice, createResearchSlice, deleteResearchSlice } from './research_slices.js';
 
 let globalDataErrorRetryHandler = null;
 let activeUiToastTimerId = null;
@@ -233,11 +234,13 @@ export async function initUI(map, features) {
     quickLayerFilter: document.getElementById('quick-layer-filter'),
     layersEntryHelper: document.getElementById('layers-entry-helper'),
     bookmarksBtn: document.getElementById('bookmarks-btn'),
+    slicesBtn: document.getElementById('slices-btn'),
     coursesBtn: document.getElementById('courses-btn'),
     liveBtn: document.getElementById('live-btn'),
     filtersPanel: document.getElementById('filters-panel'),
     layersPanel: document.getElementById('layers-panel'),
     bookmarksPanel: document.getElementById('bookmarks-panel'),
+    slicesPanel: document.getElementById('slices-panel'),
     coursesPanel: document.getElementById('courses-panel'),
     livePanel: document.getElementById('live-panel'),
     appShell: document.getElementById('app-shell'),
@@ -313,6 +316,10 @@ export async function initUI(map, features) {
     detailFocusReturnEl: null,
     searchResults: [],
     bookmarks: [],
+    researchSlices: [],
+    researchSlicesLoaded: false,
+    researchSlicesLoading: false,
+    researchSlicesError: '',
     applyState: null,
     warnings: [],
     lastVisibilityKey: '',
@@ -465,6 +472,11 @@ export async function initUI(map, features) {
   elements.filtersBtn?.addEventListener('click', () => togglePrimaryPanel(elements, state, 'filters', elements.filtersBtn));
   elements.layersBtn?.addEventListener('click', () => togglePrimaryPanel(elements, state, 'layers', elements.layersBtn));
   elements.bookmarksBtn?.addEventListener('click', () => togglePrimaryPanel(elements, state, 'bookmarks', elements.bookmarksBtn));
+  elements.slicesBtn?.addEventListener('click', async () => {
+    await ensureResearchSlicesLoaded(state, { force: !state.researchSlicesLoaded });
+    renderSlicesPanel(elements, state, map);
+    togglePrimaryPanel(elements, state, 'slices', elements.slicesBtn);
+  });
   elements.coursesBtn?.addEventListener('click', () => togglePrimaryPanel(elements, state, 'courses', elements.coursesBtn));
   elements.liveBtn?.addEventListener('click', () => {
     const nextOpen = state.overlay.activePrimary !== 'live';
@@ -718,6 +730,7 @@ function renderTopPanels(elements, state, layers, confidenceValues, map, visibil
   renderFiltersPanel(elements, state, layers, confidenceValues);
   renderLayersPanel(elements, state, layers);
   renderBookmarksPanel(elements, state, map);
+  renderSlicesPanel(elements, state, map);
   renderCoursesPanel(elements, state, map);
   renderLivePanel(elements, state, map);
 }
@@ -974,6 +987,223 @@ function renderBookmarksPanel(elements, state, map) {
     });
     elements.bookmarksPanel.appendChild(item);
   });
+}
+
+async function ensureResearchSlicesLoaded(state, { force = false } = {}) {
+  if (state.researchSlicesLoading) return;
+  if (state.researchSlicesLoaded && !force) return;
+  state.researchSlicesLoading = true;
+  state.researchSlicesError = '';
+  try {
+    const items = await listResearchSlices();
+    state.researchSlices = Array.isArray(items) ? items : [];
+    state.researchSlicesLoaded = true;
+  } catch (error) {
+    state.researchSlicesError = normalizeAppError(error, 'Не удалось загрузить исследовательские срезы.').message;
+  } finally {
+    state.researchSlicesLoading = false;
+  }
+}
+
+function renderSlicesPanel(elements, state, map) {
+  const panel = elements.slicesPanel;
+  if (!panel) return;
+  panel.replaceChildren();
+
+  const title = document.createElement('h3');
+  title.className = 'panel-title';
+  title.textContent = 'My Slices';
+  panel.appendChild(title);
+
+  const selected = getSelectedFeature(state);
+  const selectedId = selected ? getFeatureUiId(selected) : null;
+
+  const form = document.createElement('form');
+  form.className = 'panel-stack';
+  form.noValidate = true;
+
+  const titleInput = document.createElement('input');
+  titleInput.type = 'text';
+  titleInput.name = 'slice_title';
+  titleInput.maxLength = 180;
+  titleInput.placeholder = 'Название среза';
+  titleInput.required = true;
+
+  const descInput = document.createElement('textarea');
+  descInput.name = 'slice_description';
+  descInput.maxLength = 4000;
+  descInput.rows = 3;
+  descInput.placeholder = 'Краткое описание (опционально)';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'submit';
+  saveBtn.className = 'ui-button ui-button-primary';
+  saveBtn.textContent = 'Save Slice';
+  saveBtn.disabled = !selectedId || state.researchSlicesLoading;
+
+  const hint = document.createElement('p');
+  hint.className = 'status-summary';
+  hint.textContent = selectedId
+    ? `Будет сохранён контекст выбранного объекта: ${String(normalizeProps(selected).name_ru || normalizeProps(selected).title_short || selectedId)}`
+    : 'Чтобы сохранить срез, выберите объект на карте.';
+
+  form.append(titleInput, descInput, saveBtn, hint);
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (!selectedId) {
+      showUiSystemMessage('Выберите объект на карте перед сохранением среза.', { variant: 'warning', timeout: 2500 });
+      return;
+    }
+
+    try {
+      const payload = buildResearchSlicePayload({
+        title: titleInput.value,
+        description: descInput.value,
+        selectedFeatureId: selectedId,
+        timeRange: {
+          start: state.currentStartYear,
+          end: state.currentEndYear,
+          mode: state.timelineMode
+        },
+        map,
+        enabledLayerIds: Array.from(state.enabledLayerIds || []),
+        activeQuickLayerIds: Array.from(state.activeQuickLayerIds || [])
+      });
+      await createResearchSlice(payload);
+      titleInput.value = '';
+      descInput.value = '';
+      showUiSystemMessage('Срез сохранён', { variant: 'success', timeout: 2200 });
+      await ensureResearchSlicesLoaded(state, { force: true });
+      renderSlicesPanel(elements, state, map);
+    } catch (error) {
+      showUiSystemMessage(normalizeAppError(error, 'Не удалось сохранить срез.').message, { variant: 'warning', timeout: 3200 });
+    }
+  });
+  panel.appendChild(form);
+
+  if (state.researchSlicesLoading) {
+    panel.appendChild(createInlineStateBlock({
+      variant: 'info',
+      title: 'Loading slices',
+      message: 'Загрузка списка срезов…'
+    }));
+    return;
+  }
+
+  if (state.researchSlicesError) {
+    panel.appendChild(createInlineStateBlock({
+      variant: 'warning',
+      title: 'Slices unavailable',
+      message: state.researchSlicesError
+    }));
+    return;
+  }
+
+  if (!Array.isArray(state.researchSlices) || !state.researchSlices.length) {
+    panel.appendChild(createInlineStateBlock({
+      variant: 'info',
+      title: 'No slices yet',
+      message: 'Сохранённые исследовательские срезы появятся здесь.'
+    }));
+    return;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'courses-list';
+  state.researchSlices.forEach((slice) => {
+    const row = document.createElement('article');
+    row.className = 'course-item';
+
+    const rowTitle = document.createElement('strong');
+    rowTitle.className = 'course-item-title';
+    rowTitle.textContent = String(slice?.title || 'Untitled slice');
+
+    const rowMeta = document.createElement('p');
+    rowMeta.className = 'status-summary';
+    const stamp = String(slice?.updated_at || slice?.created_at || '');
+    rowMeta.textContent = `${Number(slice?.feature_count || 0)} объектов${stamp ? ` · ${stamp.slice(0, 10)}` : ''}`;
+
+    const actions = document.createElement('div');
+    actions.className = 'panel-action-row';
+
+    const openBtn = document.createElement('button');
+    openBtn.type = 'button';
+    openBtn.className = 'ui-button ui-button-secondary';
+    openBtn.textContent = 'Open';
+    openBtn.addEventListener('click', async () => {
+      try {
+        const rawSlice = await getResearchSlice(String(slice?.id || ''));
+        applyResearchSliceContext(rawSlice, state, elements, map);
+        closePrimaryPanel(elements, state, 'slices');
+        showUiSystemMessage('Срез восстановлен', { variant: 'success', timeout: 2200 });
+      } catch (error) {
+        showUiSystemMessage(normalizeAppError(error, 'Не удалось открыть срез.').message, { variant: 'warning', timeout: 3200 });
+      }
+    });
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'ui-button ui-button-danger';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', async () => {
+      const ok = window.confirm('Удалить исследовательский срез?');
+      if (!ok) return;
+      try {
+        await deleteResearchSlice(String(slice?.id || ''));
+        await ensureResearchSlicesLoaded(state, { force: true });
+        renderSlicesPanel(elements, state, map);
+        showUiSystemMessage('Срез удалён', { variant: 'success', timeout: 2200 });
+      } catch (error) {
+        showUiSystemMessage(normalizeAppError(error, 'Не удалось удалить срез.').message, { variant: 'warning', timeout: 3200 });
+      }
+    });
+
+    actions.append(openBtn, deleteBtn);
+    row.append(rowTitle, rowMeta, actions);
+    list.appendChild(row);
+  });
+  panel.appendChild(list);
+}
+
+function applyResearchSliceContext(rawSlice, state, elements, map) {
+  const restored = normalizeSliceForRestore(rawSlice);
+  if (restored.mode === 'point') {
+    setTimelineMode(elements, state, 'point', { commit: false });
+    applyTimelineRange(elements, state, {
+      start: restored.start ?? state.currentStartYear,
+      end: restored.start ?? state.currentStartYear,
+      snap: false,
+      commit: false
+    });
+  } else {
+    setTimelineMode(elements, state, 'range', { commit: false });
+    applyTimelineRange(elements, state, {
+      start: restored.start ?? state.currentStartYear,
+      end: restored.end ?? state.currentEndYear,
+      snap: false,
+      commit: false
+    });
+  }
+
+  if (Array.isArray(restored.enabledLayerIds) && restored.enabledLayerIds.length) {
+    state.enabledLayerIds = new Set(restored.enabledLayerIds);
+  }
+  if (Array.isArray(restored.activeQuickLayerIds) && restored.activeQuickLayerIds.length) {
+    state.activeQuickLayerIds = new Set(restored.activeQuickLayerIds);
+  }
+
+  state.applyState?.();
+
+  if (restored.center && Number.isFinite(Number(restored.zoom))) {
+    map.flyTo({ center: restored.center, zoom: Number(restored.zoom), essential: true });
+  }
+
+  if (restored.selectedFeatureId) {
+    const feature = getFeatureById(state, restored.selectedFeatureId);
+    if (feature) {
+      selectFeature(state, elements, map, feature, { centerOnMap: false, openDetail: true, scrollCard: true });
+    }
+  }
 }
 
 function renderCoursesPanel(elements, state, map) {
@@ -1349,7 +1579,7 @@ function renderSearchDropdown(elements, state, map) {
 
 function setupOverlayManager(elements, state, map) {
   const closeAll = () => {
-    ['search', 'filters', 'layers', 'bookmarks', 'courses', 'live'].forEach((key) => closePrimaryPanel(elements, state, key));
+    ['search', 'filters', 'layers', 'bookmarks', 'slices', 'courses', 'live'].forEach((key) => closePrimaryPanel(elements, state, key));
   };
   state.overlay.closeAll = closeAll;
 
@@ -1395,7 +1625,7 @@ function openPrimaryPanel(elements, state, key, trigger = null) {
     elements.topActions.classList.remove('is-expanded');
     elements.overflowBtn?.setAttribute('aria-expanded', 'false');
   }
-  ['search', 'filters', 'layers', 'bookmarks', 'courses', 'live'].forEach((name) => {
+  ['search', 'filters', 'layers', 'bookmarks', 'slices', 'courses', 'live'].forEach((name) => {
     const panel = getPanelByKey(elements, name);
     const button = getButtonByKey(elements, name);
     const isActive = name === key;
@@ -1424,6 +1654,7 @@ function getPanelByKey(elements, key) {
     filters: elements.filtersPanel,
     layers: elements.layersPanel,
     bookmarks: elements.bookmarksPanel,
+    slices: elements.slicesPanel,
     courses: elements.coursesPanel,
     live: elements.livePanel
   }[key] || null;
@@ -1434,6 +1665,7 @@ function getButtonByKey(elements, key) {
     filters: elements.filtersBtn,
     layers: elements.layersBtn,
     bookmarks: elements.bookmarksBtn,
+    slices: elements.slicesBtn,
     courses: elements.coursesBtn,
     live: elements.liveBtn
   }[key] || null;
