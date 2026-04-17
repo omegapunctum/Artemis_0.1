@@ -12,8 +12,10 @@ from app.auth.schemas import UserResponse
 from app.auth.service import User, get_current_user, init_db as init_auth_db
 from app.drafts.routes import router as drafts_router
 from app.drafts.service import init_db as init_drafts_db
+from app.research_slices.service import init_db as init_research_slices_db
 from app.moderation.routes import router as moderation_router
 from app.routes.map import router as map_router
+from app.research_slices.routes import router as research_slices_router
 from app.observability import (
     ObservabilityMiddleware,
     health_payload,
@@ -29,6 +31,7 @@ from app.uploads.routes import router as uploads_router
 setup_logging()
 init_auth_db()
 init_drafts_db()
+init_research_slices_db()
 
 UPLOADS_DIR = "uploads"
 Path(UPLOADS_DIR).mkdir(parents=True, exist_ok=True)
@@ -53,7 +56,7 @@ app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
-for router in (auth_router, drafts_router, uploads_router, moderation_router, map_router):
+for router in (auth_router, drafts_router, uploads_router, moderation_router, map_router, research_slices_router):
     app.include_router(router, prefix="/api")
 
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
