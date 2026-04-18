@@ -168,6 +168,12 @@ Remaining gaps before production scaling:
 Цель:
 Довести пользовательский runtime до устойчивого и предсказуемого состояния.
 
+Статус-синхронизация (2026-04-17):
+- baseline MVP для research slices уже реализован в backend+frontend контуре;
+- в текущем baseline поддерживаются: save slice, list my slices, open/restore context, delete;
+- access model текущего слоя: private-only, owner-only;
+- stories / share mode / AI-assistance поверх slices остаются в следующих фазах.
+
 Фаза включает:
 - завершение PWA bypass/no-cache semantics;
 - production smoke для service worker и installability;
@@ -220,7 +226,7 @@ Remaining gaps before production scaling:
 Расширять продукт только после стабилизации baseline и в границах зафиксированного ARTEMIS v1.0 scope.
 
 Планируемые направления:
-- research slices / saved slices / shareable state как базовая продуктовая единица;
+- развитие research-slice слоя поверх уже реализованного MVP (сейчас: private/owner-only save/list/open/delete), включая shareable-state следующий слой;
 - stories / guided scenarios;
 - courses;
 - explainable AI assistance (explanation / comparison / summary / hypothesis suggestions с маркировкой статуса);

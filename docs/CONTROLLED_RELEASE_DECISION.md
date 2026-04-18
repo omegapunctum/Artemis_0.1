@@ -1,7 +1,7 @@
 # Controlled Release Decision
 
 ## 1. Current verified baseline
-- Automated verification chain is currently passing in baseline runs: `python scripts/release_check.py` and `python -m pytest` pass, with intermittent backend/integration pytest instability tracked as a post-baseline hardening signal.
+- Automated verification chain is currently passing in baseline runs: `python scripts/release_check.py` passes, and pytest responsibility is split across CI workflows (ETL lane + dedicated integration lanes) rather than a single all-in-one deploy/export path.
 - Release gate is enforced in CI and before export in ETL workflow.
 - Release gate now includes behavioral PWA verification (in addition to static/pattern checks), so private/auth bypass/no-cache semantics are verified by executable behavior in gating path.
 - Governance boundary is explicit and aligned across docs/code/tests/workflows (canonical `data/*`, auxiliary `/api/map/feed`, no direct runtime publish path).

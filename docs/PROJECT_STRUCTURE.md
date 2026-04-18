@@ -239,19 +239,16 @@ docs/
 
 ```text
 docs/work/
-├── ARTEMIS_AI_STRATEGY.md
-├── ui-ux.md
-├── auth.md
-├── etl.md
-├── pwa.md
-└── courses.md
+├── ARTEMIS_AI_STRATEGY_v1_0.md
+├── ARTEMIS_UI_UX_IMPLEMENTATION_PLAN_v1_0.md
+└── moderation-runbook.md
 ```
 
 Назначение:
 - рабочие документы текущего цикла;
 - допускают быстрые изменения;
 - не считаются canonical по умолчанию;
-- `ARTEMIS_AI_STRATEGY.md` является стратегическим рабочим документом высокого уровня: он обязателен к учёту, но может обновляться быстрее, чем миссия и product scope, поэтому не входит в immutable conceptual core.
+- `ARTEMIS_AI_STRATEGY_v1_0.md` является стратегическим рабочим документом высокого уровня: он обязателен к учёту, но может обновляться быстрее, чем миссия и product scope, поэтому не входит в immutable conceptual core.
 
 ### 8.4 Audits
 

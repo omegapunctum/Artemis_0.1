@@ -53,6 +53,7 @@ Vanilla JavaScript (no frameworks):
 - Canonical API base path: **`/api`**
 - Auth API (JWT + refresh cookie)
 - Drafts API (CRUD)
+- Research Slices API (private/owner-only MVP: save, list, open/restore, delete)
 - Upload API (images)
 - Moderation API (review/approve/reject + Airtable staging sync; not direct public dataset publish)
 - Airtable integration (staging sync for review outcomes; canonical public publish remains ETL/export workflow only)
@@ -60,7 +61,10 @@ Vanilla JavaScript (no frameworks):
 
 ### CI/CD
 - GitHub Actions
-- ETL validation
+- ETL validation workflow runs the main pytest suite with targeted integration/env-specific exclusions
+- Deploy/Pages workflow performs deploy sanity checks only (no full pytest run)
+- Export/ETL workflow is gated by release checks and does not serve as the canonical env-specific integration test lane
+- Dedicated integration workflows cover moderation and Redis-backed auth/session scenarios
 - Data export
 
 ---
@@ -127,6 +131,13 @@ Vanilla JavaScript (no frameworks):
     - runtime usage: frontend must use backend-returned `url` as the single source of truth for uploaded file access.
 - Moderation (`/api/moderation/*`):
   - review/approve/reject runtime routes for moderation workflow
+- Research slices (`/api/research-slices/*`):
+  - `POST /api/research-slices` (save slice)
+  - `GET /api/research-slices` (list my slices)
+  - `GET /api/research-slices/{slice_id}` (open/restore)
+  - `PATCH /api/research-slices/{slice_id}`
+  - `DELETE /api/research-slices/{slice_id}`
+  - current baseline visibility/access model: private-only, owner-only
 - Auxiliary runtime feed:
   - `GET /api/map/feed` (auxiliary, non-canonical runtime support/read-model endpoint for UI; canonical public map source remains `data/features.geojson`)
 - Canonical public map data path:

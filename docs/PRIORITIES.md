@@ -151,7 +151,8 @@
 ### 14. Зафиксировать порядок продуктового ядра внутри будущей Product Expansion phase
 Что нужно:
 - закрепить `research slice` как главную единицу ценности ARTEMIS v1.0;
-- держать первым продуктовым порядком `saved slices / shareable state`;
+- учесть, что baseline MVP `saved slices` уже реализован (save/list/open/delete, private/owner-only);
+- держать следующим продуктовым порядком `shareable state`;
 - затем `stories`;
 - затем `courses`;
 - затем `explainable AI assistance`;
