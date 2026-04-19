@@ -6,6 +6,7 @@ import { apiFetch } from './auth.js';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+const ALLOWED_LICENSES = ['CC0', 'CC BY', 'CC BY-SA', 'PD'];
 
 function validateUpload(file) {
   if (!file) return 'Файл не выбран.';
@@ -22,7 +23,9 @@ function validateUpload(file) {
 export async function uploadFile(file, license) {
   const validationError = validateUpload(file);
   if (validationError) throw new Error(validationError);
-  if (!license || !String(license).trim()) throw new Error('Не указана лицензия.');
+  const normalizedLicense = String(license ?? '').trim();
+  if (!normalizedLicense) throw new Error('Не указана лицензия.');
+  if (!ALLOWED_LICENSES.includes(normalizedLicense)) throw new Error('Unsupported license');
 
   if (window.ARTEMIS_DRY_RUN) {
     return {
@@ -35,7 +38,7 @@ export async function uploadFile(file, license) {
 
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('license', String(license).trim());
+  formData.append('license', normalizedLicense);
 
   const response = await apiFetch('/api/uploads', {
     method: 'POST',
