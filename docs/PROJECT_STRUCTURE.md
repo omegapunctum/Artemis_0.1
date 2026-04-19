@@ -54,7 +54,7 @@
 | `app/` | canonical backend runtime | основной |
 | `css/` | основной UI style layer | основной |
 | `data/` | canonical public data layer + export diagnostics | основной |
-| `docs/` | canonical / working / audits / archive documentation system | основной |
+| `docs/` | canonical / working / audits / archive / reference documentation system | основной |
 | `icons/` | PWA assets | основной |
 | `js/` | frontend modules | основной |
 | `scripts/` | ETL, import/export, audit, release checks | основной |
@@ -226,6 +226,7 @@ docs/
 ├── ARTEMIS_PRODUCT_SCOPE.md
 ├── CONTROLLED_RELEASE_DECISION.md
 ├── DATA_CONTRACT.md
+├── DOCUMENTATION_SYSTEM.md
 ├── PRIORITIES.md
 ├── PROJECT_PHASES.md
 └── PROJECT_STRUCTURE.md
@@ -239,7 +240,8 @@ docs/
 - `CONTROLLED_RELEASE_DECISION.md` — правила controlled release, baseline-ограничения и критерии допуска;
 - `PROJECT_STRUCTURE.md` — boundaries, entrypoints, runtime rules и структура документационной системы;
 - `PROJECT_PHASES.md` — активные фазы и переходы;
-- `PRIORITIES.md` — load-bearing приоритеты текущего цикла.
+- `PRIORITIES.md` — load-bearing приоритеты текущего цикла;
+- `DOCUMENTATION_SYSTEM.md` — правила documentation governance, роли слоёв и порядок разрешения doc-conflicts.
 
 Правило:
 - только этот набор плюс `README.md` считается source of truth;
@@ -254,14 +256,18 @@ docs/
 docs/work/
 ├── ARTEMIS_AI_STRATEGY_v1_0.md
 ├── ARTEMIS_UI_UX_IMPLEMENTATION_PLAN_v1_0.md
-└── moderation-runbook.md
+├── moderation-runbook.md
+└── uiux/
+    ├── ARTEMIS_UI_UX_SYSTEM.md
+    └── ARTEMIS_UI_UX_COMPONENT_MAP.md
 ```
 
 Назначение:
 - рабочие документы текущего цикла;
 - допускают быстрые изменения;
 - не считаются canonical по умолчанию;
-- `ARTEMIS_AI_STRATEGY_v1_0.md` является стратегическим рабочим документом высокого уровня: он обязателен к учёту, но может обновляться быстрее, чем миссия и product scope, поэтому не входит в immutable conceptual core.
+- `ARTEMIS_AI_STRATEGY_v1_0.md` является стратегическим рабочим документом высокого уровня: он обязателен к учёту, но может обновляться быстрее, чем миссия и product scope, поэтому не входит в immutable conceptual core;
+- UI/UX working specs физически размещаются в `docs/work/uiux/`, а не в canonical root `docs/`.
 
 ### 8.4 Audits
 
@@ -327,7 +333,8 @@ docs/reference/
 - release gate / workflow / readiness semantics;
 - canonical public map source;
 - auth/runtime deployment constraints;
-- миссия, product scope и статус Foundational Pack как части canonical documentation layer.
+- миссия, product scope и статус Foundational Pack как части canonical documentation layer;
+- documentation governance и правила размещения документов.
 
 Без этого change считается незавершённым.
 
