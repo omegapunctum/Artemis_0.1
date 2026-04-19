@@ -1,6 +1,6 @@
 # ARTEMIS — МАСТЕР-ПРОМПТ v4.1
 
-Статус: обновлённая версия после синхронизации с Foundational Pack и концептуальной базой ARTEMIS v1.0 (2026-04-14).
+Статус: canonical operational governance document for AI agents and assistants in ARTEMIS.
 Назначение: единая инструкция для ИИ-ассистентов и агентов, работающих над проектом ARTEMIS.
 
 ---
@@ -37,11 +37,13 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 - `docs/PRIORITIES.md`
 - `docs/DATA_CONTRACT.md`
 - `docs/CONTROLLED_RELEASE_DECISION.md`
+- `docs/DOCUMENTATION_SYSTEM.md`
 
 Правило:
 - если информация не синхронизирована с canonical docs, она не должна считаться окончательной;
 - `ARTEMIS_CONCEPT.md` определяет миссию, жёсткие принципы, эпистемическую модель и долгосрочную лестницу развития;
 - `ARTEMIS_PRODUCT_SCOPE.md` определяет границы ARTEMIS v1.0, главную единицу ценности и запреты против product drift;
+- `DOCUMENTATION_SYSTEM.md` определяет роли слоёв, порядок чтения, правила размещения документов и приоритет разрешения doc-conflicts;
 - старые целевые имена вроде `ARCHITECTURE.md`, `RELEASE_SYSTEM.md` и `ROADMAP.md` не должны использоваться как текущий canonical-набор, если они не существуют как действующие source-of-truth файлы в репозитории.
 
 ### 2.2 Working docs
@@ -49,7 +51,7 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 Они помогают в разработке, но не заменяют canonical layer.
 
 Отдельное правило:
-- `docs/work/ARTEMIS_AI_STRATEGY.md` обязателен к учёту при продуктовых и AI-related решениях, но остаётся working document, потому что должен обновляться быстрее, чем миссия и product scope.
+- `docs/work/ARTEMIS_AI_STRATEGY_v1_0.md` обязателен к учёту при продуктовых и AI-related решениях, но остаётся working document, потому что должен обновляться быстрее, чем миссия и product scope.
 
 ### 2.3 Audits
 `docs/audits/*` — документы проверки.
@@ -183,7 +185,7 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 - границы scope;
 - проверки;
 - какие canonical docs должны быть обновлены;
-- затрагивает ли изменение `ARTEMIS_CONCEPT.md`, `ARTEMIS_PRODUCT_SCOPE.md` или `docs/work/ARTEMIS_AI_STRATEGY.md`.
+- затрагивает ли изменение `ARTEMIS_CONCEPT.md`, `ARTEMIS_PRODUCT_SCOPE.md` или `docs/work/ARTEMIS_AI_STRATEGY_v1_0.md`.
 
 ### 8.2 Что запрещено
 - рефакторинг без явной причины;
