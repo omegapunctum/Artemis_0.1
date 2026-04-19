@@ -1,4 +1,4 @@
-name: Release Gate
+name: Release Discipline Gate (Structural)
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
 
 jobs:
   release-gate:
+    name: Structural release gate
     runs-on: ubuntu-latest
 
     steps:
@@ -21,4 +22,5 @@ jobs:
         run: pip install -r requirements.txt pytest
 
       - name: Run release gate
+        # Structural release-discipline check; this workflow does not replace full regression testing.
         run: python scripts/release_check.py

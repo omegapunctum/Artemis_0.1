@@ -104,6 +104,7 @@
 
 Статус-обновление (2026-04-15): **baseline stabilized; release gate hardened; фаза переведена в режим завершения**.
 Статус-обновление (2026-04-16): **COMPLETED / CLOSED** в рамках controlled-release scope после green release-gate.
+Статус-обновление (2026-04-18): **COMPLETED / CLOSED** в текущем baseline; deploy в GitHub Pages также проходит через `python scripts/release_check.py`, а release-gate явно зафиксирован как structural release discipline gate.
 
 Фаза включает:
 - синхронизацию `export_meta.json` и `scripts/release_check.py`;
@@ -138,23 +139,11 @@
 - Redis path exists but not fully production-hardened.
 
 Remaining gaps before production scaling:
-- доказать Redis/session путь на реальной инфраструктуре e2e;
-- перейти от process-local assumptions к устойчивой multi-node session модели;
+- доказать Redis/session путь на реальной инфраструктуре в расширенной environment/multi-node конфигурации;
+- перейти от текущего baseline (single-node operational model) к устойчивой multi-node session модели;
 - определить production-grade storage/migration/session persistence контур;
 - добавить production runbook для moderation/runtime операций;
 - закрепить регулярный scaling-focused regression цикл.
-
-Статус-синхронизация после текущего hardening-цикла (2026-04-16):
-- Redis/session real infra proof для single-instance, multi-instance и restart continuity уже получен и зафиксирован тестами/CI;
-- consume-once invalidation для refresh-сессий считается доказанным на baseline+integration уровне;
-- moderation failure/retry path и операторский runbook уже существуют и подтверждены integration evidence;
-- baseline migration discipline (минимальный registry + idempotent apply) считается закрытым на baseline уровне;
-- при этом production-grade persistence discipline, расширенная environment matrix и более глубокий observability/ops слой остаются задачами следующего hardening-шагa.
-
-Уточнение к списку выше:
-- пункты про Redis real infra proof и moderation runbook/integration считать **закрытыми в текущем цикле hardening**;
-- пункты про production-grade storage/migration/session persistence контур и регулярный scaling-focused regression цикл считать **открытыми**;
-- пункт про переход от process-local assumptions трактуется как **частично закрытый**: continuity уже доказана, но полный production multi-node operational envelope ещё не зафиксирован.
 
 Классификация этих хвостов:
 - это **не blockers** для закрытия ФАЗЫ 3;
@@ -264,10 +253,10 @@ Remaining gaps before production scaling:
 ## АКТИВНЫЙ ПОРЯДОК РАБОТ
 
 На текущем цикле проект работает так:
-1. ФАЗА 3 — CONTROLLED RELEASE STABILIZATION
-2. ФАЗА 4 — PWA / UX STABILIZATION
-3. ФАЗА 5 — SCALING / HARDENING
-4. ФАЗА 6 — PRODUCT EXPANSION
+1. ФАЗА 4 — PWA / UX STABILIZATION
+2. ФАЗА 5 — SCALING / HARDENING
+3. ФАЗА 6 — PRODUCT EXPANSION
+4. ФАЗА 3 — CONTROLLED RELEASE STABILIZATION (закрытая baseline-фаза; без reopen при отсутствии нового drift)
 
 Статус-уточнение (после закрытия ФАЗЫ 3):
 - следующий активный рабочий контур: ФАЗА 4;

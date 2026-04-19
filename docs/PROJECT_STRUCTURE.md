@@ -13,10 +13,10 @@
 3. Где находится документация и какой у неё статус.
 
 В версии v4.0 к технической структуре добавляется жёсткая документационная иерархия:
-- canonical;
-- working;
-- audits;
-- archive.
+- canonical source-of-truth layer;
+- working layer (`docs/work/*`);
+- audit layer (`docs/audits/*`);
+- historical reference layer (`docs/archive/*`, `docs/reference/*`).
 
 Это обязательная часть структуры проекта, а не вспомогательная заметка.
 
@@ -62,6 +62,11 @@
 | `README.md` | корневой entrypoint документации | canonical |
 | `sw.js` | service worker | основной |
 | `manifest.json` | PWA manifest | основной |
+
+Дополнение по release/workflow layer:
+- structural release discipline закреплён исполнимыми checks в workflow-слое (`.github/workflows/*`) и в `scripts/release_check.py`;
+- Pages deploy и release-gate используют один и тот же release-check entrypoint;
+- workflow-слой не заменяет полный regression suite и не должен описываться как его эквивалент.
 
 ---
 
@@ -243,7 +248,7 @@ docs/
 
 ### 8.3 Working docs
 
-Целевой слой:
+Текущий слой:
 
 ```text
 docs/work/
@@ -260,13 +265,11 @@ docs/work/
 
 ### 8.4 Audits
 
-Целевой слой:
+Текущий слой:
 
 ```text
 docs/audits/
-├── YYYY-MM-DD_release_audit.md
-├── YYYY-MM-DD_uiux_audit.md
-└── YYYY-MM-DD_data_audit.md
+└── *.md
 ```
 
 Назначение:
@@ -274,22 +277,25 @@ docs/audits/
 - не определяют архитектуру или roadmap;
 - всегда проверяют canonical docs, а не заменяют их.
 
-### 8.5 Archive
+### 8.5 Archive / Reference
 
-Целевой слой:
+Текущий слой:
 
 ```text
 docs/archive/
 └── ...
+
+docs/reference/
+└── ...
 ```
 
 Назначение:
-- старые snapshot-документы;
+- старые snapshot-документы и reference-материалы;
 - historical context;
 - reference only.
 
 Правило:
-- архив нельзя использовать как текущий source of truth.
+- archive/reference слой нельзя использовать как текущий source of truth.
 
 ---
 

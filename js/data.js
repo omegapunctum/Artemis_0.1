@@ -33,14 +33,30 @@ export async function loadFeatures() {
 
   featuresInFlight = (async () => {
     const requestUrl = new URL(`${DATA_BASE_PATH}features.geojson`, document.baseURI);
-    const response = await fetchWithRetry(requestUrl.href);
+    let response;
+    try {
+      response = await fetchWithRetry(requestUrl.href);
+    } catch (error) {
+      console.error('[ARTEMIS:data] Network/fetch error while loading data/features.geojson:', error);
+      throw error;
+    }
     if (!response.ok) {
       notifyCacheState(response);
+      console.error('[ARTEMIS:data] Non-OK response while loading data/features.geojson:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: response.url || requestUrl.href
+      });
       throw new Error(`Не удалось загрузить features.geojson: HTTP ${response.status}`);
     }
     notifyCacheState(response);
 
-    featuresCache = await response.json();
+    try {
+      featuresCache = await response.json();
+    } catch (error) {
+      console.error('[ARTEMIS:data] JSON parse error for data/features.geojson:', error);
+      throw new Error('Не удалось распарсить data/features.geojson как JSON.');
+    }
     const rawFeatures = Array.isArray(featuresCache?.features) ? featuresCache.features : [];
     const count = rawFeatures.length;
     const firstFeature = rawFeatures[0] || null;
@@ -66,7 +82,7 @@ export async function loadFeatures() {
     return await featuresInFlight;
   } catch (error) {
     console.error('Ошибка при загрузке data/features.geojson:', error);
-    showError('Ошибка загрузки данных');
+    showError('Ошибка загрузки данных карты');
     throw createDataLoadError('features.geojson', error);
   } finally {
     featuresInFlight = null;

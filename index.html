@@ -449,13 +449,25 @@
         const uiErrorMessage = error?.code === 'DATA_LOAD_TIMEOUT'
           ? 'Ошибка загрузки данных. Попробуйте обновить страницу.'
           : normalized.message;
+        const failureCode = String(error?.code || '').toUpperCase();
+        const failureResource = String(error?.resource || '').toLowerCase();
+        const isMapFeaturesFailure = failureCode === 'DATA_LOAD_TIMEOUT'
+          || (failureCode === 'DATA_LOAD_FAILED' && failureResource === 'features.geojson')
+          || failureCode === 'MAP_INIT_INVALID_PAYLOAD'
+          || failureCode === 'MAP_BOOTSTRAP_FAILED'
+          || failureResource === 'features.geojson'
+          || String(error?.message || '').toLowerCase().includes('features.geojson');
         runtimeReadiness.failed = true;
         runtimeReadiness.errorMessage = uiErrorMessage;
         showError(uiErrorMessage);
-        showGlobalDataError({
-          message: uiErrorMessage,
-          onRetry: () => bootstrapApp()
-        });
+        if (isMapFeaturesFailure) {
+          hideGlobalDataError();
+        } else {
+          showGlobalDataError({
+            message: uiErrorMessage,
+            onRetry: () => bootstrapApp()
+          });
+        }
         syncRuntimeStatus();
       }
     }

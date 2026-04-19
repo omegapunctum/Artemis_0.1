@@ -1,7 +1,7 @@
 # ARTEMIS
 
-**ARTEMIS** is an interactive geo-historical map built with **MapLibre + GeoJSON**.  
-It visualizes historical events, movements, and entities in space and time.
+**ARTEMIS** is a map-first geo-historical knowledge platform built with **MapLibre + GeoJSON**.  
+It visualizes historical events, movements, and entities in space and time, and provides backend knowledge workflows around that map surface.
 
 ---
 
@@ -12,6 +12,10 @@ ARTEMIS combines:
 - interactive map visualization (MapLibre)
 - user-generated content (UGC)
 - moderation/review runtime flow
+- research slices (private/owner-only knowledge snapshots)
+- stories (thin orchestration over research slices)
+- courses (thin orchestration over stories)
+- explain-context contract payloads for `slice|story|course`
 - batch public publish pipeline
 - progressive web app (PWA)
 

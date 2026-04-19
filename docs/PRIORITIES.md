@@ -24,7 +24,10 @@
 
 ---
 
-## КРИТИЧЕСКИЕ ПРИОРИТЕТЫ
+## КРИТИЧЕСКИЕ ПРИОРИТЕТЫ (ЗАКРЫТЫЙ BASELINE-БЛОК)
+
+Статус блока: **COMPLETED / CLOSED в рамках controlled-release baseline**.  
+Этот блок сохраняется как load-bearing reference закрытых работ, но **не является текущим главным активным приоритетом цикла**.
 
 ### 1. Закрыть data-contract drift между `data/export_meta.json` и `scripts/release_check.py`
 Статус: **COMPLETED / CLOSED (2026-04-15)**.
@@ -88,6 +91,11 @@
 
 ## ВЫСОКИЙ ПРИОРИТЕТ
 
+Текущий практический порядок активных приоритетов:
+1. **PWA / UX stabilization** (основной активный приоритет цикла);
+2. **Scaling / hardening** (следующий приоритет после PWA/UX stabilization);
+3. **Product/documentation coherence** в рамках уже открытого scope, без выхода в новые крупные инициативы.
+
 ### 6. Досинхронизировать canonical documentation framework в репозитории
 Статус: **MOSTLY COMPLETED / BASELINE-ALIGNED (2026-04-16); PHASE-5 EVIDENCE SYNC REQUIRED**.
 Что нужно:
@@ -132,6 +140,7 @@
 ## СРЕДНИЙ ПРИОРИТЕТ
 
 ### 11. Завершить UX/PWA stabilization pass
+Статус: **PRIMARY ACTIVE PRIORITY (PHASE 4)**.
 Что нужно:
 - offline edge cases;
 - installability smoke;
@@ -144,11 +153,13 @@
 - перестать использовать их как активные ориентиры.
 
 ### 13. Подготовить scaling/hardening backlog отдельно от product expansion backlog
+Статус: **NEXT ACTIVE PRIORITY AFTER PHASE 4 STABILIZATION (PHASE 5 PREP)**.
 Что нужно:
 - перестать смешивать архитектурный долг и продуктовые идеи в одном operational списке;
 - использовать `ARTEMIS_PRODUCT_SCOPE.md` как фильтр для product expansion задач.
 
 ### 14. Зафиксировать порядок продуктового ядра внутри будущей Product Expansion phase
+Статус: **ALLOWED ONLY AFTER EXECUTION COHERENCE STABILIZATION (POST PHASE 4/5 GATES)**.
 Что нужно:
 - закрепить `research slice` как главную единицу ценности ARTEMIS v1.0;
 - учесть, что baseline MVP `saved slices` уже реализован (save/list/open/delete, private/owner-only);

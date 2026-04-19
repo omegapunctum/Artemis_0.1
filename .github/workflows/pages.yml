@@ -38,6 +38,9 @@ jobs:
       - name: Basic sanity check
         run: echo "Deploy sanity check passed"
 
+      - name: Release check
+        run: python scripts/release_check.py
+
       - name: Setup Pages
         uses: actions/configure-pages@v6
 

@@ -140,17 +140,17 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 ## 6. ТЕКУЩИЙ ПОРЯДОК РАБОТ
 
 Приоритет фаз:
-1. Controlled Release Stabilization
-2. PWA / UX Stabilization
-3. Scaling / Hardening
-4. Product Expansion
+1. PWA / UX Stabilization
+2. Scaling / Hardening
+3. Product Expansion
+4. Controlled Release Stabilization (closed baseline reference; reopen only on new contract drift)
 
 Приоритет задач внутри цикла:
-1. закрыть contract drift;
-2. синхронизировать docs и release system;
-3. устранить runtime/API drift между frontend и backend;
+1. завершить PWA/UX stabilization pass как текущий верхний практический приоритет;
+2. удержать execution coherence (runtime/docs/release semantics) без reopen уже закрытого controlled-release baseline;
+3. провести следующий scaling/hardening цикл для single-instance/multi-node ограничений и production-grade persistence/ops gaps;
 4. удержать architecture boundaries;
-5. только потом открывать product expansion в границах `ARTEMIS_PRODUCT_SCOPE.md`.
+5. открывать следующий слой product expansion только после stabilization/coherence в границах `ARTEMIS_PRODUCT_SCOPE.md`.
 
 Внутренний порядок будущего product expansion:
 1. research slices / saved state
@@ -289,10 +289,9 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 Не расширять ARTEMIS ценой потери целостности.
 
 Сначала:
-- согласованный release system;
-- согласованный data contract;
-- согласованная documentation hierarchy;
 - устойчивый map-first runtime.
+- устойчивый PWA/UX runtime и execution coherence.
+- следующий scaling/hardening цикл без ложных production-ready claims.
 
 Потом:
 - research slices как стабильная продуктовая единица;

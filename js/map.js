@@ -1,3 +1,5 @@
+import { showError } from './ux.js';
+
 const SOURCE_ID = 'artemis-features';
 const LAYER_ID = 'artemis-points';
 const SELECTED_LAYER_ID = 'artemis-points-selected';
@@ -14,6 +16,7 @@ const MAP_THEME_PRESETS = {
   soft: { id: 'soft', label: 'Мягкая', className: 'map-theme-soft' }
 };
 const DEFAULT_MAP_THEME = 'graphite';
+const MAP_DATA_ERROR_MESSAGE = 'Ошибка загрузки данных карты';
 const MARKER_THEME = {
   point: {
     color: '#22d3ee',
@@ -54,6 +57,34 @@ function syncTopHeaderLayoutMetrics() {
   if (measuredHeight > 0) {
     root.style.setProperty('--top-header-height', `${measuredHeight}px`);
   }
+}
+
+function reportMapDataLoadFailure(reason, details = null) {
+  const errorDetails = details && typeof details === 'object' ? details : { details };
+  console.error('[ARTEMIS:map] Не удалось подготовить данные карты:', { reason, ...errorDetails });
+  showError(MAP_DATA_ERROR_MESSAGE);
+}
+
+function validateInitialFeaturePayload(features) {
+  if (!features || typeof features !== 'object') {
+    const error = new Error('data/features.geojson не загружен или имеет неверный формат payload.');
+    error.code = 'MAP_INIT_INVALID_PAYLOAD';
+    error.resource = 'features.geojson';
+    throw error;
+  }
+  if (!Array.isArray(features.features)) {
+    const error = new Error('data/features.geojson: поле features отсутствует или не является массивом.');
+    error.code = 'MAP_INIT_INVALID_PAYLOAD';
+    error.resource = 'features.geojson';
+    throw error;
+  }
+  if (features.features.length === 0) {
+    const error = new Error('data/features.geojson: features пустой (features.length = 0).');
+    error.code = 'MAP_INIT_INVALID_PAYLOAD';
+    error.resource = 'features.geojson';
+    throw error;
+  }
+  return features;
 }
 
 // Нормализует FeatureCollection и исключает битые объекты из карты.
@@ -111,6 +142,13 @@ function hasPointGeometry(feature) {
 
 // Инициализация карты и подготовка единого источника данных.
 export function initMap(containerId, features) {
+  let validatedFeatures = features;
+  try {
+    validatedFeatures = validateInitialFeaturePayload(features);
+  } catch (error) {
+    reportMapDataLoadFailure('invalid_geojson_payload', { error: String(error?.message || error) });
+    throw error;
+  }
   syncTopHeaderLayoutMetrics();
   const map = new maplibregl.Map({
     container: containerId,
@@ -123,7 +161,7 @@ export function initMap(containerId, features) {
   window.__ARTEMIS_MAP = map;
 
   map.addControl(new maplibregl.NavigationControl(), 'top-right');
-  const initialBuild = buildMapFeatureCollection(features);
+  const initialBuild = buildMapFeatureCollection(validatedFeatures);
   map.__artemis = {
     layerLookup: new Map(),
     lastMapFeatureCount: 0,
@@ -157,6 +195,7 @@ export function initMap(containerId, features) {
       markMapBootstrapReady(map);
     } catch (error) {
       markMapBootstrapFailed(map, error);
+      reportMapDataLoadFailure('map_bootstrap_failed', { error: String(error?.message || error) });
       throw error;
     }
   });
@@ -164,9 +203,11 @@ export function initMap(containerId, features) {
     if (map?.__artemis?.bootstrap?.ready || map?.__artemis?.bootstrap?.failed) return;
     if (!event?.error) return;
     markMapBootstrapFailed(map, event.error);
+    reportMapDataLoadFailure('map_runtime_error', { error: String(event.error?.message || event.error) });
   });
 
-  window.addEventListener('resize', syncTopHeaderLayoutMetrics, { passive: true });
+  map.__artemis.syncTopHeaderLayoutMetricsHandler = syncTopHeaderLayoutMetrics;
+  window.addEventListener('resize', map.__artemis.syncTopHeaderLayoutMetricsHandler, { passive: true });
 
   return map;
 }
@@ -241,8 +282,27 @@ function markMapBootstrapFailed(map, error) {
   map.__artemis.bootstrap = map.__artemis.bootstrap || { ready: false, failed: false, error: null };
   if (map.__artemis.bootstrap.ready || map.__artemis.bootstrap.failed) return;
   map.__artemis.bootstrap.failed = true;
-  map.__artemis.bootstrap.error = error instanceof Error ? error : new Error(String(error || 'Map bootstrap failed.'));
+  const normalizedError = error instanceof Error ? error : new Error(String(error || 'Map bootstrap failed.'));
+  if (!normalizedError.code) normalizedError.code = 'MAP_BOOTSTRAP_FAILED';
+  if (!normalizedError.resource) normalizedError.resource = 'map-bootstrap';
+  map.__artemis.bootstrap.error = normalizedError;
   map.fire('artemis:bootstrap-failed', { error: map.__artemis.bootstrap.error });
+  cleanupFailedBootstrapResidue(map);
+}
+
+function cleanupFailedBootstrapResidue(map) {
+  const resizeHandler = map?.__artemis?.syncTopHeaderLayoutMetricsHandler;
+  if (resizeHandler) {
+    window.removeEventListener('resize', resizeHandler);
+  }
+  if (window.__ARTEMIS_MAP === map) {
+    window.__ARTEMIS_MAP = null;
+  }
+  try {
+    map.remove();
+  } catch (_error) {
+    // noop: bootstrap already failed, cleanup is best-effort only.
+  }
 }
 
 function ensureMapBindingsReady(map) {
