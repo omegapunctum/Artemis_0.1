@@ -61,13 +61,13 @@
 - стабильные loading/error/offline состояния;
 - финальный main-screen UX baseline.
 
-### 2. Закрыть documentation/runtime claim drift в canonical docs
+### 2. Закрыть остаточный canonical docs cleanup tail
 Статус: **ACTIVE**.
 Что нужно:
-- досинхронизировать `README.md` с текущей operational truth по auth/scaling, workflows/release semantics и product framing;
 - удержать единый canonical set между `README.md`, `docs/ARTEMIS_MASTER_PROMPT.md`, `docs/PROJECT_STRUCTURE.md`, `docs/PROJECT_PHASES.md`, `docs/PRIORITIES.md`, `docs/DATA_CONTRACT.md`, `docs/CONTROLLED_RELEASE_DECISION.md` и `docs/DOCUMENTATION_SYSTEM.md`;
-- убрать из canonical-описаний старые целевые имена документов (`ARCHITECTURE.md`, `RELEASE_SYSTEM.md`, `ROADMAP.md`), если они не являются действующими source-of-truth файлами;
-- перевести старые документы в archive/reference-слой только как historical reference.
+- завершить cleanup active `docs/` root против canonical allowlist;
+- перевести non-canonical working/spec/snapshot документы в `docs/work/`, `docs/archive/` или `docs/reference/` по их реальной роли;
+- после cleanup проверить cross-links и не допускать повторного competing documentation layer.
 
 ### 3. Удержать canonical public map source без повторного drift
 Статус: **ACTIVE**.
@@ -81,18 +81,18 @@
 - перестать держать временные `place`-сущности в production-like контурах;
 - явно отделить internal/tooling runtime read-model от публичного data layer.
 
-### 5. Закрыть single-instance auth/scaling risk как документированный technical debt
+### 5. Подготовить scaling/hardening cycle без ложных production-ready claims
 Статус: **ACTIVE / PHASE 5 PREP**.
 Что нужно:
-- зафиксировать текущий proven baseline отдельно от production-hardened envelope;
+- удерживать уже зафиксированное различие между proven controlled baseline и production-hardened envelope;
 - подготовить отдельный scaling-cycle: session store, refresh registry, storage model, persistence/ops contour;
 - не выдавать имеющийся Redis/session proof за полностью production-ready multi-node модель.
 
-### 6. Подтвердить release/readiness/manual smoke одной терминологией
-Статус: **ACTIVE DOCS-COHERENCE TASK**.
+### 6. Завершить финальную терминологическую полировку release/readiness docs
+Статус: **ACTIVE DOCS-COHERENCE TAIL**.
 Что нужно:
-- унифицировать язык release docs;
-- исключить документы, которые создают ложное ощущение полного production green при существующих ограничениях;
+- удержать единый язык release/readiness/manual smoke после уже выполненной baseline-синхронизации;
+- исключить остаточные документы или формулировки, создающие ложное ощущение полного production green при существующих ограничениях;
 - удержать coverage для upload/runtime contract, чтобы критичный drift не проходил между frontend и backend без тестового сигнала.
 
 ---
@@ -106,11 +106,12 @@
 - сократить длинные dated status updates;
 - убрать из phase document лишний closure/history noise.
 
-### 8. Провести cleanup `docs/reference/` и старых snapshot-документов
-Статус: **ACTIVE HYGIENE TASK**.
+### 8. Довести hygiene cleanup `docs/reference/` и snapshot-слоя до конца
+Статус: **ACTIVE HYGIENE TAIL**.
 Что нужно:
-- сохранить архивную ценность старых версий;
-- перестать использовать их как активные ориентиры.
+- сохранить архивную и reference-ценность старых версий;
+- перестать использовать их как активные ориентиры;
+- завершить разложение remaining non-canonical документов по правильным слоям.
 
 ### 9. Подготовить scaling/hardening backlog отдельно от product expansion backlog
 Статус: **PHASE 5 PREP**.
