@@ -38,3 +38,12 @@ Clarification (raw/source diagnostics vs release-quality signals):
 - `data/features.json` is a raw/supporting source artifact and may include source-side diagnostic metadata from Airtable;
 - raw diagnostic metadata (including `fields.id_status`) is not release-gating by itself;
 - release warnings/rejections are derived from ETL validation/export pipeline signals (e.g., `export_meta.json` + `rejected.json`), not from raw source metadata alone.
+
+## Runtime Map Feed Boundary (Current Baseline)
+
+Boundary rules:
+- canonical public map dataset remains `data/features.geojson`;
+- `GET /api/map/feed` is an auxiliary, non-canonical runtime support/read-model endpoint for authenticated UI/runtime scenarios;
+- current baseline implementation of `/api/map/feed` must be treated as a temporary MVP adapter, not as a production-grade public read model over the published dataset;
+- `/api/map/feed` may aggregate runtime-only entities and transitional/mock-backed inputs required by runtime UX flows;
+- runtime consumers must not treat `/api/map/feed` as a replacement for published `/data/*` artifacts or as a stable public export contract.
