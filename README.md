@@ -122,20 +122,28 @@ Vanilla JavaScript (no frameworks):
   - `GET /api/me`
   - `GET /api/health`
 - Drafts:
-  - `GET|POST|PUT|DELETE /api/drafts`
+  - `GET /api/drafts`
+  - `GET /api/drafts/my`
+  - `POST /api/drafts`
+  - `PUT /api/drafts/{draft_id}`
+  - `DELETE /api/drafts/{draft_id}`
 - Uploads:
   - `POST /api/uploads`
-  - `POST /api/uploads/image`
-    - both upload routes are runtime endpoints; use backend-returned file URL in responses as source of truth
+    - runtime upload endpoint; use backend-returned file URL in the response as source of truth
     - request (multipart/form-data):
       - required: `file`, `license`
-      - optional: `title`, `description`
     - response:
       - `id` (string)
       - `url` (string)
       - `filename` (string)
       - `license` (string)
-    - runtime usage: frontend must use backend-returned `url` as the single source of truth for uploaded file access.
+  - `POST /api/uploads/image`
+    - draft-image upload endpoint bound to an existing draft
+    - request (multipart/form-data):
+      - required: `draft_id`, `file`
+    - response:
+      - `url` (string)
+  - public uploaded-file serving remains static via `/uploads/*`, not via a separate documented API read route
 - Moderation (`/api/moderation/*`):
   - review/approve/reject runtime routes for moderation workflow
 - Research slices (`/api/research-slices/*`):
