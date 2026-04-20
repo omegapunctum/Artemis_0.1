@@ -99,22 +99,11 @@
 - release gate hardened;
 - controlled-release baseline закрыт в текущем scope.
 
-Фаза включала:
-- синхронизацию `export_meta.json` и `scripts/release_check.py`;
-- унификацию release terminology;
-- синхронизацию checked-in data artifacts;
-- фиксацию единого release contract;
-- выравнивание README / release docs / checklist / workflows;
-- устранение runtime/API drift между `js/*` и backend routes;
-- выравнивание canonical docs между `README.md`, `docs/*` и фактической структурой репозитория.
-
-Обязательные условия закрытия:
-- release gate проверяет тот же контракт, который реально лежит в `data/*`;
-- `export_meta.json`, `features.json`, `features.geojson`, `rejected.json` не расходятся по смыслу;
-- controlled release описан в одном термино-согласованном наборе документов;
-- manual smoke, readiness и automated checks не противоречат друг другу;
-- upload/auth/runtime API surface не расходится между frontend, backend, README и tests;
-- canonical docs не содержат конкурирующих старых названий документов и старых source-of-truth схем.
+Фаза зафиксировала:
+- единый release/data contract для checked-in artifacts и release gate;
+- согласованную release terminology между canonical docs и workflow/readiness-слоем;
+- устранение критичного runtime/API drift между frontend, backend, README и tests в baseline-контуре;
+- закрытие controlled-release baseline без reopen при отсутствии нового contract drift.
 
 Нельзя относить к этой фазе:
 - новые продуктовые функции;
@@ -129,11 +118,6 @@
 - multi-instance не должен описываться как fully production-ready;
 - scaling/persistence/ops contour остаётся отдельным следующим классом задач.
 
-Классификация remaining gaps:
-- это не blockers для закрытия ФАЗЫ 3;
-- это следующий класс задач для ФАЗЫ 5 — SCALING / HARDENING;
-- PWA/UX runtime polish и installability/smoke относятся к ФАЗЕ 4.
-
 ---
 
 ## ФАЗА 4 — PWA / UX STABILIZATION [АКТИВНАЯ ФАЗА №1]
@@ -141,12 +125,10 @@
 Цель:
 Довести пользовательский runtime до устойчивого и предсказуемого состояния.
 
-Статус-синхронизация:
-- baseline MVP для research slices уже реализован в backend+frontend контуре;
-- в текущем baseline поддерживаются: save slice, list my slices, open/restore context, delete;
-- access model текущего слоя: private-only, owner-only;
-- stories / courses / explain-context contract уже реализованы как thin orchestration/runtime layers поверх slices (private/owner-only);
-- share mode и AI-generation/explanation слой поверх ECC остаются в следующих фазах.
+Текущая граница фазы:
+- активная задача этой фазы — эксплуатационная устойчивость интерфейса и PWA/runtime-поведения;
+- продуктовые thin runtime layers уже существуют в baseline, но не должны раздувать scope этой фазы;
+- share mode и AI-generation/explanation слой остаются в следующих фазах.
 
 Фаза включает:
 - завершение PWA bypass/no-cache semantics;
@@ -199,15 +181,12 @@
 Цель:
 Расширять продукт только после стабилизации baseline и в границах зафиксированного ARTEMIS v1.0 scope.
 
-Планируемые направления:
-- развитие research-slice слоя поверх уже реализованного MVP, включая shareable-state как следующий слой;
-- stories / guided scenarios как следующий слой глубины поверх уже реализованного thin runtime слоя;
-- courses как следующий слой глубины поверх уже реализованного thin runtime слоя;
-- explainable AI assistance как следующий слой поверх уже реализованного ECC;
-- аналитика и compare flows;
-- «Мои проекты»;
-- локализация;
-- ограниченное расширение типов сущностей и сценариев использования.
+Планируемое ядро фазы:
+- развитие research-slice слоя, включая shareable-state как следующий слой;
+- stories как следующий слой глубины;
+- courses как следующий слой глубины;
+- explainable AI assistance как следующий слой поверх ECC;
+- только затем вторичные product extensions.
 
 Правило:
 - эта фаза не должна открываться раньше закрытия release и runtime stabilization;
