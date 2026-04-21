@@ -25,6 +25,7 @@ class Metrics:
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._started_at = time.time()
+        self._last_server_error_at: float | None = None
         self._counters: dict[str, int] = {
             'total_requests': 0,
             'total_errors': 0,
@@ -38,6 +39,17 @@ class Metrics:
         with self._lock:
             self._counters[key] = self._counters.get(key, 0) + amount
 
+    def mark_server_error(self) -> None:
+        with self._lock:
+            self._last_server_error_at = time.time()
+
+    def has_recent_server_error(self, window_seconds: int) -> bool:
+        with self._lock:
+            last_error_at = self._last_server_error_at
+        if last_error_at is None:
+            return False
+        return (time.time() - last_error_at) <= max(1, int(window_seconds))
+
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
             counts = dict(self._counters)
@@ -48,6 +60,7 @@ class Metrics:
 
 
 metrics = Metrics()
+HEALTH_ERROR_DECAY_SECONDS = 120
 
 
 class KeyValueFormatter(logging.Formatter):
@@ -198,6 +211,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
         metrics.increment('auth_failures')
     if status_code >= 500:
         metrics.increment('total_errors')
+        metrics.mark_server_error()
     level = logging.ERROR if status_code >= 500 else logging.WARNING
     log_event(
         level,
@@ -234,6 +248,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     metrics.increment('total_errors')
+    metrics.mark_server_error()
     log_event(
         logging.ERROR,
         'unhandled_exception',
@@ -252,7 +267,7 @@ def health_payload() -> dict[str, Any]:
     snapshot = metrics.snapshot()
     counts = snapshot['counts']
     return {
-        'ok': counts.get('total_errors', 0) == 0,
+        'ok': not metrics.has_recent_server_error(HEALTH_ERROR_DECAY_SECONDS),
         'uptime': snapshot['uptime_seconds'],
         'counts': counts,
     }

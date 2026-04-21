@@ -2002,6 +2002,11 @@ function setupOverlayManager(elements, state, map) {
   const closeAll = () => {
     ['search', 'filters', 'layers', 'bookmarks', 'slices', 'courses', 'live'].forEach((key) => closePrimaryPanel(elements, state, key));
   };
+  const collapseTopActions = () => {
+    if (!elements.topActions?.classList.contains('is-expanded')) return;
+    elements.topActions.classList.remove('is-expanded');
+    elements.overflowBtn?.setAttribute('aria-expanded', 'false');
+  };
   state.overlay.closeAll = closeAll;
 
   document.addEventListener('artemis:overlay-open', (event) => {
@@ -2009,6 +2014,7 @@ function setupOverlayManager(elements, state, map) {
     if (!state.viewport.isMobile) return;
     if (source === 'detail') {
       closeAll();
+      collapseTopActions();
       return;
     }
     if (source === 'primary') {
@@ -2017,6 +2023,7 @@ function setupOverlayManager(elements, state, map) {
     }
     if (source === 'ugc' || source === 'moderation') {
       closeAll();
+      collapseTopActions();
       clearSelection(state, elements, map);
     }
   });
@@ -2196,7 +2203,8 @@ function renderCards(elements, state, map) {
     renderCardsState(elements, { ...state, loading: false, empty: !state.filteredFeatures.length });
     return;
   }
-  const cardsKey = state.filteredFeatureIds.slice(0, 80).join('|');
+  const renderedRibbonFeatures = getRibbonRenderFeatures(state.filteredFeatures, getSelectedFeature(state), 80);
+  const cardsKey = renderedRibbonFeatures.map((feature) => getFeatureUiId(feature)).join('|');
   if (!state.error && state.filteredFeatures.length && cardsKey === state.lastRenderedCardsKey) {
     syncSelectedCardState(elements, state.selectedFeatureId);
     syncMapHoveredCardState(elements, state.hoveredFeatureId);
@@ -2215,7 +2223,7 @@ function renderCards(elements, state, map) {
   }
 
   renderCardsState(elements, { ...state, loading: false, empty: false });
-  state.filteredFeatures.slice(0, 80).forEach((feature) => {
+  renderedRibbonFeatures.forEach((feature) => {
     const props = normalizeProps(feature);
     const featureId = getFeatureUiId(feature);
     const item = document.createElement('li');
@@ -2266,6 +2274,20 @@ function renderCards(elements, state, map) {
     list.appendChild(item);
   });
   syncMapHoveredCardState(elements, state.hoveredFeatureId);
+}
+
+function getRibbonRenderFeatures(filteredFeatures, selectedFeature, limit = 80) {
+  const safeLimit = Math.max(1, Number(limit) || 80);
+  const visible = (Array.isArray(filteredFeatures) ? filteredFeatures : []).slice(0, safeLimit);
+  if (!selectedFeature) return visible;
+  const selectedId = getFeatureUiId(selectedFeature);
+  if (!selectedId) return visible;
+  if (visible.some((feature) => getFeatureUiId(feature) === selectedId)) return visible;
+  const selectedInFiltered = (Array.isArray(filteredFeatures) ? filteredFeatures : [])
+    .find((feature) => getFeatureUiId(feature) === selectedId);
+  if (!selectedInFiltered) return visible;
+  if (!visible.length) return [selectedInFiltered];
+  return [...visible.slice(0, safeLimit - 1), selectedInFiltered];
 }
 
 function buildVisibilityKey(state) {
@@ -2348,6 +2370,8 @@ function showDetailPanel(state, elements, map, feature, options = {}) {
   } else {
     elements.detailPanel.classList.remove('is-mobile-sheet', 'is-expanded');
   }
+  syncDetailPanelExpandControl(elements, state);
+  syncTimelineInteractionLock(elements, state);
   syncDetailDockLayout(elements, state);
   document.dispatchEvent(new CustomEvent('artemis:overlay-open', { detail: { source: 'detail' } }));
   if (Number.isInteger(state.detailRenderFrameId)) {
@@ -2376,6 +2400,8 @@ function hideDetailPanel(elements, state = null) {
   updateDetailPanelHeading(elements, 'preview');
   elements.detailPanel.classList.remove('is-selected');
   setPanelOpenState(elements.detailPanel, false);
+  syncDetailPanelExpandControl(elements, state);
+  syncTimelineInteractionLock(elements, state);
   syncDetailDockLayout(elements, state);
   if (state) restoreDetailFocus(elements, state);
 }
@@ -3228,6 +3254,8 @@ function applyResponsiveLayout(elements, state, map) {
     elements.detailPanel.classList.add('is-mobile-sheet');
     syncDetailSheetState(state, elements);
   }
+  syncDetailPanelExpandControl(elements, state);
+  syncTimelineInteractionLock(elements, state);
   syncDetailDockLayout(elements, state);
   map?.resize?.();
 }
@@ -3259,6 +3287,28 @@ function syncDetailSheetState(state, elements) {
     expandBtn.textContent = state.detailSheetExpanded ? '⇩' : '⇧';
     expandBtn.setAttribute('aria-label', state.detailSheetExpanded ? 'Свернуть панель деталей' : 'Развернуть панель деталей');
   }
+}
+
+function syncDetailPanelExpandControl(elements, state) {
+  const expandBtn = document.getElementById('detail-panel-expand');
+  const panel = elements?.detailPanel;
+  if (!expandBtn || !panel) return;
+  const shouldShow = Boolean(state?.viewport?.isMobile) && !panel.hidden;
+  expandBtn.hidden = !shouldShow;
+  if (!shouldShow) {
+    expandBtn.setAttribute('aria-expanded', 'false');
+    expandBtn.textContent = '⇧';
+    expandBtn.setAttribute('aria-label', 'Развернуть панель деталей');
+  }
+}
+
+function syncTimelineInteractionLock(elements, state) {
+  const bottomPanel = document.getElementById('bottom-panel');
+  const detailPanel = elements?.detailPanel;
+  if (!bottomPanel || !detailPanel) return;
+  const shouldLock = Boolean(state?.viewport?.isMobile) && !detailPanel.hidden;
+  bottomPanel.classList.toggle('is-interaction-blocked', shouldLock);
+  bottomPanel.inert = shouldLock;
 }
 
 function updateDetailPanelHeading(elements, mode = 'preview') {

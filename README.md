@@ -104,12 +104,24 @@ Vanilla JavaScript (no frameworks):
 - In static mode, auth refresh flow must not spam POST refresh attempts against unavailable endpoints.
 - Auth refresh guard prevents recurring `405` noise on static runtime by using controlled fallback behavior.
 
+## PWA Runtime Baseline Semantics (Current)
+
+- Service worker static asset handling is currently **cache-first baseline** for static resources; freshness is tied to service worker update flow (new worker install/activation + update application), so static assets may remain stale until that flow completes.
+- Offline baseline is currently **data-offline oriented**, not full app-shell offline navigation mode: map/data requests can fall back to cached data where present, but navigation itself is network-first/no-store and does not provide a dedicated offline shell fallback page.
+- Private/auth/API requests are bypassed from SW cache handling (network-only path), and responses marked `Cache-Control: no-store` or `private` are intentionally not written to cache.
+
 ## Auth / Deployment Constraints (Current Baseline)
 
 - `AUTH_SECRET_KEY` **must** be explicitly configured for real runtime; ephemeral per-process fallback is dev-only and not an acceptable deployment mode.
 - Current auth/session guarantees should be treated as **baseline-capable but not fully production-hardened for multi-instance deployments**.
 - The project already includes hardening work beyond the original memory-only MVP, including Redis-backed/session continuity proof paths and related integration coverage, but this should **not** be described as a finished production-ready multi-node auth/session architecture.
 - Multi-instance scaling, persistence, and ops hardening remain part of the next dedicated scaling/hardening cycle.
+- Current persistence baseline uses a **shared SQLAlchemy engine/Base scope** (auth + drafts + research slices + stories + courses) rather than isolated per-domain database engines.
+- Migration/bootstrap behavior is **runtime-startup driven**: `init_db()` paths run during API startup and apply versioned migrations against the active DB.
+- Versioned migrations use a shared `schema_version` discipline and should be treated as a current baseline mechanism, not as a fully hardened production migration platform.
+- Runtime startup for API is currently **fail-fast** on DB/bootstrap/migration initialization errors (`init_db()` startup path), and should be treated as baseline behavior, not as a fully hardened startup-orchestration platform.
+- Current `/api/health` semantics are baseline-level and process-local: `total_errors` remains an accumulated historical diagnostic counter, while `health.ok` reflects whether there were recent server-side errors within a fixed baseline decay window; this should not be interpreted as a fully hardened readiness/SLO contract.
+- Backend runtime currently guarantees request correlation and structured failure envelope at baseline level (`X-Request-ID` + `request_id` in error payloads), but this should not be described as a completed observability platform.
 
 ---
 

@@ -86,6 +86,7 @@
 Что нужно:
 - удерживать уже зафиксированное различие между proven controlled baseline и production-hardened envelope;
 - подготовить отдельный scaling-cycle: session store, refresh registry, storage model, persistence/ops contour;
+- зафиксировать, что sticky fail-state из historical 5xx для `health.ok` уже устранён через process-local decay semantics; следующий hardening topic — улучшение observability/readiness интерпретации (thresholds/window tuning, signal policy, ops-гайд) без ложных claims о fully production-grade readiness platform;
 - не выдавать имеющийся Redis/session proof за полностью production-ready multi-node модель.
 
 ### 6. Завершить финальную терминологическую полировку release/readiness docs

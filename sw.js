@@ -182,6 +182,7 @@ async function handleNavigationRequest(request) {
     return await fetch(request, { cache: 'no-store' });
   } catch (error) {
     console.debug('[SW] navigation network failed');
+    notifyClients({ type: 'ARTEMIS_NAVIGATION_OFFLINE_UNAVAILABLE' });
     return Response.error();
   }
 }
@@ -191,6 +192,7 @@ async function handleStaticRequest(request) {
     const cache = await caches.open(RUNTIME_CACHE);
     const cachedResponse = await cache.match(request) || await caches.match(request);
     if (cachedResponse) {
+      revalidateStaticInBackground(request, cache);
       console.debug('[SW] static cache hit:', request.url);
       return cachedResponse;
     }
@@ -216,6 +218,16 @@ async function handleStaticRequest(request) {
       return Response.error();
     }
   }
+}
+
+function revalidateStaticInBackground(request, cache) {
+  fetch(request, { cache: 'no-store' })
+    .then(async (networkResponse) => {
+      if (networkResponse.ok && isCacheableResponse(networkResponse)) {
+        await cache.put(request, networkResponse.clone());
+      }
+    })
+    .catch(() => {});
 }
 
 function isCacheableResponse(response) {
