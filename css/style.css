@@ -835,6 +835,10 @@ button:focus-visible {
   border-color: rgba(148, 163, 184, 0.2);
   box-shadow: 0 6px 16px rgba(2, 6, 23, 0.18);
 }
+#bottom-panel.is-interaction-blocked {
+  pointer-events: none;
+  opacity: 0.66;
+}
 .timeline-row { display: grid; gap: 10px; }
 .timeline-head {
   display: flex;

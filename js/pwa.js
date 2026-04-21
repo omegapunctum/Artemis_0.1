@@ -99,8 +99,8 @@ function handleServiceWorkerMessage(event) {
     showSystemMessage('Network unavailable, showing cached data', { variant: 'warning', timeout: 3200 });
   } else if (payload.type === 'ARTEMIS_DATA_CACHE_MISS') {
     showSystemMessage('Offline cache is empty for requested data', { variant: 'warning', timeout: 3600 });
-  } else if (payload.type === 'ARTEMIS_NAVIGATION_OFFLINE_FALLBACK') {
-    showSystemMessage('Opened offline version from cache', { variant: 'warning', timeout: 3000 });
+  } else if (payload.type === 'ARTEMIS_NAVIGATION_OFFLINE_UNAVAILABLE') {
+    showSystemMessage('Offline navigation is unavailable in current mode', { variant: 'warning', timeout: 3400 });
   }
 }
 
