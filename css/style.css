@@ -685,6 +685,11 @@ body { overflow: hidden; }
   max-height: min(62vh, 520px);
   overflow: auto;
 }
+#explore-toolbar-shell > #courses-panel,
+#explore-toolbar-shell > #live-panel {
+  top: calc(100% + 8px);
+  right: 0;
+}
 .courses-list {
   display: grid;
   gap: 6px;

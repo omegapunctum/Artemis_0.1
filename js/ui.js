@@ -264,6 +264,7 @@ export async function initUI(map, features) {
     liveState: createLiveState(getRecentFeatures(18, { type: 'FeatureCollection', features: allFeatures })),
     liveError: '',
     sliceSelectionSet: new Set(),
+    sliceAnchorFeatureId: null,
     sliceOpenedTitle: '',
     sliceOpenedAnnotationPlan: null,
     stories: [],
@@ -524,7 +525,6 @@ export async function initUI(map, features) {
   });
 
   state.loading = false;
-  openExploreWorkspaceSection(elements, state, 'layers');
   applyState();
   applyResponsiveLayout(elements, state, map);
 
@@ -2419,7 +2419,7 @@ function showDetailPanel(state, elements, map, feature, options = {}) {
 
   const props = normalizeProps(feature);
   const detail = viewMode === 'full'
-    ? buildFullDetailContent(state, props, feature)
+    ? buildFullDetailContent(state, elements, map, props, feature)
     : buildPreviewDetailContent(state, elements, map, feature, props);
 
   elements.detailPanel.dataset.mode = viewMode;
@@ -2924,7 +2924,9 @@ function updateResearchContextBar(elements, state) {
   const objectsLabel = `Объекты: ${Math.max(0, state?.filteredFeatures?.length || 0)}`;
   const sliceStateLabel = state.researchContextDirty ? 'Изменён' : 'Не сохранён';
   const triggerLabel = state?.sliceOpenedTitle ? String(state.sliceOpenedTitle) : 'Новый срез';
-  const renderKey = [periodLabel, layersLabel, objectsLabel, sliceStateLabel, triggerLabel].join('||');
+  const anchorTitleSuffix = state?.sliceAnchorFeatureId ? ' · anchor выбран' : '';
+  const triggerTitle = `${triggerLabel}${anchorTitleSuffix}`;
+  const renderKey = [periodLabel, layersLabel, objectsLabel, sliceStateLabel, triggerLabel, triggerTitle].join('||');
   if (renderKey === state.researchContextLastRenderedKey) return;
   state.researchContextLastRenderedKey = renderKey;
 
@@ -2937,7 +2939,7 @@ function updateResearchContextBar(elements, state) {
   }
   if (elements.researchSliceTrigger) {
     elements.researchSliceTrigger.textContent = triggerLabel;
-    elements.researchSliceTrigger.title = triggerLabel;
+    elements.researchSliceTrigger.title = triggerTitle;
   }
 }
 
@@ -3506,14 +3508,46 @@ function buildPreviewDetailContent(state, elements, map, feature, props) {
     }));
     showDetailPanel(state, elements, map, feature, { mode: 'full', force: true });
   });
-  actionsWrap.append(moreBtn);
+  const addToSliceBtn = document.createElement('button');
+  addToSliceBtn.type = 'button';
+  addToSliceBtn.className = 'ui-button ui-button-secondary';
+  addToSliceBtn.textContent = 'Добавить в срез';
+  addToSliceBtn.dataset.action = 'add-to-slice';
+  addToSliceBtn.addEventListener('click', () => {
+    if (!(state.sliceSelectionSet instanceof Set)) state.sliceSelectionSet = new Set();
+    if (!featureId || state.sliceSelectionSet.has(featureId)) return;
+    state.sliceSelectionSet.add(featureId);
+    updateResearchContextBar(elements, state);
+    if (elements.slicesPanel && !elements.slicesPanel.hidden) {
+      renderSlicesPanel(elements, state, map);
+    }
+    showUiSystemMessage('Объект добавлен в срез', {
+      variant: 'success',
+      timeout: 1600
+    });
+  });
+  const anchorBtn = document.createElement('button');
+  anchorBtn.type = 'button';
+  anchorBtn.className = 'ui-button ui-button-secondary';
+  anchorBtn.textContent = 'Использовать как anchor';
+  anchorBtn.dataset.action = 'set-slice-anchor';
+  anchorBtn.addEventListener('click', () => {
+    if (!featureId || state.sliceAnchorFeatureId === featureId) return;
+    state.sliceAnchorFeatureId = featureId;
+    updateResearchContextBar(elements, state);
+    showUiSystemMessage('Объект выбран как anchor', {
+      variant: 'success',
+      timeout: 1600
+    });
+  });
+  actionsWrap.append(moreBtn, addToSliceBtn, anchorBtn);
   actionsSection.appendChild(actionsWrap);
   detail.appendChild(actionsSection);
 
   return detail;
 }
 
-function buildFullDetailContent(state, props, feature) {
+function buildFullDetailContent(state, elements, map, props, feature) {
   const layerLabel = state.layerLookup.get(String(props.layer_id || '').trim()) || String(props.layer_id || '').trim();
   const dateLabel = formatRangeLabel(props.date_start, props.date_end);
   const title = getPrimaryTitle(props);
@@ -3621,6 +3655,37 @@ function buildFullDetailContent(state, props, feature) {
   if (props.layer_id) appendMetaRow(technicalSection, 'Layer ID', props.layer_id);
   if (props.coordinates_confidence) appendMetaRow(technicalSection, 'Coordinates confidence', props.coordinates_confidence);
   if (technicalSection.querySelector('.detail-meta-row')) detail.appendChild(technicalSection);
+
+  const actionsSection = document.createElement('section');
+  actionsSection.className = 'detail-section';
+  const actionsWrap = document.createElement('div');
+  actionsWrap.className = 'detail-actions';
+  const focusBtn = document.createElement('button');
+  focusBtn.type = 'button';
+  focusBtn.className = 'ui-button ui-button-secondary';
+  focusBtn.textContent = 'Сфокусировать на карте';
+  focusBtn.dataset.action = 'focus-on-map';
+  focusBtn.addEventListener('click', () => {
+    const coordinates = feature?.geometry?.coordinates;
+    const hasCoordinates = Array.isArray(coordinates)
+      && Number.isFinite(Number(coordinates[0]))
+      && Number.isFinite(Number(coordinates[1]));
+    if (!hasCoordinates) {
+      showUiSystemMessage('Не удалось сфокусироваться на объекте', {
+        variant: 'warning',
+        timeout: 1800
+      });
+      return;
+    }
+    focusFeatureOnMap(map, feature);
+    showUiSystemMessage('Карта сфокусирована на объекте', {
+      variant: 'success',
+      timeout: 1600
+    });
+  });
+  actionsWrap.appendChild(focusBtn);
+  actionsSection.appendChild(actionsWrap);
+  detail.appendChild(actionsSection);
 
   return detail;
 }
