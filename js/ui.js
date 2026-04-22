@@ -270,6 +270,7 @@ export async function initUI(map, features) {
     sliceCompareSelectionIds: [],
     sliceComparePanelOpen: false,
     sliceAnchorFeatureId: null,
+    sliceOpenedId: '',
     sliceOpenedTitle: '',
     sliceOpenedAnnotationPlan: null,
     stories: [],
@@ -1202,13 +1203,15 @@ function renderSlicesPanel(elements, state, map) {
         enabledLayerIds: Array.from(state.enabledLayerIds || []),
         activeQuickLayerIds: Array.from(state.activeQuickLayerIds || [])
       });
-      await createResearchSlice(payload);
+      const createdSlice = await createResearchSlice(payload);
+      const createdSliceId = String(createdSlice?.id || '').trim();
       titleInput.value = '';
       descInput.value = '';
       factInput.value = '';
       interpretationInput.value = '';
       hypothesisInput.value = '';
       if (state.sliceSelectionSet instanceof Set) state.sliceSelectionSet.clear();
+      state.sliceOpenedId = createdSliceId || '';
       state.sliceOpenedTitle = String(payload?.title || '').trim();
       markResearchContextAsSaved(state);
       updateResearchContextBar(elements, state);
@@ -1291,12 +1294,27 @@ function renderSlicesPanel(elements, state, map) {
       message: 'Настройте карту, выберите объекты и сохраните первый срез — он появится в этом списке.'
     }));
   } else {
-    const openedTitleKey = String(state.sliceOpenedTitle || '').trim().toLowerCase();
+    const openedSliceId = String(state.sliceOpenedId || '').trim();
     const availableSliceById = new Map(
       state.researchSlices
         .map((slice) => [String(slice?.id || '').trim(), slice])
         .filter(([id]) => id)
     );
+    const restoreSliceFromEntry = async (slice) => {
+      try {
+        const rawSlice = await getResearchSlice(String(slice?.id || ''));
+        applyResearchSliceContext(rawSlice, state, elements, map);
+        state.sliceOpenedId = String(rawSlice?.id || slice?.id || '').trim();
+        state.sliceOpenedTitle = String(rawSlice?.title || slice?.title || '').trim();
+        state.sliceOpenedAnnotationPlan = buildSliceAnnotationDisplayPlan(rawSlice);
+        markResearchContextAsSaved(state);
+        updateResearchContextBar(elements, state);
+        renderSlicesPanel(elements, state, map);
+        showUiSystemMessage('Срез восстановлен', { variant: 'success', timeout: 2200 });
+      } catch (error) {
+        showUiSystemMessage(normalizeAppError(error, 'Не удалось открыть срез.').message, { variant: 'warning', timeout: 3200 });
+      }
+    };
     state.sliceCompareSelectionIds = (Array.isArray(state.sliceCompareSelectionIds) ? state.sliceCompareSelectionIds : [])
       .filter((id) => availableSliceById.has(String(id || '').trim()))
       .slice(0, 2);
@@ -1305,13 +1323,16 @@ function renderSlicesPanel(elements, state, map) {
     if (state.sliceComparePanelOpen) {
       const comparePanel = document.createElement('section');
       comparePanel.className = 'slice-compare-panel';
+      const comparePanelHeader = document.createElement('header');
+      comparePanelHeader.className = 'panel-stack';
       const comparePanelTitle = document.createElement('h5');
       comparePanelTitle.className = 'panel-title';
       comparePanelTitle.textContent = 'Сравнение срезов';
-      comparePanel.appendChild(comparePanelTitle);
+      comparePanelHeader.appendChild(comparePanelTitle);
 
       const compareFallback = state.sliceCompareSelectionIds.length < 2;
       if (compareFallback) {
+        comparePanel.appendChild(comparePanelHeader);
         const fallback = document.createElement('p');
         fallback.className = 'status-summary';
         fallback.textContent = 'Для сравнения нужно выбрать два среза';
@@ -1321,10 +1342,23 @@ function renderSlicesPanel(elements, state, map) {
           .map((sliceId) => availableSliceById.get(String(sliceId || '').trim()))
           .filter(Boolean);
         const selectedTitles = selectedSlices.map((slice) => String(slice?.title || '').trim()).filter(Boolean);
+        const openedCompareSlice = selectedSlices.find((slice) => String(slice?.id || '').trim() === openedSliceId) || null;
+        const openedCompareTitle = String(openedCompareSlice?.title || '').trim() || 'Без названия';
         const pairSummary = document.createElement('p');
         pairSummary.className = 'status-summary';
-        pairSummary.textContent = `${selectedTitles[0] || 'Срез A'} ↔ ${selectedTitles[1] || 'Срез B'}`;
-        comparePanel.appendChild(pairSummary);
+        const pairSummaryRaw = `${selectedTitles[0] || 'Срез A'} ↔ ${selectedTitles[1] || 'Срез B'}`;
+        pairSummary.textContent = truncateText(pairSummaryRaw, 96);
+        pairSummary.title = pairSummaryRaw;
+        comparePanelHeader.appendChild(pairSummary);
+
+        const openedSummary = document.createElement('p');
+        openedSummary.className = 'status-summary';
+        openedSummary.textContent = openedCompareSlice
+          ? `Сейчас открыт: ${truncateText(openedCompareTitle, 64)}`
+          : 'Ни один из выбранных срезов сейчас не открыт';
+        if (openedCompareSlice) openedSummary.title = `Сейчас открыт: ${openedCompareTitle}`;
+        comparePanelHeader.appendChild(openedSummary);
+        comparePanel.appendChild(comparePanelHeader);
 
         const columns = document.createElement('div');
         columns.className = 'slice-compare-columns';
@@ -1332,15 +1366,27 @@ function renderSlicesPanel(elements, state, map) {
         selectedSlices.slice(0, 2).forEach((slice, index) => {
           const card = document.createElement('article');
           card.className = 'slice-compare-card';
+          const sliceId = String(slice?.id || '').trim();
+          const isOpenedSlice = Boolean(sliceId) && Boolean(openedSliceId) && sliceId === openedSliceId;
+          if (isOpenedSlice) card.classList.add('is-current-slice');
           const cardTitle = document.createElement('h6');
           cardTitle.className = 'panel-title';
           cardTitle.textContent = columnLabels[index] || `Срез ${index + 1}`;
           card.appendChild(cardTitle);
 
+          const cardHead = document.createElement('div');
+          cardHead.className = 'course-item-head';
           const sliceTitle = document.createElement('p');
           sliceTitle.className = 'status-summary';
           sliceTitle.textContent = String(slice?.title || 'Без названия');
-          card.appendChild(sliceTitle);
+          cardHead.appendChild(sliceTitle);
+          if (isOpenedSlice) {
+            const openedBadge = document.createElement('span');
+            openedBadge.className = 'ui-badge';
+            openedBadge.textContent = 'Открыт';
+            cardHead.appendChild(openedBadge);
+          }
+          card.appendChild(cardHead);
 
           const sliceMeta = buildSliceListMetaSummary(slice);
           if (sliceMeta) {
@@ -1387,6 +1433,19 @@ function renderSlicesPanel(elements, state, map) {
               card.appendChild(layersLine);
             }
           }
+
+          const cardActions = document.createElement('div');
+          cardActions.className = 'panel-action-row';
+          const openFromCompareBtn = document.createElement('button');
+          openFromCompareBtn.type = 'button';
+          openFromCompareBtn.className = 'ui-button ui-button-secondary';
+          openFromCompareBtn.textContent = isOpenedSlice ? 'Открыт' : 'Открыть срез';
+          openFromCompareBtn.disabled = isOpenedSlice;
+          openFromCompareBtn.addEventListener('click', async () => {
+            await restoreSliceFromEntry(slice);
+          });
+          cardActions.appendChild(openFromCompareBtn);
+          card.appendChild(cardActions);
 
           columns.appendChild(card);
         });
@@ -1498,7 +1557,7 @@ function renderSlicesPanel(elements, state, map) {
       rowTitle.className = 'course-item-title';
       const rawTitle = String(slice?.title || 'Без названия');
       rowTitle.textContent = rawTitle;
-      const isOpened = Boolean(openedTitleKey) && rawTitle.trim().toLowerCase() === openedTitleKey;
+      const isOpened = Boolean(sliceId) && Boolean(openedSliceId) && sliceId === openedSliceId;
       titleRow.appendChild(rowTitle);
       if (isOpened) {
         const openedBadge = document.createElement('span');
@@ -1550,18 +1609,7 @@ function renderSlicesPanel(elements, state, map) {
       openBtn.textContent = isOpened ? 'Открыт' : 'Открыть срез';
       openBtn.disabled = isOpened;
       openBtn.addEventListener('click', async () => {
-        try {
-          const rawSlice = await getResearchSlice(String(slice?.id || ''));
-          applyResearchSliceContext(rawSlice, state, elements, map);
-          state.sliceOpenedTitle = String(rawSlice?.title || slice?.title || '').trim();
-          state.sliceOpenedAnnotationPlan = buildSliceAnnotationDisplayPlan(rawSlice);
-          markResearchContextAsSaved(state);
-          updateResearchContextBar(elements, state);
-          renderSlicesPanel(elements, state, map);
-          showUiSystemMessage('Срез восстановлен', { variant: 'success', timeout: 2200 });
-        } catch (error) {
-          showUiSystemMessage(normalizeAppError(error, 'Не удалось открыть срез.').message, { variant: 'warning', timeout: 3200 });
-        }
+        await restoreSliceFromEntry(slice);
       });
 
       const deleteBtn = document.createElement('button');
