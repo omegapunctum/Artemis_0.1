@@ -1635,6 +1635,47 @@ button:focus-visible {
 .detail-technical-block {
   gap: 8px;
 }
+.detail-panel .detail-meta-block {
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: rgba(15, 23, 42, 0.22);
+}
+.detail-panel .detail-source-block {
+  border: 1px solid rgba(125, 211, 252, 0.32);
+  background: linear-gradient(180deg, rgba(14, 116, 144, 0.16) 0%, rgba(15, 23, 42, 0.2) 100%);
+}
+.detail-panel .detail-source-block .detail-section-title {
+  color: #bae6fd;
+}
+.detail-panel .detail-source-link-row {
+  padding-top: 4px;
+  border-top: 1px dashed rgba(125, 211, 252, 0.28);
+}
+.detail-panel .detail-technical-block {
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: linear-gradient(180deg, rgba(120, 53, 15, 0.15) 0%, rgba(15, 23, 42, 0.2) 100%);
+}
+.detail-panel .detail-technical-block .detail-section-title {
+  color: #fde68a;
+}
+.detail-panel .detail-technical-block .detail-meta-row.is-confidence-row {
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(251, 191, 36, 0.34);
+  background: rgba(120, 53, 15, 0.28);
+}
+.detail-panel .detail-technical-block .detail-meta-row.is-confidence-row .detail-meta-label {
+  color: #fcd34d;
+}
+.detail-panel .detail-technical-block .detail-meta-row.is-confidence-row .detail-meta-value {
+  color: #fef3c7;
+}
+.detail-panel .detail-related-block {
+  border: 1px solid rgba(167, 139, 250, 0.32);
+  background: linear-gradient(180deg, rgba(76, 29, 149, 0.16) 0%, rgba(15, 23, 42, 0.2) 100%);
+}
+.detail-panel .detail-related-block .detail-section-title {
+  color: #ddd6fe;
+}
 .detail-title {
   margin: 0;
   font: 700 19px/1.22 Inter, Arial, sans-serif;
@@ -1686,7 +1727,15 @@ button:focus-visible {
   background: rgba(30, 41, 59, 0.46);
   color: #dbe7f5;
 }
-.detail-badge.is-accent { border-color: rgba(56, 189, 248, .52); background: rgba(14, 116, 144, .18); }
+.detail-panel .detail-badge:not(.is-accent) {
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(30, 41, 59, 0.58);
+}
+.detail-badge.is-accent {
+  border-color: rgba(125, 211, 252, 0.56);
+  background: rgba(14, 116, 144, 0.24);
+  color: #e0f2fe;
+}
 .detail-meta-row {
   display: grid;
   grid-template-columns: minmax(84px, 108px) minmax(0, 1fr);

@@ -4,6 +4,8 @@
 Рабочий системный документ visual layer для UI/UX уровня v1.0.
 
 > Status update (2026-04-22): текущий visual state главного экрана принят как **working visual baseline** (calm dense shell, calmer top controls, editorial detail panel, corrected timeline, preserved map primacy). Текущий цикл малого visual hardening/correction для этих зон завершён; дальнейшие изменения по ним допускаются только через отдельный audit.
+>
+> Status sync (2026-04-22): для `detail panel` зафиксирован **current baseline for epistemic first-pass** на runtime-уровне (различение factual/meta, provenance/source, uncertainty/confidence-adjacent и related/relation-like слоёв). Это локальный baseline detail-зоны, а не полная глобальная epistemic system ARTEMIS; дальнейшее развитие — только audit-first, без инерционного repatch.
 
 Назначение:
 - зафиксировать официальный визуальный стиль ARTEMIS;
@@ -487,6 +489,7 @@ Loading state не должен выглядеть как ошибка.
 - должен быть плотным, спокойным, editor-like;
 - preview и full modes должны визуально различаться;
 - provenance, related entities и AI blocks должны быть различимы, но иерархически подчинены основному factual content.
+- runtime baseline (first-pass) уже включает локальное различение factual/meta, provenance/source, uncertainty/confidence-adjacent и related/relation-like; следующий шаг по этой зоне допускается только через отдельный audit.
 
 ## 12.4 Slice surfaces
 - slices должны восприниматься как исследовательские состояния, а не как generic bookmarks;

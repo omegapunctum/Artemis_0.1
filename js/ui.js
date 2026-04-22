@@ -3733,7 +3733,7 @@ function createSectionTitle(value) {
   return title;
 }
 function appendMetaRow(parent, label, value) {
-  if (!parent || value === null || value === undefined || value === '') return;
+  if (!parent || value === null || value === undefined || value === '') return null;
   const row = document.createElement('div');
   row.className = 'detail-meta-row';
   const key = document.createElement('span');
@@ -3744,6 +3744,7 @@ function appendMetaRow(parent, label, value) {
   val.textContent = String(value);
   row.append(key, val);
   parent.appendChild(row);
+  return row;
 }
 function createDetailRow(label, value = '') {
   const row = document.createElement('section');
@@ -4130,7 +4131,10 @@ function buildFullDetailContent(state, elements, map, props, feature) {
     appendMetaRow(technicalSection, 'Название (EN)', props.name_en);
   }
   if (props.layer_id) appendMetaRow(technicalSection, 'ID слоя', props.layer_id);
-  if (props.coordinates_confidence) appendMetaRow(technicalSection, 'Точность координат', props.coordinates_confidence);
+  if (props.coordinates_confidence) {
+    const confidenceRow = appendMetaRow(technicalSection, 'Точность координат', props.coordinates_confidence);
+    confidenceRow?.classList.add('is-confidence-row');
+  }
   if (technicalSection.querySelector('.detail-meta-row')) detail.appendChild(technicalSection);
 
   if (Array.isArray(relatedFeatures) && relatedFeatures.length > 0) {

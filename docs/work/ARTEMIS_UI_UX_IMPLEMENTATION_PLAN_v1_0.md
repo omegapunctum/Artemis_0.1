@@ -4,6 +4,8 @@
 Рабочий implementation-plan документ для инженерного исполнения UI/UX-слоя ARTEMIS v1.0.
 
 > Status update (2026-04-22): для главного экрана принят working visual baseline; отдельный hardening-цикл по shell / top controls / detail panel / timeline завершён. В рамках текущего плана нет обязательного инерционного repatch этих зон без нового audit.
+>
+> Detail-panel implementation sync (2026-04-22): first-pass runtime epistemic baseline внутри detail panel принят как текущий рабочий baseline (factual/meta, provenance/source, uncertainty/confidence-adjacent, related/relation-like) без запуска нового runtime patch-track; дальнейшие шаги по зоне — только через audit-first.
 
 Основан строго на:
 - `ARTEMIS_CONCEPT_v1.0`

@@ -15,6 +15,8 @@
 `docs/work/uiux/ARTEMIS_UI_UX_VISUAL_SYSTEM.md` — отдельный owner-doc для visual design layer: official style, palette, typography, text tone, state semantics and design-token baseline.
 
 > Status sync (2026-04-22): main-screen visual baseline зафиксирован в owner-doc visual layer; для shell/top controls/detail panel/timeline действует правило audit-first (без инерционного repatch в рамках текущего цикла).
+>
+> Detail-panel sync (2026-04-22): принят current runtime baseline для epistemic first-pass внутри detail panel (factual/meta, provenance/source, uncertainty/confidence-adjacent, related/relation-like). Это не конкурирующий source-of-truth и не полная глобальная epistemic system; authoritative visual semantics остаётся в owner-doc `ARTEMIS_UI_UX_VISUAL_SYSTEM.md`.
 
 Следовательно:
 - `ARTEMIS_UI_UX_SYSTEM.md` фиксирует UX-архитектуру, режимы, информационную структуру и поведение интерфейса как системы;
@@ -218,6 +220,7 @@ Desktop ARTEMIS должен состоять из 6 основных зон:
 - AI explanation;
 - story step context;
 - compare context.
+- Status note: текущий first-pass epistemic baseline detail panel уже зафиксирован в visual owner-doc и считается достаточным до следующего audit.
 
 ## 5.7 Narrative / AI modes
 Нужны чёткие режимы:
