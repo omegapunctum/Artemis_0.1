@@ -1998,6 +1998,9 @@ function renderSearchDropdown(elements, state, map) {
     const noResults = document.createElement('div');
     noResults.className = 'search-no-results';
     noResults.textContent = `По запросу «${state.search}» ничего не найдено.`;
+    const noResultsHint = document.createElement('div');
+    noResultsHint.className = 'search-no-results-hint';
+    noResultsHint.textContent = 'Попробуйте изменить период, слои или формулировку запроса.';
     const clearBtn = document.createElement('button');
     clearBtn.type = 'button';
     clearBtn.className = 'ui-button ui-button-secondary';
@@ -2007,6 +2010,7 @@ function renderSearchDropdown(elements, state, map) {
       state.applyState?.();
     });
     elements.searchDropdown.appendChild(noResults);
+    elements.searchDropdown.appendChild(noResultsHint);
     elements.searchDropdown.appendChild(clearBtn);
     return;
   }
@@ -2018,7 +2022,10 @@ function renderSearchDropdown(elements, state, map) {
     item.type = 'button';
     item.className = `search-result-item${state.selectedFeatureId === featureId ? ' is-selected' : ''}`;
     const title = String(props.name_ru || props.name_en || props.title_short || 'Без названия');
-    const meta = `${formatRange(props.date_start, props.date_end)} • ${state.layerLookup.get(String(props.layer_id || '').trim()) || props.layer_id || 'Layer'}`;
+    const dateMeta = props.date_start || props.date_end ? formatRange(props.date_start, props.date_end) : '';
+    const rawLayerMeta = state.layerLookup.get(String(props.layer_id || '').trim()) || String(props.layer_id || '').trim();
+    const layerMeta = rawLayerMeta === 'Layer' ? 'Слой не указан' : rawLayerMeta;
+    const meta = [dateMeta, layerMeta].filter(Boolean).join(' · ') || 'Без дополнительной информации';
     item.textContent = title;
     const metaNode = document.createElement('span');
     metaNode.className = 'search-result-meta';
@@ -2036,7 +2043,7 @@ function renderSearchDropdown(elements, state, map) {
     const truncationNote = document.createElement('div');
     truncationNote.className = 'search-truncation-note';
     truncationNote.setAttribute('role', 'note');
-    truncationNote.textContent = `Показаны первые ${state.searchResults.length} результатов`;
+    truncationNote.textContent = `Показаны первые ${state.searchResults.length} результатов. Уточните запрос для более точного поиска.`;
     elements.searchDropdown.appendChild(truncationNote);
   }
 }
@@ -2241,8 +2248,8 @@ function updateSearchEntryState(elements, hasSearch) {
   }
   if (!helper) return;
   helper.textContent = hasSearch
-    ? `Поиск активен: «${query || 'запрос'}».`
-    : 'Ищите места, события и объекты.';
+    ? `Поиск активен: «${query || 'запрос'}». Выберите объект из результатов.`
+    : 'Ищите объекты, места и исторические сюжеты.';
 }
 
 function setupSearchSuggestions(elements) {
@@ -3821,7 +3828,7 @@ function buildResultFeedbackLabel(state) {
   if (state.search) constraints.push(`поиск: «${state.search}»`);
   if (hasLayerCustomization(state)) constraints.push('слои');
   if (hasQuickLayerCustomization(state)) constraints.push('категории');
-  if (state.confidenceFilter !== 'all') constraints.push(`confidence: ${state.confidenceFilter}`);
+  if (state.confidenceFilter !== 'all') constraints.push(`точность координат: ${state.confidenceFilter}`);
   const yearMin = Number(state.yearBounds?.min ?? state.currentStartYear);
   const yearMax = Number(state.yearBounds?.max ?? state.currentEndYear);
   if (state.currentStartYear !== yearMin || state.currentEndYear !== yearMax) {
@@ -3832,7 +3839,7 @@ function buildResultFeedbackLabel(state) {
     }
   }
   const suffix = constraints.length ? ` · Ограничения: ${constraints.join(', ')}` : '';
-  return `${state.filteredFeatures.length} objects в ленте и на карте${suffix}`;
+  return `${state.filteredFeatures.length} объектов в ленте и на карте${suffix}`;
 }
 
 function buildEmptyStateContext(state, elements) {
