@@ -274,6 +274,6 @@ Recommended reading order:
 8. then profile-specific canonical docs (`docs/DATA_CONTRACT.md`, `docs/CONTROLLED_RELEASE_DECISION.md`, `docs/ARTEMIS_MASTER_PROMPT.md`)
 9. only after that `docs/work/*`, `docs/audits/*`, `docs/reference/*`, `docs/archive/*`
 
-Working strategy docs live in `docs/work/` (including `docs/work/ARTEMIS_AI_STRATEGY_v1_0.md`). UI/UX working specs live in `docs/work/uiux/`; `docs/work/uiux/ARTEMIS_UI_UX_SYSTEM.md` is the primary UI/UX working spec, and `docs/work/uiux/ARTEMIS_UI_UX_COMPONENT_MAP.md` is the system-level working implementation map derived from that spec.
+Working strategy docs live in `docs/work/` (including `docs/work/ARTEMIS_AI_STRATEGY_v1_0.md`). UI/UX working specs live in `docs/work/uiux/`; `docs/work/uiux/ARTEMIS_UI_UX_SYSTEM.md` remains the primary UI/UX working spec, `docs/work/uiux/ARTEMIS_UI_UX_COMPONENT_MAP.md` remains the system-level implementation map, and `docs/work/uiux/ARTEMIS_UI_UX_VISUAL_SYSTEM.md` owns the visual design layer: official style, palette, typography, state semantics and design-token baseline.
 
 Historical documents live in `docs/archive/`, and diagnostic/reference documents live in `docs/reference/`; for example, `docs/reference/Artemis_UI_UX_Report.md` is diagnostic/reference material and **not** the primary UI/UX specification.
