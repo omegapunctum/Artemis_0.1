@@ -41,6 +41,31 @@ ARTEMIS не должен строиться как “ещё одно AI-при
 
 ---
 
+## Slice-Centered AI Operation Model
+
+AI in ARTEMIS must operate from explicit research context rather than detached free-form prompting.
+
+The primary context container for AI interaction in v1.0 is the research slice.
+
+This means:
+- AI explanation is grounded in the current slice state;
+- AI comparison operates on differences between slices or between slice states;
+- AI suggestions extend or clarify the current slice rather than replace it;
+- AI summary is a derived assistance layer, not a source of truth.
+
+AI must not be implemented as:
+- a floating generic assistant with no active slice context;
+- a competing interface to the map;
+- a hidden source of factual authority.
+
+Epistemic separation must remain visible between:
+- source-backed data;
+- interpretation;
+- hypothesis;
+- and AI-generated output.
+
+---
+
 ## 3. Допустимые AI-функции в v1.0
 
 ### 3.1 AI Explanation
