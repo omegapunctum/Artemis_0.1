@@ -264,7 +264,8 @@ docs/work/
 ├── moderation-runbook.md
 └── uiux/
     ├── ARTEMIS_UI_UX_SYSTEM.md
-    └── ARTEMIS_UI_UX_COMPONENT_MAP.md
+    ├── ARTEMIS_UI_UX_COMPONENT_MAP.md
+    └── ARTEMIS_UI_UX_VISUAL_SYSTEM.md
 ```
 
 Назначение:
@@ -272,7 +273,7 @@ docs/work/
 - допускают быстрые изменения;
 - не считаются canonical по умолчанию;
 - `ARTEMIS_AI_STRATEGY_v1_0.md` является стратегическим рабочим документом высокого уровня: он обязателен к учёту, но может обновляться быстрее, чем миссия и product scope, поэтому не входит в immutable conceptual core;
-- UI/UX working specs физически размещаются в `docs/work/uiux/`, а не в canonical root `docs/`.
+- UI/UX working specs физически размещаются в `docs/work/uiux/`, а не в canonical root `docs/`; `ARTEMIS_UI_UX_SYSTEM.md` владеет общей UX-моделью, `ARTEMIS_UI_UX_COMPONENT_MAP.md` — картой компонентов и состояний, `ARTEMIS_UI_UX_VISUAL_SYSTEM.md` — visual design layer.
 
 ### 8.4 Audits
 
