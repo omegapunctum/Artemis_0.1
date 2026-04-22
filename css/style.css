@@ -866,6 +866,17 @@ body { overflow: hidden; }
   margin-bottom: 6px;
   color: #9fb4cb;
 }
+.slice-item-usage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -2px 0 8px;
+}
+.slice-usage-badge {
+  border-color: rgba(148, 163, 184, 0.42);
+  background: rgba(30, 41, 59, 0.56);
+  color: #dbe7f5;
+}
 .slice-item-preview {
   margin-top: 0;
   margin-bottom: 10px;

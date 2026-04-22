@@ -994,6 +994,7 @@ async function ensureResearchSlicesLoaded(state, { force = false } = {}) {
 async function openResearchSlicesWorkspace(elements, state, map, options = {}) {
   await ensureResearchSlicesLoaded(state, options);
   await ensureStoriesLoaded(state, options);
+  await ensureCoursesLoaded(state, options);
   renderSlicesPanel(elements, state, map);
   openExploreWorkspaceSection(elements, state, 'slices');
 }
@@ -1023,6 +1024,64 @@ function syncResearchSliceCompareCta(elements, state) {
   elements.researchSliceCompareBtn.title = isReady
     ? 'Сравнить выбранные 2 среза'
     : 'Выберите 2 среза в панели «Срезы»';
+}
+
+function collectStorySliceIds(story) {
+  const ids = [];
+  const directIds = Array.isArray(story?.slice_ids) ? story.slice_ids : (Array.isArray(story?.sliceIds) ? story.sliceIds : []);
+  directIds.forEach((sliceId) => {
+    const normalized = String(sliceId || '').trim();
+    if (normalized) ids.push(normalized);
+  });
+  return [...new Set(ids)];
+}
+
+function collectCourseStoryIds(course) {
+  const ids = [];
+  const directIds = Array.isArray(course?.story_ids) ? course.story_ids : (Array.isArray(course?.storyIds) ? course.storyIds : []);
+  directIds.forEach((storyId) => {
+    const normalized = String(storyId || '').trim();
+    if (normalized) ids.push(normalized);
+  });
+  return [...new Set(ids)];
+}
+
+function buildSliceNarrativeUsageLookup(state) {
+  const storyIdsBySliceId = new Map();
+  const sliceIdsByStoryId = new Map();
+  const stories = Array.isArray(state?.stories) ? state.stories : [];
+  stories.forEach((story) => {
+    const storyId = String(story?.id || '').trim();
+    if (!storyId) return;
+    const sliceIds = collectStorySliceIds(story);
+    sliceIdsByStoryId.set(storyId, new Set(sliceIds));
+    sliceIds.forEach((sliceId) => {
+      const set = storyIdsBySliceId.get(sliceId) || new Set();
+      set.add(storyId);
+      storyIdsBySliceId.set(sliceId, set);
+    });
+  });
+
+  const courseIdsBySliceId = new Map();
+  const courses = Array.isArray(state?.courses) ? state.courses : [];
+  courses.forEach((course) => {
+    const courseId = String(course?.id || '').trim();
+    if (!courseId) return;
+    const storyIds = collectCourseStoryIds(course);
+    const usedSliceIds = new Set();
+    storyIds.forEach((storyId) => {
+      const storySliceIds = sliceIdsByStoryId.get(storyId);
+      if (!storySliceIds) return;
+      storySliceIds.forEach((sliceId) => usedSliceIds.add(sliceId));
+    });
+    usedSliceIds.forEach((sliceId) => {
+      const set = courseIdsBySliceId.get(sliceId) || new Set();
+      set.add(courseId);
+      courseIdsBySliceId.set(sliceId, set);
+    });
+  });
+
+  return { storyIdsBySliceId, courseIdsBySliceId };
 }
 
 function renderSlicesPanel(elements, state, map) {
@@ -1295,6 +1354,7 @@ function renderSlicesPanel(elements, state, map) {
     }));
   } else {
     const openedSliceId = String(state.sliceOpenedId || '').trim();
+    const narrativeUsage = buildSliceNarrativeUsageLookup(state);
     const availableSliceById = new Map(
       state.researchSlices
         .map((slice) => [String(slice?.id || '').trim(), slice])
@@ -1670,6 +1730,32 @@ function renderSlicesPanel(elements, state, map) {
       rowMeta.className = 'status-summary slice-item-meta';
       rowMeta.textContent = buildSliceListMetaSummary(slice);
       if (rowMeta.textContent) row.appendChild(rowMeta);
+
+      const storyUsageCount = narrativeUsage.storyIdsBySliceId.get(sliceId)?.size || 0;
+      const courseUsageCount = narrativeUsage.courseIdsBySliceId.get(sliceId)?.size || 0;
+      if (storyUsageCount > 0 || courseUsageCount > 0) {
+        const usageRow = document.createElement('div');
+        usageRow.className = 'slice-item-usage';
+        if (storyUsageCount > 0) {
+          const storyBadge = document.createElement('span');
+          storyBadge.className = 'ui-badge slice-usage-badge';
+          storyBadge.textContent = `Story ${storyUsageCount}`;
+          storyBadge.title = storyUsageCount > 1
+            ? `Используется в ${storyUsageCount} stories`
+            : 'Используется в 1 story';
+          usageRow.appendChild(storyBadge);
+        }
+        if (courseUsageCount > 0) {
+          const courseBadge = document.createElement('span');
+          courseBadge.className = 'ui-badge slice-usage-badge';
+          courseBadge.textContent = `Course ${courseUsageCount}`;
+          courseBadge.title = courseUsageCount > 1
+            ? `Косвенно используется в ${courseUsageCount} courses`
+            : 'Косвенно используется в 1 course';
+          usageRow.appendChild(courseBadge);
+        }
+        row.appendChild(usageRow);
+      }
 
       const rowPreviewText = String(slice?.description || '').trim();
       if (rowPreviewText) {
