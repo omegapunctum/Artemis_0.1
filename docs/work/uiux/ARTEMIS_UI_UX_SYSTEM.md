@@ -19,6 +19,8 @@
 > Detail-panel sync (2026-04-22): принят current runtime baseline для epistemic first-pass внутри detail panel (factual/meta, provenance/source, uncertainty/confidence-adjacent, related/relation-like). Это не конкурирующий source-of-truth и не полная глобальная epistemic system; authoritative visual semantics остаётся в owner-doc `ARTEMIS_UI_UX_VISUAL_SYSTEM.md`.
 >
 > Typography/palette safe-zone sync (2026-04-23): controlled alignment cycle (token-only patch, selective selector adoption, editorial font routing, final audit) закрыт для safe UI zones. Текущее состояние принято как **working baseline for safe-zone visual contract alignment**; это не completion of global visual adoption. Future tracks остаются отдельными: detail panel full adoption, timeline adoption, modal/light legacy consistency.
+>
+> Detail-panel adoption sync (2026-04-23): detail panel прошёл controlled adoption cycle (selector adoption + full-mode token consistency micro-patch + final audit) и принят как **temporary post-adoption baseline**. Ключевые typography/semantic improvements зафиксированы, preview/full mechanics сохранены. Residual visual points классифицированы как optional future hardening и не reopen’ят текущий track; дальнейшие изменения detail — только audit-first.
 
 Следовательно:
 - `ARTEMIS_UI_UX_SYSTEM.md` фиксирует UX-архитектуру, режимы, информационную структуру и поведение интерфейса как системы;

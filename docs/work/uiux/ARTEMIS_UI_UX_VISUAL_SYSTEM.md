@@ -8,6 +8,8 @@
 > Status sync (2026-04-22): для `detail panel` зафиксирован **current baseline for epistemic first-pass** на runtime-уровне (различение factual/meta, provenance/source, uncertainty/confidence-adjacent и related/relation-like слоёв). Это локальный baseline detail-зоны, а не полная глобальная epistemic system ARTEMIS; дальнейшее развитие — только audit-first, без инерционного repatch.
 >
 > Typography/palette alignment sync (2026-04-23): controlled cycle для safe zones (token-only patch → selective selector adoption → editorial font routing → final audit) завершён. Текущее состояние принято как **working baseline for safe-zone visual contract alignment**; это не означает полного global visual adoption across all UI. Отдельными future tracks остаются: detail panel full adoption, timeline adoption, modal/light legacy consistency.
+>
+> Detail adoption sync (2026-04-23): после selector-adoption patch, full-mode token-consistency micro-patch и финального cold audit `detail panel` принят как **temporary post-adoption baseline**. Baseline включает owner-doc aligned typography в ключевых узлах, читаемую semantic/epistemic layer separation, full-mode token consistency и сохранённое preview/full distinction. Это не означает абсолютного финального polish detail-зоны: residual points вынесены в optional future hardening и **не reopen’ят текущий track**; любые следующие изменения detail снова только через audit-first.
 
 Назначение:
 - зафиксировать официальный визуальный стиль ARTEMIS;

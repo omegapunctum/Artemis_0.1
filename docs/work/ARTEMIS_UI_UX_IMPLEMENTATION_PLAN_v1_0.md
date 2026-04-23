@@ -6,6 +6,8 @@
 > Status update (2026-04-22): для главного экрана принят working visual baseline; отдельный hardening-цикл по shell / top controls / detail panel / timeline завершён. В рамках текущего плана нет обязательного инерционного repatch этих зон без нового audit.
 >
 > Detail-panel implementation sync (2026-04-22): first-pass runtime epistemic baseline внутри detail panel принят как текущий рабочий baseline (factual/meta, provenance/source, uncertainty/confidence-adjacent, related/relation-like) без запуска нового runtime patch-track; дальнейшие шаги по зоне — только через audit-first.
+>
+> Detail-panel adoption status sync (2026-04-23): после двух controlled CSS-итераций (selector adoption и full-mode token consistency micro-patch) и финального cold audit detail panel принят как **temporary post-adoption baseline**. Immediate patch не требуется; residual points переведены в optional future hardening и не reopen’ят текущий implementation track. Любые следующие изменения detail допускаются только через audit-first.
 
 Основан строго на:
 - `ARTEMIS_CONCEPT_v1.0`
