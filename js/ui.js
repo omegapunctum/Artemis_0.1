@@ -280,6 +280,7 @@ export async function initUI(map, features) {
     storyDraftSliceIds: [],
     currentStory: null,
     currentStoryStepIndex: 0,
+    storyModeEntrySnapshot: null,
     activeExploreSection: 'layers',
     researchContextBaselineKey: '',
     researchContextDirty: false,
@@ -1951,12 +1952,43 @@ function renderSlicesPanel(elements, state, map) {
   storiesSection.appendChild(storyForm);
 
   if (state.currentStory && Array.isArray(state.currentStory.slice_ids) && state.currentStory.slice_ids.length) {
+    const storyModeSurface = document.createElement('section');
+    storyModeSurface.className = 'story-mode-surface';
+    const storyModeHead = document.createElement('div');
+    storyModeHead.className = 'story-mode-head';
+    const storyModeBadge = document.createElement('span');
+    storyModeBadge.className = 'ui-badge story-mode-badge';
+    storyModeBadge.textContent = 'Story mode';
+    const storyModeTitle = document.createElement('strong');
+    storyModeTitle.className = 'story-mode-title';
+    const storyTitleRaw = String(state.currentStory.title || 'Story');
+    storyModeTitle.textContent = storyTitleRaw;
+    storyModeHead.append(storyModeBadge, storyModeTitle);
+    storyModeSurface.appendChild(storyModeHead);
+
     const playback = document.createElement('div');
-    playback.className = 'panel-action-row';
+    playback.className = 'panel-action-row story-playback-controls';
     const storySteps = state.currentStory.slice_ids.length;
     const storyStep = clampStoryStepIndex(state.currentStory, state.currentStoryStepIndex) + 1;
+    const storyStepSummary = document.createElement('p');
+    storyStepSummary.className = 'status-summary story-mode-step';
+    storyStepSummary.textContent = `Шаг ${storyStep} из ${storySteps}`;
+    storyModeSurface.appendChild(storyStepSummary);
+    const storyContextLine = document.createElement('p');
+    storyContextLine.className = 'status-summary story-mode-context';
+    const storyDescription = String(state.currentStory.description || '').trim();
+    const openedSliceTitle = String(state.sliceOpenedTitle || '').trim();
+    if (storyDescription) {
+      storyContextLine.textContent = truncateText(storyDescription.replace(/\s+/g, ' '), 220);
+    } else if (openedSliceTitle) {
+      storyContextLine.textContent = `Текущий фокус: ${truncateText(openedSliceTitle, 120)}.`;
+    } else {
+      storyContextLine.textContent = 'Пошаговый story-режим активен: используйте «Назад/Далее» для навигации.';
+    }
+    storyModeSurface.appendChild(storyContextLine);
+
     const stepLabel = document.createElement('span');
-    stepLabel.textContent = `${String(state.currentStory.title || 'Story')} · Шаг ${storyStep}/${storySteps}`;
+    stepLabel.textContent = `${storyTitleRaw} · ${storyStep}/${storySteps}`;
 
     const prevBtn = document.createElement('button');
     prevBtn.type = 'button';
@@ -1985,13 +2017,13 @@ function renderSlicesPanel(elements, state, map) {
     exitBtn.className = 'ui-button ui-button-secondary';
     exitBtn.textContent = 'Выйти из Story';
     exitBtn.addEventListener('click', () => {
-      state.currentStory = null;
-      state.currentStoryStepIndex = 0;
+      exitStoryMode(state, elements, map);
       renderSlicesPanel(elements, state, map);
     });
 
     playback.append(stepLabel, prevBtn, nextBtn, exitBtn);
-    storiesSection.appendChild(playback);
+    storyModeSurface.appendChild(playback);
+    storiesSection.appendChild(storyModeSurface);
   }
 
   if (state.storiesLoading) {
@@ -2028,6 +2060,9 @@ function renderSlicesPanel(elements, state, map) {
       openBtn.textContent = 'Открыть Story';
       openBtn.addEventListener('click', async () => {
         try {
+          if (!state.currentStory) {
+            captureStoryModeEntrySnapshot(state, map);
+          }
           const detail = await getStory(String(story?.id || ''));
           state.currentStory = detail;
           state.currentStoryStepIndex = 0;
@@ -2035,6 +2070,9 @@ function renderSlicesPanel(elements, state, map) {
           renderSlicesPanel(elements, state, map);
           showUiSystemMessage('Story открыта', { variant: 'success', timeout: 2200 });
         } catch (error) {
+          if (!state.currentStory) {
+            state.storyModeEntrySnapshot = null;
+          }
           showUiSystemMessage(normalizeAppError(error, 'Не удалось открыть story.').message, { variant: 'warning', timeout: 3200 });
         }
       });
@@ -2049,8 +2087,7 @@ function renderSlicesPanel(elements, state, map) {
         try {
           await deleteStory(String(story?.id || ''));
           if (state.currentStory && String(state.currentStory.id || '') === String(story?.id || '')) {
-            state.currentStory = null;
-            state.currentStoryStepIndex = 0;
+            exitStoryMode(state, elements, map);
           }
           await ensureStoriesLoaded(state, { force: true });
           renderSlicesPanel(elements, state, map);
@@ -2120,6 +2157,99 @@ async function applyCurrentStoryStep(state, elements, map) {
   if (!sliceId) return;
   const rawSlice = await getResearchSlice(sliceId);
   applyResearchSliceContext(rawSlice, state, elements, map);
+}
+
+function captureStoryModeEntrySnapshot(state, map) {
+  if (!state || state.storyModeEntrySnapshot) return;
+  const center = map?.getCenter?.();
+  const lng = Number(center?.lng);
+  const lat = Number(center?.lat);
+  const zoom = Number(map?.getZoom?.());
+  const hasViewport = Number.isFinite(lng) && Number.isFinite(lat) && Number.isFinite(zoom);
+  const detailFeatureId = String(state.detailOpenFeatureId || '').trim() || null;
+  state.storyModeEntrySnapshot = {
+    timelineMode: state.timelineMode === 'point' ? 'point' : 'range',
+    start: Number.isFinite(Number(state.currentStartYear)) ? Number(state.currentStartYear) : null,
+    end: Number.isFinite(Number(state.currentEndYear)) ? Number(state.currentEndYear) : null,
+    enabledLayerIds: [...new Set(Array.from(state.enabledLayerIds || []).map((id) => String(id || '').trim()).filter(Boolean))],
+    activeQuickLayerIds: [...new Set(Array.from(state.activeQuickLayerIds || []).map((id) => String(id || '').trim()).filter(Boolean))],
+    selectedFeatureId: String(state.selectedFeatureId || '').trim() || null,
+    detailFeatureId,
+    sliceOpenedId: String(state.sliceOpenedId || '').trim(),
+    sliceOpenedTitle: String(state.sliceOpenedTitle || '').trim(),
+    sliceOpenedAnnotationPlan: state.sliceOpenedAnnotationPlan || null,
+    viewport: hasViewport ? { center: [lng, lat], zoom } : null
+  };
+}
+
+function restoreStoryModeEntrySnapshot(state, elements, map) {
+  const snapshot = state?.storyModeEntrySnapshot;
+  state.storyModeEntrySnapshot = null;
+  if (!snapshot || typeof snapshot !== 'object') return false;
+
+  const timelineMode = snapshot.timelineMode === 'point' ? 'point' : 'range';
+  setTimelineMode(elements, state, timelineMode, { commit: false });
+  const fallbackStart = Number.isFinite(Number(state.currentStartYear)) ? Number(state.currentStartYear) : null;
+  const fallbackEnd = Number.isFinite(Number(state.currentEndYear)) ? Number(state.currentEndYear) : fallbackStart;
+  const start = Number.isFinite(Number(snapshot.start)) ? Number(snapshot.start) : fallbackStart;
+  const endSource = timelineMode === 'point' ? start : snapshot.end;
+  const end = Number.isFinite(Number(endSource)) ? Number(endSource) : fallbackEnd;
+  if (Number.isFinite(start) && Number.isFinite(end)) {
+    applyTimelineRange(elements, state, {
+      start,
+      end,
+      snap: false,
+      commit: false
+    });
+  }
+
+  if (Array.isArray(snapshot.enabledLayerIds)) {
+    state.enabledLayerIds = new Set(snapshot.enabledLayerIds.map((id) => String(id || '').trim()).filter(Boolean));
+  }
+  if (Array.isArray(snapshot.activeQuickLayerIds)) {
+    state.activeQuickLayerIds = new Set(snapshot.activeQuickLayerIds.map((id) => String(id || '').trim()).filter(Boolean));
+  }
+
+  state.sliceOpenedId = String(snapshot.sliceOpenedId || '').trim();
+  state.sliceOpenedTitle = String(snapshot.sliceOpenedTitle || '').trim();
+  state.sliceOpenedAnnotationPlan = snapshot.sliceOpenedAnnotationPlan || null;
+
+  state.applyState?.();
+
+  if (snapshot.viewport && Array.isArray(snapshot.viewport.center)) {
+    const [lng, lat] = snapshot.viewport.center;
+    const zoom = Number(snapshot.viewport.zoom);
+    if (Number.isFinite(Number(lng)) && Number.isFinite(Number(lat)) && Number.isFinite(zoom)) {
+      map.flyTo({ center: [Number(lng), Number(lat)], zoom, essential: true });
+    }
+  }
+
+  const selectedFeatureId = String(snapshot.selectedFeatureId || '').trim();
+  const detailFeatureId = String(snapshot.detailFeatureId || '').trim() || selectedFeatureId;
+  const featureIdToRestore = detailFeatureId || selectedFeatureId;
+  if (featureIdToRestore) {
+    const feature = getFeatureById(state, featureIdToRestore);
+    if (feature) {
+      selectFeature(state, elements, map, feature, {
+        centerOnMap: false,
+        openDetail: Boolean(detailFeatureId),
+        scrollCard: true
+      });
+    } else {
+      clearSelection(state, elements, map);
+    }
+  } else {
+    clearSelection(state, elements, map);
+  }
+
+  updateResearchContextBar(elements, state);
+  return true;
+}
+
+function exitStoryMode(state, elements, map) {
+  state.currentStory = null;
+  state.currentStoryStepIndex = 0;
+  restoreStoryModeEntrySnapshot(state, elements, map);
 }
 
 

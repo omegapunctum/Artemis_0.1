@@ -304,6 +304,13 @@ Slice не должен быть спрятан глубоко.
 - slice отличается от исходного;
 - этот slice используется в story/course.
 
+## 7.6 Status sync before Story Layer audit (2026-04-23)
+- Текущее состояние Slice Core считается **phase-safe for Story Layer audit**.
+- Story Layer audit можно начинать без дополнительного обязательного runtime patch в Slice Core.
+- Открытые ограничения зафиксированы как micro-hardening backlog:
+  - partial/stale restore warning surface;
+  - full filter-state capture в slice payload.
+
 ---
 
 # 8. Object UX system
@@ -373,6 +380,12 @@ Story нужна для:
 - уменьшать лишний control noise;
 - усиливать последовательность;
 - сохранять возможность выйти в свободное исследование.
+
+## 9.5 Status sync before story-focused patch cycle (2026-04-23)
+- Story-focused patch cycle разрешён к запуску.
+- Текущий runtime story считается достаточным baseline для старта Phase C.
+- Это status-note на старт работ, а не признак завершения Phase C.
+- Главный gap Story Layer: narrative depth режима, story-specific mode signals, clean return-to-exploration semantics.
 
 ---
 

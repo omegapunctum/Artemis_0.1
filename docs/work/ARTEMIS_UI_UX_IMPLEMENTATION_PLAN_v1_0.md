@@ -182,6 +182,14 @@
 - Regression check: exiting story restores last exploration context.
 - Mobile check: step navigation via staged sheet flow.
 
+### Story gate sync (2026-04-23)
+- Story-focused patch cycle можно открывать.
+- Текущий runtime story признан sufficient baseline для старта Phase C работ.
+- Это **не** означает completion of Phase C; ключевые gaps текущего этапа:
+  - guided narrative mode depth;
+  - stronger story-specific mode signals;
+  - clean return-to-exploration semantics.
+
 ---
 
 ## 7. Phase D — Course Layer
@@ -308,6 +316,13 @@
 - **Phase C done:** story mode даёт guided переход по slices с управляемой навигацией.
 - **Phase D done:** course mode добавляет последовательное обучение и прогресс без ломки core UX.
 - **Phase E done:** AI assistance explainable, provenance-aware, epistemically labeled и безопасно деградирует.
+
+### Phase gate sync (2026-04-23)
+- Slice Core признан **phase-safe for Story Layer audit**.
+- Переход к Story Layer audit допускается **без обязательного нового runtime patch**.
+- Известные ограничения вынесены в micro-hardening backlog (не reopen Phase B):
+  - отдельный graceful warning surface для partial/stale restore;
+  - full filter-state capture в slice payload.
 
 ---
 
