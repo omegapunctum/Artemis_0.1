@@ -8,6 +8,8 @@
 > Detail-panel implementation sync (2026-04-22): first-pass runtime epistemic baseline внутри detail panel принят как текущий рабочий baseline (factual/meta, provenance/source, uncertainty/confidence-adjacent, related/relation-like) без запуска нового runtime patch-track; дальнейшие шаги по зоне — только через audit-first.
 >
 > Detail-panel adoption status sync (2026-04-23): после двух controlled CSS-итераций (selector adoption и full-mode token consistency micro-patch) и финального cold audit detail panel принят как **temporary post-adoption baseline**. Immediate patch не требуется; residual points переведены в optional future hardening и не reopen’ят текущий implementation track. Любые следующие изменения detail допускаются только через audit-first.
+>
+> Main-screen cleanup status sync (2026-04-23): текущий main-screen cleanup cycle закрыт как **working baseline accepted** (top-area hierarchy cleanup + route/mode leakage containment + final audit). Для v1.0 baseline зафиксированы: global shell + one contextual strip, map-first exploration, slice-core center, compare readiness/context framing, story/course containment в default exploration, mobile staged logic preserved. Это **не** full polish completion; residual points остаются optional future tuning и не reopen’ят track. Следующие изменения main-screen допускаются только через audit-first.
 
 Основан строго на:
 - `ARTEMIS_CONCEPT_v1.0`
@@ -39,6 +41,7 @@
 5. **State completeness:** для каждого блока обязательны loading/empty/error/success состояния.
 6. **Desktop+mobile parity by logic, not by layout cloning.**
 7. **No speculative features before core done:** нельзя реализовывать “декоративный интеллект” и вторичную социальность раньше базового цикла.
+8. **Screen architecture baseline lock (v1.0):** главный экран остаётся Exploration/Workspace Core без перегрузки competing panels.
 
 ---
 
@@ -51,6 +54,17 @@
 - **Phase E — Explainable AI Layer:** explain/compare/suggest с жёсткой эпистемической маркировкой.
 
 Критическое правило последовательности: **A → B → C → D → E** без перескока через зависимости.
+
+### Route/section model v1.0 (architecture baseline)
+- Главная / Исследование
+- Срезы
+- Stories
+- Courses
+- О проекте
+
+Дополнительно:
+- Compare реализуется как analytical mode (не top-level route v1.0).
+- AI реализуется как contextual layer (не detached standalone section).
 
 ---
 
@@ -65,6 +79,7 @@
 - Time System: Timeline Bar, Time Range Control
 - Knowledge Detail System: Object Preview Card, Detail Panel, Provenance/Source Block
 - Support Layer: Search, Notifications/Status Feedback, Empty/Error/Loading states, Mobile Navigation Sheet/Drawer
+- Compact Slice Context surface (without full slices manager)
 
 ### Excluded blocks
 - Slice compare
@@ -72,6 +87,7 @@
 - AI panels
 - Hypothesis/suggestion UI
 - Advanced profile/social/UGC extensions
+- Full slices manager, story/course libraries/players, detached AI panel, multiple parallel top bars
 
 ### Likely repo files affected
 - `js/map.js`
@@ -238,6 +254,29 @@
 - Course state transition smoke (start → progress → resume → complete).
 - Broken-reference handling test for missing step/slice links.
 - Cross-mode regression: course exit to workspace.
+
+### Course gate sync (2026-04-23)
+- Отдельный course-focused patch cycle можно запускать.
+- Current course runtime признан **sufficient thin baseline for Phase D start** (без hard blocker на входе в phase-track).
+- Это **не** completion of Phase D.
+- Первый фокус стартового цикла:
+  - meaningful progress/resume semantics;
+  - course-specific educational mode depth/identity.
+
+### Status sync after early Phase D patch cycle (2026-04-23)
+- Course Layer принят как **temporary Phase D baseline**.
+- Baseline now includes:
+  - meaningful progress/resume semantics;
+  - correct start/continue/restart semantics;
+  - course-owned mode framing;
+  - deterministic exit/delete semantics;
+  - stable course -> story -> slice linkage.
+- Это **не** completion of Phase D и не competing source-of-truth.
+- Remaining gaps перенесены в следующий refinement layer и **не reopen** текущего baseline:
+  - pedagogical depth;
+  - objectives/checkpoints/learning framing;
+  - weaker conceptual dependence on story runtime;
+  - clarify `in_progress@step0` vs `resume_available`.
 
 ---
 

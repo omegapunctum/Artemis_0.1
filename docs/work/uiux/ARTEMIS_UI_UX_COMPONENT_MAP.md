@@ -100,11 +100,11 @@ ARTEMIS v1.0 должен состоять из 8 основных UI-зон:
 ### 4.1.2 Route / Mode Switcher
 **Функция:**
 переключение между режимами:
-- map research;
+- главная / исследование;
+- срезы;
 - stories;
 - courses;
-- saved slices;
-- profile / drafts.
+- о проекте.
 
 **Обязательные состояния:**
 - active mode;
@@ -506,6 +506,7 @@ ARTEMIS v1.0 должен состоять из 8 основных UI-зон:
 ---
 
 ## 4.7 AI Assistance System
+Примечание архитектуры v1.0: AI — contextual layer в рабочих режимах, не отдельный detached section.
 
 ### 4.7.1 AI Entry Point
 **Функция:**

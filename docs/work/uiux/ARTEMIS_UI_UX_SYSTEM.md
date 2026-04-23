@@ -21,6 +21,8 @@
 > Typography/palette safe-zone sync (2026-04-23): controlled alignment cycle (token-only patch, selective selector adoption, editorial font routing, final audit) закрыт для safe UI zones. Текущее состояние принято как **working baseline for safe-zone visual contract alignment**; это не completion of global visual adoption. Future tracks остаются отдельными: detail panel full adoption, timeline adoption, modal/light legacy consistency.
 >
 > Detail-panel adoption sync (2026-04-23): detail panel прошёл controlled adoption cycle (selector adoption + full-mode token consistency micro-patch + final audit) и принят как **temporary post-adoption baseline**. Ключевые typography/semantic improvements зафиксированы, preview/full mechanics сохранены. Residual visual points классифицированы как optional future hardening и не reopen’ят текущий track; дальнейшие изменения detail — только audit-first.
+>
+> Main-screen cleanup sync (2026-04-23): current main-screen cleanup baseline принят как **working baseline** после top-area hierarchy cleanup, route/mode leakage containment и финального cold audit. Baseline включает: global shell + one contextual strip, map-first exploration scene, slice-core centered exploration, compare как readiness/context layer, story/course containment в default exploration state, preserved mobile staged logic. Это **не** completion of full main-screen polish; residual points — только optional future tuning и не reopen’ят текущий cleanup track. Любые следующие изменения главного экрана — только audit-first.
 
 Следовательно:
 - `ARTEMIS_UI_UX_SYSTEM.md` фиксирует UX-архитектуру, режимы, информационную структуру и поведение интерфейса как системы;
@@ -180,6 +182,38 @@ Desktop ARTEMIS должен состоять из 6 основных зон:
 5. Detail / slice panel
 6. Narrative / AI overlays or modes
 
+## 5.1.1 Screen architecture baseline (v1.0 lock)
+Главный экран ARTEMIS v1.0 = **Exploration / Workspace Core**.
+
+На главном экране постоянно живут только:
+- top shell;
+- map canvas;
+- timeline;
+- compact slice context;
+- detail preview/full;
+- search + support states;
+- contextual layer/filter tools.
+
+На главном экране **не держим постоянно**:
+- full slices manager;
+- story library/player;
+- course library/player;
+- compare surface;
+- detached AI panel;
+- multiple parallel top bars.
+
+Route/section model v1.0:
+- Главная / Исследование;
+- Срезы;
+- Stories;
+- Courses;
+- О проекте.
+
+Архитектурные фиксации v1.0:
+- Compare = analytical mode, не отдельный top-level route;
+- AI = contextual layer inside workspace/story/course flows, не detached section;
+- baseline обязателен для снижения overload и исключения competing panels without hierarchy.
+
 ## 5.2 Top header / project shell
 Функции:
 - навигация по основным разделам;
@@ -253,6 +287,7 @@ Mobile ARTEMIS — staged workspace.
 - переносить desktop-панель один в один;
 - держать несколько тяжёлых зон раскрытыми одновременно;
 - делать карту почти невидимой из-за UI.
+- зеркалить desktop multi-panel layout в мобильный стек.
 
 ## 6.4 Mobile core flow
 1. пользователь перемещается по карте;
@@ -419,6 +454,29 @@ Course не должен быть:
 ## 10.4 Связь story и course
 - story = narrative path
 - course = structured educational path
+
+## 10.5 Course gate sync (2026-04-23)
+- Course-focused patch cycle можно открывать.
+- Текущий runtime course принят как **sufficient thin baseline** для старта Phase D (thin orchestration wrapper around stories на рабочем уровне).
+- Это **не** completion of Phase D.
+- Главные стартовые gaps Course Layer:
+  - meaningful progress/resume semantics;
+  - более явная course-specific educational mode depth/identity.
+
+## 10.6 Status sync after early Phase D patch cycle (2026-04-23)
+- Текущий Course Layer принят как **temporary Phase D baseline**.
+- В baseline зафиксированы:
+  - meaningful progress/resume semantics;
+  - корректные semantics для `Начать` / `Продолжить` / `Пройти заново`;
+  - course-owned mode framing;
+  - deterministic exit/delete path;
+  - стабильная course -> story -> slice linkage.
+- Это **не** completion of Phase D и не competing source-of-truth для других phase docs.
+- Remaining gaps зафиксированы как следующий refinement layer и **не reopen'ят** текущий baseline:
+  - pedagogical depth;
+  - objectives/checkpoints/learning framing;
+  - weaker conceptual dependence on story runtime;
+  - clarify `in_progress@step0` vs `resume_available`.
 
 ---
 

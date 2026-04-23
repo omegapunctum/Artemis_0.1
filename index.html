@@ -92,53 +92,55 @@
         <button id="overflow-btn" class="icon-btn" type="button" aria-label="Ещё действия">⋯</button>
       </div>
     </header>
-    <section id="research-context-bar" class="glass-panel" aria-label="Контекст исследования">
-      <div class="research-context-main">
-        <button id="research-slice-trigger" type="button">Новый срез</button>
-        <span id="research-slice-state">Новый срез</span>
-      </div>
-      <div class="research-context-meta" aria-label="Сводка контекста">
-        <span id="research-period-meta">Период: —</span>
-        <span id="research-layers-meta">Слои: —</span>
-        <span id="research-objects-meta">Объекты: —</span>
-      </div>
-      <div class="research-context-actions" role="group" aria-label="Действия со срезом">
-        <button id="research-slice-save-btn" type="button">Сохранить</button>
-        <button id="research-slice-open-btn" type="button">Открыть</button>
-        <button id="research-slice-compare-btn" type="button">Сравнить</button>
-      </div>
-    </section>
-    <section id="explore-toolbar-shell" class="glass-panel" aria-label="Инструменты исследования">
-      <div class="map-tools-shell" role="group" aria-label="Инструменты карты">
-        <div class="top-actions-cluster" role="group" aria-label="Элементы управления картой">
-          <button id="explore-workspace-trigger" type="button" aria-label="Открыть панель исследования" aria-expanded="false" aria-controls="explore-workspace-panel">Исследование</button>
-          <button id="courses-btn" type="button" aria-label="Открыть курсы" title="Курсы" aria-expanded="false">Курсы</button>
-          <button id="map-theme-toggle" type="button" aria-label="Сменить тему карты">Серая</button>
-          <button id="live-btn" type="button" aria-label="Лента событий" aria-expanded="false">Лента</button>
+    <section id="research-context-bar" class="glass-panel workspace-unified-strip" aria-label="Контекст и инструменты исследования">
+      <div class="workspace-strip-context">
+        <div class="research-context-main">
+          <button id="research-slice-trigger" type="button">Новый срез</button>
+          <span id="research-slice-state">Новый срез</span>
+        </div>
+        <div class="research-context-meta" aria-label="Сводка контекста">
+          <span id="research-period-meta">Период: —</span>
+          <span id="research-layers-meta">Слои: —</span>
+          <span id="research-objects-meta">Объекты: —</span>
+        </div>
+        <div class="research-context-actions" role="group" aria-label="Действия со срезом">
+          <button id="research-slice-save-btn" type="button">Сохранить</button>
+          <button id="research-slice-open-btn" type="button">Открыть</button>
+          <button id="research-slice-compare-btn" type="button">Сравнить</button>
         </div>
       </div>
-      <section id="courses-panel" class="glass-panel top-panel" hidden></section>
-      <section id="live-panel" class="glass-panel top-panel" hidden></section>
-      <section id="explore-workspace-panel" class="glass-panel top-panel" hidden aria-label="Панель исследования">
-        <div class="workspace-tab-row" role="tablist" aria-label="Секции исследования">
-          <button id="layers-btn" class="workspace-tab" type="button" role="tab" aria-selected="true" aria-controls="layers-panel">Слои</button>
-          <button id="filters-btn" class="workspace-tab" type="button" role="tab" aria-selected="false" aria-controls="filters-panel">Фильтры</button>
-          <button id="slices-btn" class="workspace-tab" type="button" role="tab" aria-selected="false" aria-controls="slices-panel">Срезы</button>
-          <button id="bookmarks-btn" class="workspace-tab" type="button" role="tab" aria-selected="false" aria-controls="bookmarks-panel">Закладки</button>
+      <div id="explore-toolbar-shell" class="workspace-strip-tools" aria-label="Инструменты исследования">
+        <div class="map-tools-shell" role="group" aria-label="Инструменты карты">
+          <div class="top-actions-cluster" role="group" aria-label="Элементы управления картой">
+            <button id="explore-workspace-trigger" type="button" aria-label="Открыть панель исследования" aria-expanded="false" aria-controls="explore-workspace-panel">Исследование</button>
+            <button id="map-theme-toggle" type="button" aria-label="Сменить тему карты">Серая</button>
+            <button id="live-btn" type="button" aria-label="Лента событий" aria-expanded="false">Лента</button>
+          </div>
+          <button id="courses-btn" class="workspace-secondary-entry" type="button" aria-label="Открыть курсы" title="Курсы" aria-expanded="false">Курсы</button>
         </div>
-        <div class="workspace-section-groups" aria-label="Группы секций">
-          <p class="workspace-section-label">Explore</p>
-          <p class="workspace-section-label">Saved</p>
-        </div>
-        <div class="workspace-panel-body">
-          <div id="quick-layer-filter" class="quick-layer-filter" role="group" aria-label="Быстрый фильтр категорий"></div>
-          <p id="layers-entry-helper" class="layers-entry-helper">Слои карты</p>
-          <section id="layers-panel" class="glass-panel top-panel workspace-section-panel" hidden></section>
-          <section id="filters-panel" class="glass-panel top-panel workspace-section-panel" hidden></section>
-          <section id="slices-panel" class="glass-panel top-panel workspace-section-panel" hidden></section>
-          <section id="bookmarks-panel" class="glass-panel top-panel workspace-section-panel" hidden></section>
-        </div>
-      </section>
+        <section id="courses-panel" class="glass-panel top-panel" hidden></section>
+        <section id="live-panel" class="glass-panel top-panel" hidden></section>
+        <section id="explore-workspace-panel" class="glass-panel top-panel" hidden aria-label="Панель исследования">
+          <div class="workspace-tab-row" role="tablist" aria-label="Секции исследования">
+            <button id="layers-btn" class="workspace-tab" type="button" role="tab" aria-selected="true" aria-controls="layers-panel">Слои</button>
+            <button id="filters-btn" class="workspace-tab" type="button" role="tab" aria-selected="false" aria-controls="filters-panel">Фильтры</button>
+            <button id="slices-btn" class="workspace-tab" type="button" role="tab" aria-selected="false" aria-controls="slices-panel">Срезы</button>
+            <button id="bookmarks-btn" class="workspace-tab" type="button" role="tab" aria-selected="false" aria-controls="bookmarks-panel">Закладки</button>
+          </div>
+          <div class="workspace-section-groups" aria-label="Группы секций">
+            <p class="workspace-section-label">Explore</p>
+            <p class="workspace-section-label">Saved</p>
+          </div>
+          <div class="workspace-panel-body">
+            <div id="quick-layer-filter" class="quick-layer-filter" role="group" aria-label="Быстрый фильтр категорий"></div>
+            <p id="layers-entry-helper" class="layers-entry-helper">Слои карты</p>
+            <section id="layers-panel" class="glass-panel top-panel workspace-section-panel" hidden></section>
+            <section id="filters-panel" class="glass-panel top-panel workspace-section-panel" hidden></section>
+            <section id="slices-panel" class="glass-panel top-panel workspace-section-panel" hidden></section>
+            <section id="bookmarks-panel" class="glass-panel top-panel workspace-section-panel" hidden></section>
+          </div>
+        </section>
+      </div>
     </section>
 
     <main id="map-container" aria-label="Карта объектов">

@@ -11,6 +11,7 @@ let globalDataErrorRetryHandler = null;
 let activeUiToastTimerId = null;
 let activeUiToastEl = null;
 const ONBOARDING_HINT_SESSION_KEY = 'artemis_onboarding_hint_dismissed';
+const COURSE_PROGRESS_STORAGE_KEY = 'artemis_course_progress_v1';
 
 function isDebugTelemetryMode() {
   if (typeof window === 'undefined') return false;
@@ -264,6 +265,7 @@ export async function initUI(map, features) {
     courseDraftStoryIds: [],
     currentCourse: null,
     currentCourseStepIndex: 0,
+    courseProgress: loadCourseProgressState(),
     liveState: createLiveState(getRecentFeatures(18, { type: 'FeatureCollection', features: allFeatures })),
     liveError: '',
     sliceSelectionSet: new Set(),
@@ -1719,31 +1721,23 @@ function renderSlicesPanel(elements, state, map) {
     compareSummary.className = 'slice-compare-summary';
     const compareSummaryTitle = document.createElement('p');
     compareSummaryTitle.className = 'status-summary slice-compare-summary-title';
-    compareSummaryTitle.textContent = `Выбрано для сравнения: ${state.sliceCompareSelectionIds.length}/2`;
-    compareSummary.appendChild(compareSummaryTitle);
-
-    if (state.sliceCompareSelectionIds.length) {
-      const compareList = document.createElement('ul');
-      compareList.className = 'slice-compare-selected-list';
-      state.sliceCompareSelectionIds.forEach((sliceId) => {
-        const compareItem = document.createElement('li');
-        compareItem.textContent = String(availableSliceById.get(String(sliceId || '').trim())?.title || sliceId);
-        compareList.appendChild(compareItem);
-      });
-      compareSummary.appendChild(compareList);
-    }
-
+    compareSummaryTitle.textContent = state.sliceCompareSelectionIds.length >= 2
+      ? `Compare ready: ${state.sliceCompareSelectionIds.length}/2`
+      : `Compare readiness: ${state.sliceCompareSelectionIds.length}/2`;
     const compareSummaryActions = document.createElement('div');
     compareSummaryActions.className = 'panel-action-row slice-compare-summary-actions';
-    const compareHint = document.createElement('span');
-    compareHint.className = 'status-summary slice-compare-hint';
-    compareHint.textContent = state.sliceCompareSelectionIds.length >= 2
-      ? 'Пара срезов готова к сравнению.'
-      : 'Выберите до двух срезов в списке.';
+    const openCompareToolsBtn = document.createElement('button');
+    openCompareToolsBtn.type = 'button';
+    openCompareToolsBtn.className = 'ui-button ui-button-secondary';
+    openCompareToolsBtn.textContent = 'Compare tools';
+    openCompareToolsBtn.addEventListener('click', () => {
+      state.sliceComparePanelOpen = true;
+      renderSlicesPanel(elements, state, map);
+    });
     const clearCompareBtn = document.createElement('button');
     clearCompareBtn.type = 'button';
     clearCompareBtn.className = 'ui-button ui-button-secondary';
-    clearCompareBtn.textContent = 'Сбросить выбор';
+    clearCompareBtn.textContent = 'Сбросить';
     clearCompareBtn.disabled = !state.sliceCompareSelectionIds.length;
     clearCompareBtn.addEventListener('click', () => {
       state.sliceCompareSelectionIds = [];
@@ -1751,8 +1745,8 @@ function renderSlicesPanel(elements, state, map) {
       syncResearchSliceCompareCta(elements, state);
       renderSlicesPanel(elements, state, map);
     });
-    compareSummaryActions.append(compareHint, clearCompareBtn);
-    compareSummary.appendChild(compareSummaryActions);
+    compareSummaryActions.append(openCompareToolsBtn, clearCompareBtn);
+    compareSummary.append(compareSummaryTitle, compareSummaryActions);
     savedSection.appendChild(compareSummary);
 
     const list = document.createElement('div');
@@ -1877,11 +1871,17 @@ function renderSlicesPanel(elements, state, map) {
   panel.appendChild(savedSection);
 
   const storiesSection = document.createElement('section');
-  storiesSection.className = 'panel-stack slice-workzone';
-  const storiesTitle = document.createElement('h4');
-  storiesTitle.className = 'panel-title';
-  storiesTitle.textContent = 'Stories';
-  storiesSection.appendChild(storiesTitle);
+  storiesSection.className = 'panel-stack slice-workzone slice-secondary-workzone';
+  const storiesToggle = document.createElement('details');
+  storiesToggle.className = 'slice-secondary-disclosure';
+  const storiesSummary = document.createElement('summary');
+  storiesSummary.className = 'status-summary';
+  const storiesCount = Array.isArray(state.stories) ? state.stories.length : 0;
+  const coursesCount = Array.isArray(state.courses) ? state.courses.length : 0;
+  storiesSummary.textContent = `Secondary narrative tools · Stories: ${storiesCount} · Courses: ${coursesCount}`;
+  storiesToggle.appendChild(storiesSummary);
+  const storiesInner = document.createElement('div');
+  storiesInner.className = 'panel-stack';
 
   const availableSliceRows = Array.isArray(state.researchSlices) ? state.researchSlices : [];
   const availableSliceMap = new Map(
@@ -2003,7 +2003,7 @@ function renderSlicesPanel(elements, state, map) {
       showUiSystemMessage(normalizeAppError(error, 'Не удалось сохранить story.').message, { variant: 'warning', timeout: 3200 });
     }
   });
-  storiesSection.appendChild(storyForm);
+  storiesInner.appendChild(storyForm);
 
   if (state.currentStory && Array.isArray(state.currentStory.slice_ids) && state.currentStory.slice_ids.length) {
     const storyModeSurface = document.createElement('section');
@@ -2091,17 +2091,17 @@ function renderSlicesPanel(elements, state, map) {
 
     playback.append(stepLabel, prevBtn, nextBtn, exitBtn);
     storyModeSurface.appendChild(playback);
-    storiesSection.appendChild(storyModeSurface);
+    storiesInner.appendChild(storyModeSurface);
   }
 
   if (state.storiesLoading) {
-    storiesSection.appendChild(createInlineStateBlock({
+    storiesInner.appendChild(createInlineStateBlock({
       variant: 'info',
       title: 'Загрузка stories',
       message: 'Загрузка stories…'
     }));
   } else if (state.storiesError) {
-    storiesSection.appendChild(createInlineStateBlock({
+    storiesInner.appendChild(createInlineStateBlock({
       variant: 'warning',
       title: 'Stories недоступны',
       message: state.storiesError
@@ -2169,9 +2169,11 @@ function renderSlicesPanel(elements, state, map) {
       item.append(itemTitle, meta, actions);
       storiesList.appendChild(item);
     });
-    storiesSection.appendChild(storiesList);
+    storiesInner.appendChild(storiesList);
   }
 
+  storiesToggle.appendChild(storiesInner);
+  storiesSection.appendChild(storiesToggle);
   panel.appendChild(storiesSection);
 }
 
@@ -2340,10 +2342,96 @@ async function ensureCoursesLoaded(state, { force = false } = {}) {
 async function applyCurrentCourseStory(state, elements, map) {
   const storyId = resolveCourseStepStoryId(state.currentCourse, state.currentCourseStepIndex);
   if (!storyId) return;
+  captureStoryModeEntrySnapshot(state, map);
   const detail = await getStory(storyId);
   state.currentStory = detail;
   state.currentStoryStepIndex = 0;
   await applyCurrentStoryStep(state, elements, map);
+}
+
+function exitCourseMode(state, elements, map) {
+  if (state.currentStory || state.storyModeEntrySnapshot) {
+    exitStoryMode(state, elements, map);
+  }
+  state.currentCourse = null;
+  state.currentCourseStepIndex = 0;
+}
+
+function loadCourseProgressState() {
+  if (typeof window === 'undefined' || !window.localStorage) return {};
+  try {
+    const raw = window.localStorage.getItem(COURSE_PROGRESS_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function saveCourseProgressState(progress) {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  try {
+    window.localStorage.setItem(COURSE_PROGRESS_STORAGE_KEY, JSON.stringify(progress && typeof progress === 'object' ? progress : {}));
+  } catch (_error) {
+    // ignore storage write issues
+  }
+}
+
+function getCourseProgressRecord(state, courseId) {
+  const key = String(courseId || '').trim();
+  if (!key) return null;
+  const source = state?.courseProgress && typeof state.courseProgress === 'object' ? state.courseProgress : {};
+  const record = source[key];
+  if (!record || typeof record !== 'object') return null;
+  const storyIndex = Number(record.storyIndex);
+  return {
+    storyIndex: Number.isInteger(storyIndex) ? storyIndex : 0,
+    storyId: String(record.storyId || '').trim(),
+    completed: Boolean(record.completed),
+    updatedAt: String(record.updatedAt || '').trim()
+  };
+}
+
+function resolveCourseResumeIndex(course, progressRecord) {
+  const storyIds = Array.isArray(course?.story_ids)
+    ? course.story_ids.map((id) => String(id || '').trim()).filter(Boolean)
+    : [];
+  if (!storyIds.length || !progressRecord) return 0;
+  const index = clampCourseStepIndex(course, progressRecord.storyIndex);
+  const storyIdAtIndex = storyIds[index] || '';
+  if (progressRecord.storyId && progressRecord.storyId === storyIdAtIndex) return index;
+  if (index >= 0 && index < storyIds.length) return index;
+  return 0;
+}
+
+function resolveCourseProgressStatus(course, progressRecord) {
+  const total = Array.isArray(course?.story_ids) ? course.story_ids.filter(Boolean).length : 0;
+  if (!total || !progressRecord) return 'not_started';
+  if (progressRecord.completed || progressRecord.storyIndex >= total - 1) return 'completed';
+  if (progressRecord.storyIndex > 0) return 'resume_available';
+  return 'in_progress';
+}
+
+function saveCourseProgress(state, course, index, { completed = false } = {}) {
+  const courseId = String(course?.id || '').trim();
+  if (!courseId) return;
+  const storyIds = Array.isArray(course?.story_ids)
+    ? course.story_ids.map((id) => String(id || '').trim()).filter(Boolean)
+    : [];
+  if (!storyIds.length) return;
+  const safeIndex = clampCourseStepIndex(course, index);
+  const nextRecord = {
+    storyIndex: safeIndex,
+    storyId: storyIds[safeIndex] || '',
+    completed: Boolean(completed) || safeIndex >= storyIds.length - 1,
+    updatedAt: new Date().toISOString()
+  };
+  if (!state.courseProgress || typeof state.courseProgress !== 'object') {
+    state.courseProgress = {};
+  }
+  state.courseProgress[courseId] = nextRecord;
+  saveCourseProgressState(state.courseProgress);
 }
 
 function renderCoursesPanel(elements, state, map) {
@@ -2531,6 +2619,8 @@ function renderCoursesPanel(elements, state, map) {
   state.courses.forEach((course) => {
     const courseId = String(course?.id || '').trim();
     if (!courseId) return;
+    const progressRecord = getCourseProgressRecord(state, courseId);
+    const progressStatus = resolveCourseProgressStatus(course, progressRecord);
 
     const item = document.createElement('article');
     item.className = 'course-item';
@@ -2541,7 +2631,14 @@ function renderCoursesPanel(elements, state, map) {
     const meta = document.createElement('p');
     meta.className = 'status-summary';
     const stamp = String(course?.updated_at || '').trim();
-    meta.textContent = `${Number(course?.step_count || 0)} stories${stamp ? ` · ${stamp.slice(0, 10)}` : ''}`;
+    const progressLabel = progressStatus === 'completed'
+      ? 'Завершено'
+      : progressStatus === 'resume_available'
+        ? 'Продолжить'
+        : progressStatus === 'in_progress'
+          ? 'В процессе'
+          : 'Не начато';
+    meta.textContent = `${Number(course?.step_count || 0)} stories · ${progressLabel}${stamp ? ` · ${stamp.slice(0, 10)}` : ''}`;
 
     const actions = document.createElement('div');
     actions.className = 'panel-action-row';
@@ -2549,15 +2646,29 @@ function renderCoursesPanel(elements, state, map) {
     const openBtn = document.createElement('button');
     openBtn.type = 'button';
     openBtn.className = 'ui-button ui-button-secondary';
-    openBtn.textContent = 'Открыть Course';
+    openBtn.textContent = progressStatus === 'completed'
+      ? 'Пройти заново'
+      : progressStatus === 'resume_available'
+        ? 'Продолжить'
+        : 'Начать';
     openBtn.addEventListener('click', async () => {
       try {
         const detail = await getCourse(courseId);
         state.currentCourse = detail;
-        state.currentCourseStepIndex = 0;
+        const resumeRecord = getCourseProgressRecord(state, courseId);
+        const shouldResume = progressStatus === 'resume_available';
+        state.currentCourseStepIndex = shouldResume
+          ? resolveCourseResumeIndex(detail, resumeRecord)
+          : 0;
         await applyCurrentCourseStory(state, elements, map);
+        saveCourseProgress(state, detail, state.currentCourseStepIndex);
         renderCoursesPanel(elements, state, map);
-        showUiSystemMessage('Course открыта', { variant: 'success', timeout: 2200 });
+        const message = progressStatus === 'completed'
+          ? 'Course начат заново'
+          : shouldResume
+            ? 'Course продолжен'
+            : 'Course открыт';
+        showUiSystemMessage(message, { variant: 'success', timeout: 2200 });
       } catch (error) {
         showUiSystemMessage(normalizeAppError(error, 'Не удалось открыть course.').message, { variant: 'warning', timeout: 3200 });
       }
@@ -2572,9 +2683,12 @@ function renderCoursesPanel(elements, state, map) {
       if (!ok) return;
       try {
         await deleteCourse(courseId);
+        if (state.courseProgress && typeof state.courseProgress === 'object' && state.courseProgress[courseId]) {
+          delete state.courseProgress[courseId];
+          saveCourseProgressState(state.courseProgress);
+        }
         if (String(state.currentCourse?.id || '') === courseId) {
-          state.currentCourse = null;
-          state.currentCourseStepIndex = 0;
+          exitCourseMode(state, elements, map);
         }
         await ensureCoursesLoaded(state, { force: true });
         renderCoursesPanel(elements, state, map);
@@ -2594,12 +2708,49 @@ function renderCoursesPanel(elements, state, map) {
     return;
   }
 
-  const playback = document.createElement('div');
-  playback.className = 'panel-action-row';
   const totalStories = state.currentCourse.story_ids.length;
   const currentIndex = clampCourseStepIndex(state.currentCourse, state.currentCourseStepIndex);
+  const currentStoryTitle = String(state.currentStory?.title || '').trim();
+  const progressRecord = getCourseProgressRecord(state, state.currentCourse?.id);
+  const progressStatus = resolveCourseProgressStatus(state.currentCourse, progressRecord);
+  const progressStatusLabel = progressStatus === 'completed'
+    ? 'Завершено'
+    : progressStatus === 'resume_available'
+      ? 'Продолжение доступно'
+      : progressStatus === 'in_progress'
+        ? 'В процессе'
+        : 'Не начато';
+
+  const courseModeSurface = document.createElement('section');
+  courseModeSurface.className = 'course-mode-surface';
+  const courseModeHead = document.createElement('div');
+  courseModeHead.className = 'course-mode-head';
+  const courseModeBadge = document.createElement('span');
+  courseModeBadge.className = 'ui-badge course-mode-badge';
+  courseModeBadge.textContent = 'Course mode';
+  const courseModeTitle = document.createElement('strong');
+  courseModeTitle.className = 'course-mode-title';
+  courseModeTitle.textContent = String(state.currentCourse.title || 'Course');
+  courseModeHead.append(courseModeBadge, courseModeTitle);
+  courseModeSurface.appendChild(courseModeHead);
+
+  const courseProgressLine = document.createElement('p');
+  courseProgressLine.className = 'status-summary course-mode-progress';
+  courseProgressLine.textContent = `Прогресс: Story ${currentIndex + 1}/${totalStories} · ${progressStatusLabel}`;
+  courseModeSurface.appendChild(courseProgressLine);
+
+  const courseContextLine = document.createElement('p');
+  courseContextLine.className = 'status-summary course-mode-context';
+  courseContextLine.textContent = currentStoryTitle
+    ? `Текущий учебный фокус: ${truncateText(currentStoryTitle, 120)}.`
+    : 'Последовательный учебный режим активен.';
+  courseModeSurface.appendChild(courseContextLine);
+
+  const playback = document.createElement('div');
+  playback.className = 'panel-action-row course-playback-controls';
   const stepLabel = document.createElement('span');
-  stepLabel.textContent = `${String(state.currentCourse.title || 'Course')} · Story ${currentIndex + 1}/${totalStories}`;
+  stepLabel.className = 'status-summary course-playback-hint';
+  stepLabel.textContent = 'Навигация курса';
 
   const prevBtn = document.createElement('button');
   prevBtn.type = 'button';
@@ -2609,6 +2760,7 @@ function renderCoursesPanel(elements, state, map) {
   prevBtn.addEventListener('click', async () => {
     state.currentCourseStepIndex = clampCourseStepIndex(state.currentCourse, state.currentCourseStepIndex - 1);
     await applyCurrentCourseStory(state, elements, map);
+    saveCourseProgress(state, state.currentCourse, state.currentCourseStepIndex);
     renderCoursesPanel(elements, state, map);
   });
 
@@ -2620,6 +2772,7 @@ function renderCoursesPanel(elements, state, map) {
   nextBtn.addEventListener('click', async () => {
     state.currentCourseStepIndex = clampCourseStepIndex(state.currentCourse, state.currentCourseStepIndex + 1);
     await applyCurrentCourseStory(state, elements, map);
+    saveCourseProgress(state, state.currentCourse, state.currentCourseStepIndex, { completed: state.currentCourseStepIndex >= totalStories - 1 });
     renderCoursesPanel(elements, state, map);
   });
 
@@ -2628,13 +2781,14 @@ function renderCoursesPanel(elements, state, map) {
   exitBtn.className = 'ui-button ui-button-secondary';
   exitBtn.textContent = 'Выйти из Course';
   exitBtn.addEventListener('click', () => {
-    state.currentCourse = null;
-    state.currentCourseStepIndex = 0;
+    saveCourseProgress(state, state.currentCourse, state.currentCourseStepIndex, { completed: state.currentCourseStepIndex >= totalStories - 1 });
+    exitCourseMode(state, elements, map);
     renderCoursesPanel(elements, state, map);
   });
 
   playback.append(stepLabel, prevBtn, nextBtn, exitBtn);
-  panel.appendChild(playback);
+  courseModeSurface.appendChild(playback);
+  panel.appendChild(courseModeSurface);
 }
 
 function renderLivePanel(elements, state, map) {
@@ -4109,12 +4263,8 @@ function applyResponsiveLayout(elements, state, map) {
     const headerHeight = Math.max(44, Math.round(elements.topHeader.getBoundingClientRect().height));
     rootStyle.setProperty('--top-header-height', `${headerHeight}px`);
     if (elements.researchContextBar) {
-      const contextHeight = Math.max(40, Math.round(elements.researchContextBar.getBoundingClientRect().height));
-      rootStyle.setProperty('--research-context-height', `${contextHeight}px`);
-    }
-    if (elements.exploreToolbarShell) {
-      const toolbarHeight = Math.max(42, Math.round(elements.exploreToolbarShell.getBoundingClientRect().height));
-      rootStyle.setProperty('--explore-toolbar-height', `${toolbarHeight}px`);
+      const stripHeight = Math.max(56, Math.round(elements.researchContextBar.getBoundingClientRect().height));
+      rootStyle.setProperty('--workspace-strip-height', `${stripHeight}px`);
     }
   }
   if (rootStyle) {
