@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from app.routes.map import MAP_FEED_ADAPTERS, build_map_feed_items_from_drafts, draft_to_map_feed_item, map_entities, place_to_map_feed_item
+from app.routes.map import MAP_FEED_ADAPTERS, build_map_feed_items_from_drafts, draft_to_map_feed_item, map_entities
 
 
 def test_draft_to_map_feed_item_maps_expected_fields() -> None:
@@ -57,15 +57,3 @@ def test_map_entities_uses_draft_registry_adapter() -> None:
     assert items[0].name == "Registry Draft"
     assert items[0].longitude == 30.0
     assert items[0].latitude == 50.0
-
-
-def test_place_to_map_feed_item_maps_expected_fields() -> None:
-    place = {"id": "p1", "name": "Place A", "coords": {"lat": 10.0, "lng": 20.0}}
-
-    item = place_to_map_feed_item(place)
-
-    assert item.id == "p1"
-    assert item.entity_type == "place"
-    assert item.name == "Place A"
-    assert item.longitude == 20.0
-    assert item.latitude == 10.0

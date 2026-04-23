@@ -152,6 +152,13 @@ app/
 - текущий persistence baseline использует shared SQLAlchemy scope: `app.auth.service` задаёт общий `engine`/`Base`, который переиспользуется в `drafts` / `research_slices` / `stories` / `courses`;
 - migration/bootstrap path текущего baseline выполняется при runtime startup через `init_db()` вызовы в `app.main.py`, а не через отдельный внешний migration orchestrator;
 - versioned migrations в backend опираются на общую `schema_version` discipline как baseline-механизм и не должны трактоваться как fully hardened production migration platform;
+- общая `schema_version` таблица рассматривается как shared baseline coordination mechanism для всех runtime-доменов, а не как изолированный per-service журнал;
+- migration version ids в общей `schema_version` модели должны оставаться глобально уникальными и domain-coordinated между `auth` / `drafts` / `research_slices` / `stories` / `courses`;
+- новые migration steps нельзя добавлять произвольно: перед добавлением версии обязателен локальный check текущего version space в общей `schema_version` discipline, чтобы избежать ручного drift/коллизий;
+- execution policy текущего baseline: migration/apply path выполняется в controlled single-writer режиме (явный owner запуска), а не как некоординированный конкурентный first-boot apply из нескольких инстансов одновременно;
+- рекомендуемый baseline порядок выполнения: preflight-only discipline check → migration/apply path (`init_db()` startup sequence) → обычный runtime boot;
+- concurrent first-boot apply считается нарушением baseline guardrail и не должен нормализоваться как допустимая operational практика;
+- ошибка preflight трактуется как stop-before-apply event; ошибка startup apply трактуется как fail-fast operational event, а не как silent retry semantics внутри текущего baseline.
 - moderation path не является direct publish path для public dataset;
 - текущий upload surface должен описываться как runtime split: API-приём файлов идёт через `/api/uploads` и `/api/uploads/image`, а публичная выдача загруженных файлов идёт через статический `/uploads/*` mount;
 - документация не должна описывать несуществующий отдельный runtime route `GET /api/uploads/{filename}`, если фактическая раздача файлов закреплена за static mount.

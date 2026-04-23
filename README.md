@@ -117,10 +117,20 @@ Vanilla JavaScript (no frameworks):
 - The project already includes hardening work beyond the original memory-only MVP, including Redis-backed/session continuity proof paths and related integration coverage, but this should **not** be described as a finished production-ready multi-node auth/session architecture.
 - Multi-instance scaling, persistence, and ops hardening remain part of the next dedicated scaling/hardening cycle.
 - Current persistence baseline uses a **shared SQLAlchemy engine/Base scope** (auth + drafts + research slices + stories + courses) rather than isolated per-domain database engines.
+- Current DB baseline remains **SQLite as an acceptable baseline storage layer**, but this must be treated as baseline-capable only (not a production-grade multi-node/high-concurrency storage contour).
+- SQLite operational guardrails (current baseline):
+  - concurrency expectation: single-instance / low-to-moderate concurrent write pressure; do not interpret current mode as horizontally scaled write-ready storage;
+  - locking/recovery caveat: lock contention and restart-time migration/bootstrap sensitivity must be treated as operational risk signals, not as edge-case impossibilities;
+  - trigger conditions for next storage-hardening stage include recurring lock-related runtime failures, sustained write-latency under normal workload, and repeated operational need for multi-instance write concurrency.
 - Migration/bootstrap behavior is **runtime-startup driven**: `init_db()` paths run during API startup and apply versioned migrations against the active DB.
 - Versioned migrations use a shared `schema_version` discipline and should be treated as a current baseline mechanism, not as a fully hardened production migration platform.
 - Runtime startup for API is currently **fail-fast** on DB/bootstrap/migration initialization errors (`init_db()` startup path), and should be treated as baseline behavior, not as a fully hardened startup-orchestration platform.
 - Current `/api/health` semantics are baseline-level and process-local: `total_errors` remains an accumulated historical diagnostic counter, while `health.ok` reflects whether there were recent server-side errors within a fixed baseline decay window; this should not be interpreted as a fully hardened readiness/SLO contract.
+  - Baseline default decay window is `120s`; it can be locally tuned via `HEALTH_ERROR_DECAY_SECONDS` env (invalid/empty values safely fall back to `120`) as a narrow hardening control, not as an observability-platform redesign.
+  - Operator policy (runbook-light, current baseline):
+    - `ok=true` means no recent process-local 5xx in the active decay window; it does **not** mean zero historical errors and does **not** by itself prove cluster/global readiness.
+    - `ok=false` means a recent server-side failure was observed in this process; short-lived `ok=false` within decay window is a warning signal and is not automatically equal to sustained outage.
+    - `counts.total_errors` is a historical diagnostic counter for this process lifetime and must be interpreted together with `ok`, `uptime`, and recent logs/events, not as a standalone outage state.
 - Backend runtime currently guarantees request correlation and structured failure envelope at baseline level (`X-Request-ID` + `request_id` in error payloads), but this should not be described as a completed observability platform.
 
 ---

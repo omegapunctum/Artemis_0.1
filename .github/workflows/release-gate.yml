@@ -26,6 +26,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt pytest
 
+      - name: Run migration preflight discipline check
+        env:
+          AUTH_DATABASE_URL: sqlite:///:memory:
+        run: python scripts/preflight_migration_check.py
+
       - name: Run release gate
         # Structural release-discipline check; this workflow does not replace full regression testing.
         run: python scripts/release_check.py

@@ -137,8 +137,8 @@ class MapFeedEndpointTests(unittest.TestCase):
         payload = response.json()
         parsed = MapFeedResponse.model_validate(payload)
 
-        self.assertEqual(len(payload["items"]), 5)
-        self.assertEqual(payload["total"], 5)
+        self.assertEqual(len(payload["items"]), 3)
+        self.assertEqual(payload["total"], 3)
         self.assertFalse(payload["bbox_applied"])
         self.assertEqual(parsed.total, len(parsed.items))
 
@@ -210,7 +210,7 @@ class MapFeedEndpointTests(unittest.TestCase):
         paged_payload = paged.json()
 
         self.assertTrue(filtered_payload["bbox_applied"])
-        self.assertEqual(filtered_payload["total"], 3)
+        self.assertEqual(filtered_payload["total"], 2)
         self.assertEqual(filtered_payload["total"], len(filtered_payload["items"]))
 
         self.assertEqual(paged_payload["total"], filtered_payload["total"])
@@ -225,7 +225,7 @@ class MapFeedEndpointTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200, response.text)
         payload = response.json()
 
-        self.assertEqual([item["name"] for item in payload["items"]], ["Alpha", "bravo", "charlie", "Place A", "Place B"])
+        self.assertEqual([item["name"] for item in payload["items"]], ["Alpha", "bravo", "charlie"])
 
     def test_empty_names_sorted_last(self):
         self._insert_draft("Zulu", {"lat": 10, "lng": 20})
@@ -238,8 +238,8 @@ class MapFeedEndpointTests(unittest.TestCase):
         payload = response.json()
         names = [item["name"] for item in payload["items"]]
 
-        self.assertEqual(names[:4], ["Alpha", "Place A", "Place B", "Zulu"])
-        self.assertEqual(names[4:], ["", "   "])
+        self.assertEqual(names[:2], ["Alpha", "Zulu"])
+        self.assertEqual(names[2:], ["", "   "])
 
     def test_tie_breaker_uses_id_string_ascending(self):
         self._insert_draft("same", {"lat": 10, "lng": 20})
@@ -268,7 +268,7 @@ class MapFeedEndpointTests(unittest.TestCase):
         names_page_2 = [item["name"] for item in page_2.json()["items"]]
 
         self.assertEqual(names_page_1, ["Alpha", "bravo"])
-        self.assertEqual(names_page_2, ["charlie", "Place A"])
+        self.assertEqual(names_page_2, ["charlie"])
 
     def test_invalid_bbox_returns_422(self):
         for bbox in ("1,2,3", "a,b,c,d", "10,20,0,5"):

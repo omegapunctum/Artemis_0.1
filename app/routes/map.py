@@ -64,49 +64,8 @@ def build_map_feed_items_from_drafts(drafts: list[Any]) -> list[MapFeedItem]:
     return [draft_to_map_feed_item(draft) for draft in drafts]
 
 
-
-
-def get_places_mock() -> list[dict[str, Any]]:
-    """
-    Temporary INTERNAL mock runtime source for `/api/map/feed`.
-
-    Boundary and lifecycle:
-    - transitional/dev-only adapter input for runtime UX/tests;
-    - NOT a canonical data path and NOT a public export source;
-    - must be replaced or removed in a dedicated cleanup track when a real
-      runtime place source is ready.
-    """
-    return [
-        {
-            "id": "p1",
-            "name": "Place A",
-            "coords": {"lat": 10.0, "lng": 20.0},
-        },
-        {
-            "id": "p2",
-            "name": "Place B",
-            "coords": {"lat": None, "lng": None},
-        },
-    ]
-
-
-def place_to_map_feed_item(place: dict[str, Any]) -> MapFeedItem:
-    lon, lat = extract_coords({"coords": place.get("coords")})
-    return MapFeedItem(
-        id=str(place["id"]),
-        entity_type="place",
-        name=place.get("name"),
-        layer_id=None,
-        geometry_type=None,
-        longitude=lon,
-        latitude=lat,
-        date_start=None,
-        date_end=None,
-    )
-
 MAP_FEED_ADAPTERS: dict[str, Any] = {
     "draft": draft_to_map_feed_item,
-    "place": place_to_map_feed_item,
 }
 
 
@@ -119,7 +78,6 @@ def map_entities(entity_type: str, entities: list[Any]) -> list[MapFeedItem]:
 TYPE_ORDER: dict[str, int] = {
     "draft": 0,
     "event": 1,
-    "place": 2,
 }
 
 
@@ -179,11 +137,7 @@ def get_map_feed(
         parsed_bbox = parse_bbox(bbox)
         filtered_items: list[MapFeedItem] = []
 
-        draft_items = map_entities("draft", list_drafts(db, current_user))
-        # Transitional INTERNAL mock branch.
-        # Keep behavior stable for current runtime/test contract until dedicated cleanup.
-        place_items = map_entities("place", get_places_mock())
-        items = draft_items + place_items
+        items = map_entities("draft", list_drafts(db, current_user))
 
         if entity_type is not None:
             if entity_type not in MAP_FEED_ADAPTERS:

@@ -60,7 +60,23 @@ class Metrics:
 
 
 metrics = Metrics()
-HEALTH_ERROR_DECAY_SECONDS = 120
+DEFAULT_HEALTH_ERROR_DECAY_SECONDS = 120
+
+
+def _read_health_error_decay_seconds() -> int:
+    raw_value = os.getenv('HEALTH_ERROR_DECAY_SECONDS', '').strip()
+    if not raw_value:
+        return DEFAULT_HEALTH_ERROR_DECAY_SECONDS
+    try:
+        parsed = int(raw_value)
+    except ValueError:
+        return DEFAULT_HEALTH_ERROR_DECAY_SECONDS
+    return max(1, parsed)
+
+
+HEALTH_ERROR_DECAY_SECONDS = _read_health_error_decay_seconds()
+HEALTH_STATUS_HEALTHY = 'healthy_no_recent_server_errors'
+HEALTH_STATUS_RECENT_SERVER_ERROR = 'recent_server_error_within_decay_window'
 
 
 class KeyValueFormatter(logging.Formatter):
@@ -266,10 +282,13 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 def health_payload() -> dict[str, Any]:
     snapshot = metrics.snapshot()
     counts = snapshot['counts']
+    has_recent_error = metrics.has_recent_server_error(HEALTH_ERROR_DECAY_SECONDS)
     return {
-        'ok': not metrics.has_recent_server_error(HEALTH_ERROR_DECAY_SECONDS),
+        'ok': not has_recent_error,
         'uptime': snapshot['uptime_seconds'],
         'counts': counts,
+        'recent_error_window_seconds': HEALTH_ERROR_DECAY_SECONDS,
+        'status_reason': HEALTH_STATUS_RECENT_SERVER_ERROR if has_recent_error else HEALTH_STATUS_HEALTHY,
     }
 
 
