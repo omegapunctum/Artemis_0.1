@@ -6,6 +6,8 @@
 > Status update (2026-04-22): текущий visual state главного экрана принят как **working visual baseline** (calm dense shell, calmer top controls, editorial detail panel, corrected timeline, preserved map primacy). Текущий цикл малого visual hardening/correction для этих зон завершён; дальнейшие изменения по ним допускаются только через отдельный audit.
 >
 > Status sync (2026-04-22): для `detail panel` зафиксирован **current baseline for epistemic first-pass** на runtime-уровне (различение factual/meta, provenance/source, uncertainty/confidence-adjacent и related/relation-like слоёв). Это локальный baseline detail-зоны, а не полная глобальная epistemic system ARTEMIS; дальнейшее развитие — только audit-first, без инерционного repatch.
+>
+> Typography/palette alignment sync (2026-04-23): controlled cycle для safe zones (token-only patch → selective selector adoption → editorial font routing → final audit) завершён. Текущее состояние принято как **working baseline for safe-zone visual contract alignment**; это не означает полного global visual adoption across all UI. Отдельными future tracks остаются: detail panel full adoption, timeline adoption, modal/light legacy consistency.
 
 Назначение:
 - зафиксировать официальный визуальный стиль ARTEMIS;

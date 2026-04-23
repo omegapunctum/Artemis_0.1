@@ -17,6 +17,8 @@
 > Status sync (2026-04-22): main-screen visual baseline зафиксирован в owner-doc visual layer; для shell/top controls/detail panel/timeline действует правило audit-first (без инерционного repatch в рамках текущего цикла).
 >
 > Detail-panel sync (2026-04-22): принят current runtime baseline для epistemic first-pass внутри detail panel (factual/meta, provenance/source, uncertainty/confidence-adjacent, related/relation-like). Это не конкурирующий source-of-truth и не полная глобальная epistemic system; authoritative visual semantics остаётся в owner-doc `ARTEMIS_UI_UX_VISUAL_SYSTEM.md`.
+>
+> Typography/palette safe-zone sync (2026-04-23): controlled alignment cycle (token-only patch, selective selector adoption, editorial font routing, final audit) закрыт для safe UI zones. Текущее состояние принято как **working baseline for safe-zone visual contract alignment**; это не completion of global visual adoption. Future tracks остаются отдельными: detail panel full adoption, timeline adoption, modal/light legacy consistency.
 
 Следовательно:
 - `ARTEMIS_UI_UX_SYSTEM.md` фиксирует UX-архитектуру, режимы, информационную структуру и поведение интерфейса как системы;
@@ -386,6 +388,12 @@ Story нужна для:
 - Текущий runtime story считается достаточным baseline для старта Phase C.
 - Это status-note на старт работ, а не признак завершения Phase C.
 - Главный gap Story Layer: narrative depth режима, story-specific mode signals, clean return-to-exploration semantics.
+
+## 9.6 Status sync after early Phase C patch cycle (2026-04-23)
+- Текущий Story Layer принят как **temporary Phase C baseline**.
+- В baseline уже собраны: guided traversal, mode distinction, safe return to exploration, step-specific narrative context baseline, map/time/slice synchronization per step.
+- Это не completion of Phase C и не competing source-of-truth для других phase docs.
+- Residual gap зафиксирован как один следующий micro-enhancement: story step state framing / guided depth improvement (без reopen всего Story Layer).
 
 ---
 

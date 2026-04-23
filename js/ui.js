@@ -1037,6 +1037,60 @@ function collectStorySliceIds(story) {
   return [...new Set(ids)];
 }
 
+function getStoryStepRecord(story, index) {
+  if (!story || typeof story !== 'object') return null;
+  const clampedIndex = clampStoryStepIndex(story, index);
+  const currentSliceId = String(resolveStoryStepSliceId(story, clampedIndex) || '').trim();
+  const candidateCollections = [
+    story?.steps,
+    story?.story_steps,
+    story?.step_items,
+    story?.step_contexts,
+    story?.stepContexts
+  ];
+  for (const collection of candidateCollections) {
+    if (!Array.isArray(collection) || !collection.length) continue;
+    const indexed = collection[clampedIndex];
+    if (indexed && typeof indexed === 'object' && !Array.isArray(indexed)) return indexed;
+    if (!currentSliceId) continue;
+    const matched = collection.find((item) => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return false;
+      const itemSliceId = String(item?.slice_id || item?.sliceId || item?.id || '').trim();
+      return Boolean(itemSliceId) && itemSliceId === currentSliceId;
+    });
+    if (matched) return matched;
+  }
+  return null;
+}
+
+function resolveStoryStepNarrative(story, index) {
+  const stepRecord = getStoryStepRecord(story, index);
+  if (!stepRecord) return { stepTitle: '', stepNarrative: '' };
+
+  const extractFirstText = (source, keys) => {
+    for (const key of keys) {
+      if (!Object.prototype.hasOwnProperty.call(source, key)) continue;
+      const value = String(source[key] || '').trim();
+      if (value) return value;
+    }
+    return '';
+  };
+
+  return {
+    stepTitle: extractFirstText(stepRecord, ['title', 'label']),
+    stepNarrative: extractFirstText(stepRecord, ['text', 'note', 'context', 'description', 'summary'])
+  };
+}
+
+function resolveStoryStepStateLabel(step, total) {
+  const current = Number(step);
+  const stepsTotal = Number(total);
+  if (!Number.isFinite(current) || !Number.isFinite(stepsTotal) || stepsTotal <= 1) return 'Единственный шаг';
+  if (current <= 1) return 'Начало истории';
+  if (current >= stepsTotal) return 'Финальный шаг';
+  return 'Шаг в процессе';
+}
+
 function collectCourseStoryIds(course) {
   const ids = [];
   const directIds = Array.isArray(course?.story_ids) ? course.story_ids : (Array.isArray(course?.storyIds) ? course.storyIds : []);
@@ -1970,15 +2024,28 @@ function renderSlicesPanel(elements, state, map) {
     playback.className = 'panel-action-row story-playback-controls';
     const storySteps = state.currentStory.slice_ids.length;
     const storyStep = clampStoryStepIndex(state.currentStory, state.currentStoryStepIndex) + 1;
+    const stepStateLabel = resolveStoryStepStateLabel(storyStep, storySteps);
+    const { stepTitle: stepTitleRaw, stepNarrative: stepNarrativeRaw } = resolveStoryStepNarrative(state.currentStory, state.currentStoryStepIndex);
+    const openedSliceTitle = String(state.sliceOpenedTitle || '').trim();
+    const stepDisplayTitle = stepTitleRaw || openedSliceTitle || `Шаг ${storyStep}`;
+    const storyStepStateLine = document.createElement('p');
+    storyStepStateLine.className = 'status-summary story-mode-state';
+    storyStepStateLine.textContent = stepStateLabel;
+    storyModeSurface.appendChild(storyStepStateLine);
     const storyStepSummary = document.createElement('p');
     storyStepSummary.className = 'status-summary story-mode-step';
     storyStepSummary.textContent = `Шаг ${storyStep} из ${storySteps}`;
     storyModeSurface.appendChild(storyStepSummary);
+    const storyStepTitleLine = document.createElement('p');
+    storyStepTitleLine.className = 'story-mode-step-title';
+    storyStepTitleLine.textContent = stepDisplayTitle;
+    storyModeSurface.appendChild(storyStepTitleLine);
     const storyContextLine = document.createElement('p');
     storyContextLine.className = 'status-summary story-mode-context';
     const storyDescription = String(state.currentStory.description || '').trim();
-    const openedSliceTitle = String(state.sliceOpenedTitle || '').trim();
-    if (storyDescription) {
+    if (stepNarrativeRaw) {
+      storyContextLine.textContent = truncateText(stepNarrativeRaw.replace(/\s+/g, ' '), 220);
+    } else if (storyDescription) {
       storyContextLine.textContent = truncateText(storyDescription.replace(/\s+/g, ' '), 220);
     } else if (openedSliceTitle) {
       storyContextLine.textContent = `Текущий фокус: ${truncateText(openedSliceTitle, 120)}.`;
@@ -1988,7 +2055,8 @@ function renderSlicesPanel(elements, state, map) {
     storyModeSurface.appendChild(storyContextLine);
 
     const stepLabel = document.createElement('span');
-    stepLabel.textContent = `${storyTitleRaw} · ${storyStep}/${storySteps}`;
+    stepLabel.className = 'status-summary story-playback-hint';
+    stepLabel.textContent = 'Навигация по шагам';
 
     const prevBtn = document.createElement('button');
     prevBtn.type = 'button';

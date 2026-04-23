@@ -190,6 +190,12 @@
   - stronger story-specific mode signals;
   - clean return-to-exploration semantics.
 
+### Story gate sync (post-audit, 2026-04-23)
+- Текущий Story Layer принят как **temporary Phase C baseline** (рабочий baseline раннего этапа).
+- Baseline уже включает: guided traversal, mode distinction, safe return-to-exploration, step-specific narrative context baseline и map/time/slice synchronization per step.
+- Это **не** completion of Phase C; фиксация baseline не закрывает весь Story Layer.
+- Residual gap не reopen'ит фазу целиком: следующий возможный micro-enhancement — story step state framing / guided depth improvement.
+
 ---
 
 ## 7. Phase D — Course Layer
