@@ -10,6 +10,8 @@
 > Detail-panel adoption status sync (2026-04-23): после двух controlled CSS-итераций (selector adoption и full-mode token consistency micro-patch) и финального cold audit detail panel принят как **temporary post-adoption baseline**. Immediate patch не требуется; residual points переведены в optional future hardening и не reopen’ят текущий implementation track. Любые следующие изменения detail допускаются только через audit-first.
 >
 > Main-screen cleanup status sync (2026-04-23): текущий main-screen cleanup cycle закрыт как **working baseline accepted** (top-area hierarchy cleanup + route/mode leakage containment + final audit). Для v1.0 baseline зафиксированы: global shell + one contextual strip, map-first exploration, slice-core center, compare readiness/context framing, story/course containment в default exploration, mobile staged logic preserved. Это **не** full polish completion; residual points остаются optional future tuning и не reopen’ят track. Следующие изменения main-screen допускаются только через audit-first.
+>
+> Main-screen refinement sub-track sync (2026-04-23): после добавления отдельного working pack для `main screen / primary workspace` refinement открыт **узкий audit-first sub-track** без reopen всего UI/UX rollout. Этот sub-track задаётся документами `2026-04-23_UIUX_MAIN_SCREEN_TECHNICAL_SPEC_ACTIVE_v1_0.md`, `2026-04-23_UIUX_MAIN_SCREEN_ART_DIRECTION_SPEC_ACTIVE_v1_0.md` и связанными prompt-docs. Его scope ограничен зонами: top shell hierarchy, slice/context sub-bar, map workspace discipline, detail panel as meaning container, timeline strengthening, mobile staged adaptation. Story/Course/Compare full-mode redesign в этот sub-track не входят.
 
 Основан строго на:
 - `ARTEMIS_CONCEPT_v1.0`
@@ -65,6 +67,12 @@
 Дополнительно:
 - Compare реализуется как analytical mode (не top-level route v1.0).
 - AI реализуется как contextual layer (не detached standalone section).
+
+### Main-screen refinement sub-track (2026-04-23)
+- Запускается только как **audit-first** refinement поверх принятого baseline.
+- Не заменяет фазовую последовательность A → B → C → D → E.
+- Не создаёт новый competing owner-doc; использует implementation-plan как rollout owner и main-screen working pack как track-specific target layer.
+- До patch/tasking должен быть выполнен audit current runtime vs main-screen working pack.
 
 ---
 
@@ -404,6 +412,7 @@
 
 ## 14. Recommended order for future Codex tasking
 
+0. **Codex Pre-Task:** current runtime vs main-screen working-pack audit (shell, slice/context strip, map workspace, detail panel, timeline, mobile staged adaptation).
 1. **Codex Task Group A:** Workspace Core stabilization (map/time/detail/support states).
 2. **Codex Task Group B:** Slice lifecycle implementation and persistence hardening.
 3. **Codex Task Group C:** Story consumption flow (entry + step viewer + mode transitions).
