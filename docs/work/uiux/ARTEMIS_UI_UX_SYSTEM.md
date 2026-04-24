@@ -24,6 +24,8 @@
 >
 > Main-screen cleanup sync (2026-04-23): current main-screen cleanup baseline принят как **working baseline** после top-area hierarchy cleanup, route/mode leakage containment и финального cold audit. Baseline включает: global shell + one contextual strip, map-first exploration scene, slice-core centered exploration, compare как readiness/context layer, story/course containment в default exploration state, preserved mobile staged logic. Это **не** completion of full main-screen polish; residual points — только optional future tuning и не reopen’ят текущий cleanup track. Любые следующие изменения главного экрана — только audit-first.
 
+> Main-screen refinement track sync (2026-04-23): отдельный working pack для `main screen / primary workspace` refinement принят как **track-specific target layer** внутри текущего UI/UX цикла. Документы `2026-04-23_UIUX_MAIN_SCREEN_TECHNICAL_SPEC_ACTIVE_v1_0.md`, `2026-04-23_UIUX_MAIN_SCREEN_ART_DIRECTION_SPEC_ACTIVE_v1_0.md` и связанные prompt-docs конкретизируют target-состояние главного экрана, но не заменяют owner-doc роли `ARTEMIS_UI_UX_SYSTEM.md` и `ARTEMIS_UI_UX_VISUAL_SYSTEM.md`. Любой переход от этого pack к runtime patch остаётся audit-first.
+
 Следовательно:
 - `ARTEMIS_UI_UX_SYSTEM.md` фиксирует UX-архитектуру, режимы, информационную структуру и поведение интерфейса как системы;
 - `ARTEMIS_UI_UX_VISUAL_SYSTEM.md` фиксирует, как эта система должна выглядеть.
