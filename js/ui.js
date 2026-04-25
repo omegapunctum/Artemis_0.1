@@ -4178,9 +4178,9 @@ function getPrimaryTitle(props) {
 function getConfidenceLabel(value) {
   const normalized = String(value || '').trim().toLowerCase();
   if (!normalized) return '';
-  if (normalized === 'exact') return 'Точные координаты';
-  if (normalized === 'approximate') return 'Примерные координаты';
-  if (normalized === 'conditional') return 'Условные координаты';
+  if (normalized === 'exact') return 'Exact';
+  if (normalized === 'approximate') return 'Approximate';
+  if (normalized === 'conditional') return 'Conditional';
   return normalized;
 }
 function buildBadge(label, tone = '') {
@@ -4403,24 +4403,23 @@ function getCurrentSliceStatus(state) {
 function getVisibleLayersCue(state) {
   const total = state?.defaultEnabledLayerIds instanceof Set ? state.defaultEnabledLayerIds.size : 0;
   const visible = state?.enabledLayerIds instanceof Set ? state.enabledLayerIds.size : 0;
-  if (!visible) return 'Layers: 0 visible';
-  if (!total || visible >= total) return `Layers: ${visible} visible`;
-  return `Layers: ${visible}/${total} visible`;
+  if (!visible) return '0 visible';
+  if (!total || visible >= total) return `${visible} visible`;
+  return `${visible}/${total} visible`;
 }
 
 function getSelectionSummary(state) {
   const selectedInSlice = state?.sliceSelectionSet instanceof Set ? state.sliceSelectionSet.size : 0;
-  if (selectedInSlice > 0) return `Entities in research: ${selectedInSlice}`;
+  if (selectedInSlice > 0) return `${selectedInSlice} selected`;
   const searchCount = Array.isArray(state?.searchResults) ? state.searchResults.length : 0;
-  if (searchCount > 0) return `Selection context: ${searchCount} in active search`;
-  return 'Selection context: focus on current object';
+  if (searchCount > 0) return `${searchCount} from search`;
+  return 'Focused object';
 }
 
 function buildPreviewHeaderSection(props, title, layerLabel, dateLabel) {
   const headerSection = document.createElement('section');
   headerSection.className = 'detail-section detail-preview-header';
   headerSection.dataset.level = '1';
-  headerSection.appendChild(createSectionTitle('Preview header'));
 
   const mediaNode = buildImageNode(props, title, false);
   mediaNode.classList.add('detail-header-media');
@@ -4435,10 +4434,10 @@ function buildPreviewHeaderSection(props, title, layerLabel, dateLabel) {
   metaRow.className = 'detail-preview-meta-row';
   const typeNode = document.createElement('span');
   typeNode.className = 'detail-preview-meta-chip';
-  typeNode.textContent = layerLabel || 'Type: not specified';
+  typeNode.textContent = layerLabel || 'Uncategorized';
   const periodNode = document.createElement('span');
   periodNode.className = 'detail-preview-meta-chip is-period';
-  periodNode.textContent = dateLabel || 'Period: not specified';
+  periodNode.textContent = dateLabel || 'Period unknown';
   metaRow.append(typeNode, periodNode);
   headerSection.appendChild(metaRow);
 
@@ -4449,11 +4448,42 @@ function buildSliceContextSection(state) {
   const contextSection = document.createElement('section');
   contextSection.className = 'detail-section detail-slice-context-block';
   contextSection.dataset.level = '2';
-  contextSection.appendChild(createSectionTitle('Research slice context'));
-  appendMetaRow(contextSection, 'Slice', getCurrentSliceTitle(state));
-  appendMetaRow(contextSection, 'Status', getCurrentSliceStatus(state));
-  appendMetaRow(contextSection, 'Layers', getVisibleLayersCue(state).replace(/^Layers:\s*/i, ''));
-  appendMetaRow(contextSection, 'Entities', getSelectionSummary(state).replace(/^Entities in research:\s*/i, '').replace(/^Selection context:\s*/i, ''));
+  contextSection.appendChild(createSectionTitle('Slice context'));
+
+  const summary = document.createElement('p');
+  summary.className = 'detail-slice-context-title';
+  summary.textContent = getCurrentSliceTitle(state);
+  contextSection.appendChild(summary);
+
+  const chips = document.createElement('div');
+  chips.className = 'detail-slice-context-chips';
+  [
+    `Status: ${getCurrentSliceStatus(state)}`,
+    `Layers: ${getVisibleLayersCue(state)}`,
+    `Entities: ${getSelectionSummary(state)}`
+  ].forEach((text) => {
+    const chip = document.createElement('span');
+    chip.className = 'detail-slice-context-chip';
+    chip.textContent = text;
+    chips.appendChild(chip);
+  });
+  contextSection.appendChild(chips);
+
+  const annotationPlan = state?.sliceOpenedAnnotationPlan && typeof state.sliceOpenedAnnotationPlan === 'object'
+    ? state.sliceOpenedAnnotationPlan
+    : null;
+  const shortNote = Array.isArray(annotationPlan?.groups)
+    ? annotationPlan.groups
+      .flatMap((group) => (Array.isArray(group?.items) ? group.items : []))
+      .map((item) => String(item?.text || '').trim())
+      .find(Boolean)
+    : '';
+  if (shortNote) {
+    const note = document.createElement('p');
+    note.className = 'detail-slice-context-note';
+    note.textContent = truncateText(shortNote, 120);
+    contextSection.appendChild(note);
+  }
   return contextSection;
 }
 
@@ -4477,7 +4507,7 @@ function buildActionZonesSection({ onSaveSlice, onAddToResearch, onCompare, onEx
   const section = document.createElement('section');
   section.className = 'detail-section detail-action-zones';
   section.dataset.level = '4';
-  section.appendChild(createSectionTitle('Action zones'));
+  section.appendChild(createSectionTitle('Actions'));
 
   const upperGroup = document.createElement('div');
   upperGroup.className = 'detail-action-zone-group detail-action-zone-group-upper';
@@ -4500,13 +4530,13 @@ function buildActionZonesSection({ onSaveSlice, onAddToResearch, onCompare, onEx
 
   const compareBtn = document.createElement('button');
   compareBtn.type = 'button';
-  compareBtn.className = 'ui-button ui-button-secondary';
+  compareBtn.className = 'ui-button ui-button-tertiary';
   compareBtn.textContent = 'Compare';
   compareBtn.addEventListener('click', onCompare);
 
   const explainBtn = document.createElement('button');
   explainBtn.type = 'button';
-  explainBtn.className = 'ui-button ui-button-secondary';
+  explainBtn.className = 'ui-button ui-button-tertiary';
   explainBtn.textContent = 'Explain';
   explainBtn.addEventListener('click', onExplain);
   lowerGroup.append(compareBtn, explainBtn);
@@ -4560,7 +4590,7 @@ function buildPreviewDetailContent(state, elements, map, feature, props) {
 
   const relationBlock = buildEpistemicBlock('relation', (block) => {
     if (!relatedFeatures.length) {
-      appendMetaRow(block, 'Network', 'No related entities in current slice view');
+      appendMetaRow(block, 'Network', 'No related entities in this view');
       return;
     }
     relatedFeatures.forEach((relatedFeature) => {
@@ -4586,7 +4616,7 @@ function buildPreviewDetailContent(state, elements, map, feature, props) {
   const interpretationBlock = buildEpistemicBlock('interpretation', (block) => {
     const text = document.createElement('p');
     text.className = 'detail-description detail-description-preview';
-    text.textContent = description || 'Interpretive note is not available yet.';
+    text.textContent = description || 'No interpretation yet.';
     if (!description) text.classList.add('is-empty');
     block.appendChild(text);
   });
@@ -4595,7 +4625,7 @@ function buildPreviewDetailContent(state, elements, map, feature, props) {
   const aiBlock = buildEpistemicBlock('ai', (block) => {
     const hint = document.createElement('p');
     hint.className = 'detail-empty';
-    hint.textContent = 'AI Suggestion: review full detail to expand context before comparing this object with the current slice.';
+    hint.textContent = 'Review full detail before comparing this object with the active slice.';
     block.appendChild(hint);
   });
   detail.appendChild(aiBlock);
@@ -4644,8 +4674,8 @@ function buildFullDetailContent(state, elements, map, props, feature) {
   const factBlock = buildEpistemicBlock('fact', (block) => {
     appendMetaRow(block, 'Period', dateLabel || 'Not specified');
     if (layerLabel) appendMetaRow(block, 'Category', layerLabel);
-    if (coordinatesLabel) appendMetaRow(block, 'Coordinates', coordinatesLabel);
-    if (confidenceLabel) appendMetaRow(block, 'Verified', confidenceLabel);
+    if (coordinatesLabel) appendMetaRow(block, 'Location', coordinatesLabel);
+    if (confidenceLabel) appendMetaRow(block, 'Confidence', confidenceLabel);
     if (sourceDomain) appendMetaRow(block, 'Source', sourceDomain);
     if (licenseLabel) appendMetaRow(block, 'License', licenseLabel);
     if (sourceUrl) {
@@ -4699,23 +4729,22 @@ function buildFullDetailContent(state, elements, map, props, feature) {
   const interpretationBlock = buildEpistemicBlock('interpretation', (block) => {
     const descriptionNode = document.createElement('p');
     descriptionNode.className = 'detail-description';
-    descriptionNode.textContent = description || 'Interpretation is not available for this object yet.';
+    descriptionNode.textContent = description || 'No interpretation is available yet.';
     if (!description) descriptionNode.classList.add('is-empty');
     block.appendChild(descriptionNode);
     if (hasBriefDescription) {
       const descriptionHint = document.createElement('p');
       descriptionHint.className = 'detail-description-note';
-      descriptionHint.textContent = 'Available interpretation is concise and should be read as editorial context.';
+      descriptionHint.textContent = 'This short note should be read as editorial context.';
       block.appendChild(descriptionHint);
     }
-    if (props.layer_id) appendMetaRow(block, 'Layer ID', props.layer_id);
   });
   detail.appendChild(interpretationBlock);
 
   const aiBlock = buildEpistemicBlock('ai', (block) => {
     const aiHint = document.createElement('p');
     aiHint.className = 'detail-empty';
-    aiHint.textContent = 'AI Suggestion: compare this object with the current slice anchor and review timeframe overlap first.';
+    aiHint.textContent = 'Compare with the current slice anchor and confirm timeframe overlap first.';
     block.appendChild(aiHint);
   });
   detail.appendChild(aiBlock);
