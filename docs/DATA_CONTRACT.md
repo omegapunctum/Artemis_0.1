@@ -48,3 +48,16 @@ Boundary rules:
 - `/api/map/feed` currently serves internal runtime feed semantics without transitional/mock-backed place payloads; any future entity expansion must remain internal/non-canonical and be introduced explicitly;
 - frontend main map bootstrap path must keep `data/features.geojson` as default source; `/api/map/feed` may be used only as an explicit internal runtime toggle/path;
 - runtime consumers must not treat `/api/map/feed` as a replacement for published `/data/*` artifacts or as a stable public export contract.
+
+## Upload Runtime / File-Serving Boundary (Current Baseline)
+
+Boundary rules:
+- upload API surface is runtime-only and consists of `POST /api/uploads` and `POST /api/uploads/image`;
+- public serving of uploaded files is static via `/uploads/*` mount;
+- `/uploads/*` serving for user-uploaded files includes explicit baseline response-header policy at runtime;
+- baseline serving-policy headers for `/uploads/*` are `X-Content-Type-Options: nosniff`, `Content-Disposition: inline`, and `Cache-Control: no-store`;
+- upload acceptance validates declared upload metadata (`content_type`) and applies server-side magic-bytes signature checks for supported image types (`PNG`, `JPEG/JPG`, `WEBP`);
+- when declared type is allowlisted but the detected file signature does not match that declared type, the upload is rejected;
+- upload acceptance (runtime API) and uploaded-file delivery (static path) are separate contract surfaces and must not be conflated;
+- there is no contract route `GET /api/uploads/{filename}` in the current baseline;
+- frontend must treat backend-returned `url` from upload responses as source of truth for file access paths.

@@ -15,6 +15,10 @@ ALLOWED_CONTENT_TYPES = {
     "image/png": ".png",
     "image/webp": ".webp",
 }
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+JPEG_SIGNATURE_PREFIX = b"\xff\xd8"
+WEBP_RIFF_HEADER = b"RIFF"
+WEBP_MARKER = b"WEBP"
 ALLOWED_LICENSES = {"CC0", "CC BY", "CC BY-SA", "PD"}
 UPLOADS_ROOT = Path("uploads")
 ORPHAN_MAX_AGE_HOURS = 24
@@ -31,6 +35,8 @@ def _save_file_for_user(user: User, file: UploadFile) -> tuple[str, str]:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File too large")
     if not content:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File is empty")
+    if not _content_matches_declared_type(file.content_type, content):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported image type")
 
     user_directory = UPLOADS_ROOT / user.id
     user_directory.mkdir(parents=True, exist_ok=True)
@@ -42,6 +48,31 @@ def _save_file_for_user(user: User, file: UploadFile) -> tuple[str, str]:
 
     destination.write_bytes(content)
     return f"/uploads/{user.id}/{filename}", filename
+
+
+def _is_png(content: bytes) -> bool:
+    return content.startswith(PNG_SIGNATURE)
+
+
+def _is_jpeg(content: bytes) -> bool:
+    return content.startswith(JPEG_SIGNATURE_PREFIX)
+
+
+def _is_webp(content: bytes) -> bool:
+    return len(content) >= 12 and content.startswith(WEBP_RIFF_HEADER) and content[8:12] == WEBP_MARKER
+
+
+def _content_matches_declared_type(content_type: str | None, content: bytes) -> bool:
+    sniffers = {
+        "image/png": _is_png,
+        "image/jpeg": _is_jpeg,
+        "image/jpg": _is_jpeg,
+        "image/webp": _is_webp,
+    }
+    matcher = sniffers.get(content_type or "")
+    if matcher is None:
+        return False
+    return matcher(content)
 
 
 def save_uploaded_file(user: User, file: UploadFile, license_value: str | None) -> tuple[str, str, str, str]:

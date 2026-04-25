@@ -123,8 +123,14 @@ Vanilla JavaScript (no frameworks):
   - locking/recovery caveat: lock contention and restart-time migration/bootstrap sensitivity must be treated as operational risk signals, not as edge-case impossibilities;
   - trigger conditions for next storage-hardening stage include recurring lock-related runtime failures, sustained write-latency under normal workload, and repeated operational need for multi-instance write concurrency.
 - Migration/bootstrap behavior is **runtime-startup driven**: `init_db()` paths run during API startup and apply versioned migrations against the active DB.
+- Startup owner gate (current baseline hardening): migration apply path is owner-only via `MIGRATION_STARTUP_ROLE`; `owner` runs startup `init_db()`/apply sequence, `non-owner` skips apply path.
+- Outside development/testing/local aliases, `MIGRATION_STARTUP_ROLE` must be explicitly configured (`owner` or `non-owner`) as a fail-fast startup policy.
 - Versioned migrations use a shared `schema_version` discipline and should be treated as a current baseline mechanism, not as a fully hardened production migration platform.
 - Runtime startup for API is currently **fail-fast** on DB/bootstrap/migration initialization errors (`init_db()` startup path), and should be treated as baseline behavior, not as a fully hardened startup-orchestration platform.
+- Session backend policy (current baseline hardening):
+  - `AUTH_SESSION_BACKEND=memory` is allowed only for development/testing/local environments (including short aliases `dev`/`test`);
+  - non-development/testing/local deployments must use Redis-backed refresh session storage (`AUTH_SESSION_BACKEND=redis` + `REDIS_URL`) and fail fast on misconfiguration.
+  - Redis-backed refresh-session consume follows an atomic one-time path (`GETDEL`, then atomic fallbacks via `EVAL` or `WATCH/MULTI/EXEC`); legacy non-atomic `get+delete` is not baseline behavior.
 - Current `/api/health` semantics are baseline-level and process-local: `total_errors` remains an accumulated historical diagnostic counter, while `health.ok` reflects whether there were recent server-side errors within a fixed baseline decay window; this should not be interpreted as a fully hardened readiness/SLO contract.
   - Baseline default decay window is `120s`; it can be locally tuned via `HEALTH_ERROR_DECAY_SECONDS` env (invalid/empty values safely fall back to `120`) as a narrow hardening control, not as an observability-platform redesign.
   - Operator policy (runbook-light, current baseline):
@@ -177,6 +183,8 @@ For detailed boundaries and interpretation, read together with:
   - public uploaded-file serving remains static via `/uploads/*`, not via a separate documented API read route
 - Moderation (`/api/moderation/*`):
   - review/approve/reject runtime routes for moderation workflow
+  - current baseline approval semantics are two-step: `pending -> review -> approved/publish-attempt`
+  - first `approve` advances draft from `pending` to `review` only; publish-attempt path is allowed only after review stage
 - Research slices (`/api/research-slices/*`):
   - `POST /api/research-slices` (save slice)
   - `GET /api/research-slices` (list my slices)

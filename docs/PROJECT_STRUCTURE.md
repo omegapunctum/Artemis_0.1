@@ -149,12 +149,16 @@ app/
 - новый runtime-код в `api/` запрещён;
 - сохранение пустого legacy package в `api/` само по себе не считается отдельным runtime entrypoint;
 - env/runtime configuration закрепляется только за `app.main:app`;
+- session backend deployment policy: memory-backed refresh sessions допустимы только для development/testing/local baseline (включая short aliases `dev`/`test`); non-development/testing/local deployments обязаны использовать Redis-backed session store (`AUTH_SESSION_BACKEND=redis` + `REDIS_URL`) с fail-fast на misconfiguration;
+- Redis-backed refresh-session consume в текущем baseline трактуется как atomic one-time operation (`GETDEL` или atomic fallback path), а legacy non-atomic `get+delete` не должен считаться допустимым baseline-поведением;
 - текущий persistence baseline использует shared SQLAlchemy scope: `app.auth.service` задаёт общий `engine`/`Base`, который переиспользуется в `drafts` / `research_slices` / `stories` / `courses`;
 - migration/bootstrap path текущего baseline выполняется при runtime startup через `init_db()` вызовы в `app.main.py`, а не через отдельный внешний migration orchestrator;
 - versioned migrations в backend опираются на общую `schema_version` discipline как baseline-механизм и не должны трактоваться как fully hardened production migration platform;
 - общая `schema_version` таблица рассматривается как shared baseline coordination mechanism для всех runtime-доменов, а не как изолированный per-service журнал;
 - migration version ids в общей `schema_version` модели должны оставаться глобально уникальными и domain-coordinated между `auth` / `drafts` / `research_slices` / `stories` / `courses`;
 - новые migration steps нельзя добавлять произвольно: перед добавлением версии обязателен локальный check текущего version space в общей `schema_version` discipline, чтобы избежать ручного drift/коллизий;
+- startup owner gate текущего baseline: migration apply path выполняется только при `MIGRATION_STARTUP_ROLE=owner`; `MIGRATION_STARTUP_ROLE=non-owner` выполняет обычный runtime boot без apply;
+- вне development/testing/local aliases `MIGRATION_STARTUP_ROLE` должен быть явно задан (`owner`/`non-owner`), иначе startup трактуется как fail-fast config error;
 - execution policy текущего baseline: migration/apply path выполняется в controlled single-writer режиме (явный owner запуска), а не как некоординированный конкурентный first-boot apply из нескольких инстансов одновременно;
 - рекомендуемый baseline порядок выполнения: preflight-only discipline check → migration/apply path (`init_db()` startup sequence) → обычный runtime boot;
 - concurrent first-boot apply считается нарушением baseline guardrail и не должен нормализоваться как допустимая operational практика;

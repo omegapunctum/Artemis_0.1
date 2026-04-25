@@ -45,6 +45,8 @@ AIRTABLE_SOURCE_DRAFT_ID_FIELD = "source_draft_id"
 PUBLISH_STATUS_PENDING = "pending"
 PUBLISH_STATUS_PUBLISHED = "published"
 PUBLISH_STATUS_FAILED = "failed"
+REVIEW_STAGE_1 = "pending"
+REVIEW_STAGE_2 = "review"
 
 logger = logging.getLogger(__name__)
 _publish_locks: dict[int, threading.Lock] = {}
@@ -115,6 +117,24 @@ def approve_draft(
     with _draft_publish_lock(draft.id):
         db.refresh(draft)
 
+        if draft.status == REVIEW_STAGE_1:
+            reviewed = update_draft(
+                db,
+                draft,
+                allow_system_fields=True,
+                changes={"status": REVIEW_STAGE_2, "publish_status": PUBLISH_STATUS_PENDING},
+            )
+            _set_approve_result(result_context, "review_stage_1_passed")
+            log_event(
+                logging.INFO,
+                'moderation.review.stage_1_passed',
+                route=request.url.path if request else None,
+                request_id=getattr(getattr(request, 'state', None), 'request_id', None),
+                user_id=getattr(moderator, 'id', None),
+                draft_id=reviewed.id,
+            )
+            return reviewed
+
         if draft.airtable_record_id and draft.publish_status == PUBLISH_STATUS_PUBLISHED:
             if draft.status != "approved":
                 published = update_draft(
@@ -136,8 +156,8 @@ def approve_draft(
             _set_approve_result(result_context, "approved_already_published")
             return draft
 
-        if draft.status not in {"pending", "review", "approved"}:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in pending or approved can be published")
+        if draft.status not in {REVIEW_STAGE_2, "approved"}:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in review or approved can be published")
 
         airtable_fields = build_airtable_fields(draft)
         existing_record = find_existing_airtable_feature(draft, fields=airtable_fields)
@@ -183,8 +203,8 @@ def reject_draft(db: Session, draft: Draft, reason: str | None = None) -> Draft:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Approved draft cannot be rejected")
     if draft.status == "rejected":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Draft already rejected")
-    if draft.status not in {"pending", "review"}:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in pending can be rejected")
+    if draft.status not in {REVIEW_STAGE_1, REVIEW_STAGE_2}:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only drafts in pending/review can be rejected")
     normalized_reason = str(reason).strip() if reason is not None else None
     payload = dict(draft.payload or {})
     if normalized_reason:

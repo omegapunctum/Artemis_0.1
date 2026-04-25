@@ -28,6 +28,13 @@ def _refresh_session_ttl_seconds() -> int:
     return max(refresh_days, 1) * 24 * 60 * 60
 
 
+def _runtime_env() -> str:
+    return (os.getenv("APP_ENV") or os.getenv("ENV") or "development").strip().lower()
+
+
+_MEMORY_ALLOWED_ENVS = {"development", "dev", "test", "testing", "local"}
+
+
 class InMemoryRefreshSessionStore:
     def __init__(self) -> None:
         self._sessions: dict[str, str] = {}
@@ -53,6 +60,14 @@ class InMemoryRefreshSessionStore:
 
 
 class RedisRefreshSessionStore:
+    _ATOMIC_CONSUME_LUA = """
+local value = redis.call('GET', KEYS[1])
+if value then
+  redis.call('DEL', KEYS[1])
+end
+return value
+"""
+
     def __init__(
         self,
         client: "redis.Redis",
@@ -90,16 +105,47 @@ class RedisRefreshSessionStore:
         if callable(getdel):
             return self._decode(getdel(key))
 
-        value = self._client.get(key)
-        if value is None:
-            return None
-        self._client.delete(key)
-        return self._decode(value)
+        eval_fn = getattr(self._client, "eval", None)
+        if callable(eval_fn):
+            value = eval_fn(self._ATOMIC_CONSUME_LUA, 1, key)
+            return self._decode(value)
+
+        pipeline_factory = getattr(self._client, "pipeline", None)
+        if callable(pipeline_factory):
+            for _ in range(3):
+                pipeline = pipeline_factory()
+                try:
+                    pipeline.watch(key)
+                    value = pipeline.get(key)
+                    if value is None:
+                        return None
+                    pipeline.multi()
+                    pipeline.delete(key)
+                    pipeline.execute()
+                    return self._decode(value)
+                except Exception as exc:
+                    exceptions_module = getattr(redis, "exceptions", None) if redis is not None else None
+                    watch_error = getattr(exceptions_module, "WatchError", None) if exceptions_module is not None else None
+                    if watch_error is not None and isinstance(exc, watch_error):
+                        continue
+                    raise
+                finally:
+                    reset = getattr(pipeline, "reset", None)
+                    if callable(reset):
+                        reset()
+
+        raise RuntimeError("Redis client must support GETDEL, EVAL, or WATCH/MULTI for atomic consume")
 
 
 def create_default_refresh_session_store() -> RefreshSessionStore:
     backend = (os.getenv("AUTH_SESSION_BACKEND") or "memory").strip().lower()
+    runtime_env = _runtime_env()
     if backend == "memory":
+        if runtime_env not in _MEMORY_ALLOWED_ENVS:
+            raise RuntimeError(
+                "AUTH_SESSION_BACKEND=memory is allowed only in dev/test/local environments; "
+                "configure AUTH_SESSION_BACKEND=redis for non-dev/test deployments"
+            )
         return InMemoryRefreshSessionStore()
     if backend != "redis":
         raise RuntimeError("Unsupported AUTH_SESSION_BACKEND. Expected 'memory' or 'redis'.")

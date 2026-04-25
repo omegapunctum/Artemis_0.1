@@ -5,6 +5,7 @@
 - Release gate is enforced in CI and before export in ETL workflow.
 - Release gate now includes behavioral PWA verification (in addition to static/pattern checks), so private/auth bypass/no-cache semantics are verified by executable behavior in gating path.
 - Governance boundary is explicit and aligned across docs/code/tests/workflows (canonical `data/*`, auxiliary `/api/map/feed`, no direct runtime publish path).
+- Moderation governance baseline includes executable two-step review invariant: `pending -> review -> approved/publish-attempt`; first approve is stage advancement only, not direct publish-attempt.
 - Auxiliary map runtime boundary is accepted for the current controlled baseline: `/api/map/feed` remains explicitly non-canonical and may operate as an MVP adapter/read-model route for authenticated/runtime UX flows; it is not part of the public map release contract and must not be described as production-grade public dataset access.
 - Manual smoke discipline exists as documented baseline artifacts.
 - Auth/session baseline is accepted for the current controlled baseline with explicit constraints: `AUTH_SECRET_KEY` must be explicitly configured for real runtime, current guarantees are baseline-capable but not fully production-hardened for multi-instance deployments, and scaling/persistence/ops hardening remains a dedicated next cycle.
@@ -43,6 +44,7 @@ Auth/scaling hardening beyond already-proven session continuity (persistence gov
 Acceptable inside the current controlled baseline:
 - static/public map delivery from published `/data/*`, with `data/features.geojson` as the canonical public dataset;
 - auxiliary authenticated/runtime usage of `/api/map/feed` as a non-canonical support route for UX flows;
+- moderation runtime remaining separate from public dataset overwrite path, with two-step review gate enforced before publish-attempt;
 - single-instance-oriented auth/session baseline with explicit operational constraints and no production-ready multi-node claim;
 - split CI/workflow model where release gate, ETL/export, and dedicated integration lanes prove different parts of the system rather than one monolithic pipeline.
 

@@ -222,6 +222,46 @@ def test_release_check_fails_on_legacy_upload_path_assumption(tmp_path: Path) ->
     assert "[FAIL] Frontend: js/uploads.js contains legacy /api/uploads/{filename} assumption" in result.stdout
 
 
+def test_release_check_fails_on_runtime_publish_call_outside_moderation_python(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    _write(
+        tmp_path / "app" / "drafts" / "routes.py",
+        "def run_publish():\n    publish()\n",
+    )
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 1
+    assert '[FAIL] Governance: direct runtime publish found outside moderation: "app/drafts/routes.py"' in result.stdout
+
+
+def test_release_check_ignores_publish_tokens_inside_comments_and_strings(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    _write(
+        tmp_path / "app" / "drafts" / "routes.py",
+        "def no_call():\n    note = 'publish() in string'\n    # publish() in comment\n    return note\n",
+    )
+    _write(
+        tmp_path / "js" / "runtime.js",
+        "const a = 'publish()';\n// publish()\nconst b = `publish()`;\n",
+    )
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "[PASS] Governance" in result.stdout
+
+
+def test_release_check_fails_on_runtime_publish_call_outside_moderation_js(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    _write(
+        tmp_path / "js" / "runtime.js",
+        "const gate = { publish: () => {} };\ngate.publish();\n",
+    )
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 1
+    assert '[FAIL] Governance: direct runtime publish found outside moderation: "js/runtime.js"' in result.stdout
+
+
 def test_release_check_fails_when_records_rejected_mismatches_rejected_json(tmp_path: Path) -> None:
     _build_fixture(tmp_path, records_rejected=2, rejected_items=[{"id": "r1"}])
     result = _run_release_check(tmp_path)
@@ -251,7 +291,21 @@ def test_release_check_fails_without_auth_secret_key_outside_dev_test(tmp_path: 
     )
 
     assert result.returncode == 1
-    assert "[FAIL] Runtime/deployment: AUTH_SECRET_KEY is required outside dev/test" in result.stdout
+    assert "[FAIL] Runtime/deployment: AUTH_SECRET_KEY is required outside development/testing/local aliases" in result.stdout
+
+
+def test_release_check_allows_development_alias_without_auth_secret_key(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    result = _run_release_check(
+        tmp_path,
+        env_overrides={
+            "APP_ENV": "development",
+            "AUTH_SECRET_KEY": "",
+        },
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "[PASS] Runtime/deployment" in result.stdout
 
 
 def test_release_check_fails_when_redis_backend_without_redis_url(tmp_path: Path) -> None:
@@ -310,6 +364,24 @@ def test_release_check_warns_for_memory_backend(tmp_path: Path) -> None:
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert "[WARN] Runtime/deployment: memory session backend -> single-node baseline only" in result.stdout
+
+
+def test_release_check_fails_for_memory_backend_outside_dev_like_envs(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    result = _run_release_check(
+        tmp_path,
+        env_overrides={
+            "APP_ENV": "prod",
+            "AUTH_SECRET_KEY": "super-secret",
+            "AUTH_SESSION_BACKEND": "memory",
+        },
+    )
+
+    assert result.returncode == 1
+    assert (
+        "[FAIL] Runtime/deployment: AUTH_SESSION_BACKEND=memory is allowed only in development/testing/local aliases"
+        in result.stdout
+    )
 
 
 def test_release_check_invokes_pwa_behavioral_pytest(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

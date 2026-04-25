@@ -76,6 +76,10 @@ class ModerationFlowTests(unittest.TestCase):
         ) as create_airtable_mock:
             create_airtable_mock.return_value = {'id': 'rec123'}
             draft = approve_draft(self.db, draft)
+            self.assertEqual(draft.status, 'review')
+            self.assertEqual(draft.publish_status, 'pending')
+            create_airtable_mock.assert_not_called()
+            draft = approve_draft(self.db, draft)
 
         self.assertEqual(draft.status, 'approved')
         self.assertEqual(draft.publish_status, PUBLISH_STATUS_PUBLISHED)
@@ -104,6 +108,8 @@ class ModerationFlowTests(unittest.TestCase):
         with patch('app.moderation.service.find_existing_airtable_feature', return_value={'id': 'rec-existing'}), patch(
             'app.moderation.service.create_airtable_feature'
         ) as create_airtable_mock:
+            draft = approve_draft(self.db, draft)
+            self.assertEqual(draft.status, 'review')
             approved = approve_draft(self.db, draft, result_context=result_context)
 
         self.assertEqual(approved.status, 'approved')
@@ -116,6 +122,8 @@ class ModerationFlowTests(unittest.TestCase):
         user = self.make_user('stable@example.com')
         draft = create_draft(self.db, user, 'Stable', 'Desc', None)
         draft = submit_draft_for_review(self.db, draft)
+        draft = approve_draft(self.db, draft)
+        self.assertEqual(draft.status, 'review')
 
         with patch('app.moderation.service.find_existing_airtable_feature', return_value={'id': 'rec-stable'}):
             approved = approve_draft(self.db, draft)
@@ -131,6 +139,8 @@ class ModerationFlowTests(unittest.TestCase):
         user = self.make_user('failed@example.com')
         draft = create_draft(self.db, user, 'Failure', 'Desc', None)
         draft = submit_draft_for_review(self.db, draft)
+        draft = approve_draft(self.db, draft)
+        self.assertEqual(draft.status, 'review')
 
         with patch('app.moderation.service.find_existing_airtable_feature', return_value=None), patch(
             'app.moderation.service.create_airtable_feature', side_effect=HTTPException(status_code=502, detail='boom')
@@ -139,7 +149,7 @@ class ModerationFlowTests(unittest.TestCase):
                 approve_draft(self.db, draft)
 
         refreshed = self.db.query(Draft).filter(Draft.id == draft.id).first()
-        self.assertEqual(refreshed.status, 'pending')
+        self.assertEqual(refreshed.status, 'review')
         self.assertEqual(refreshed.publish_status, PUBLISH_STATUS_FAILED)
         self.assertIsNone(refreshed.airtable_record_id)
 

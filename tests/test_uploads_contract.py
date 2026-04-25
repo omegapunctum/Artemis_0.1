@@ -14,6 +14,9 @@ from tests.db_rebind_helper import build_clean_test_env
 class UploadsContractTests(unittest.TestCase):
     SERVER_PORT = 8012
     BASE_URL = f"http://127.0.0.1:{SERVER_PORT}"
+    VALID_PNG = b"\x89PNG\r\n\x1a\ncontract-content"
+    VALID_JPEG = b"\xff\xd8\xff\xe0jpeg-content"
+    VALID_WEBP = b"RIFF\x0c\x00\x00\x00WEBPwebp-content"
 
     @classmethod
     def setUpClass(cls):
@@ -76,12 +79,21 @@ class UploadsContractTests(unittest.TestCase):
         token = login.json()["access_token"]
         return {"Authorization": f"Bearer {token}"}
 
-    def _upload(self, headers: dict[str, str], *, license_value: str = "CC BY") -> requests.Response:
+    def _upload(
+        self,
+        headers: dict[str, str],
+        *,
+        license_value: str = "CC BY",
+        filename: str = "contract.png",
+        content: bytes | None = None,
+        content_type: str = "image/png",
+    ) -> requests.Response:
+        payload = content if content is not None else self.VALID_PNG
         return self.session.post(
             f"{self.BASE_URL}/api/uploads",
             headers=headers,
             data={"license": license_value},
-            files={"file": ("contract.png", b"fake-png-content", "image/png")},
+            files={"file": (filename, payload, content_type)},
             timeout=5,
         )
 
@@ -116,7 +128,10 @@ class UploadsContractTests(unittest.TestCase):
 
         served = self.session.get(f"{self.BASE_URL}{payload['url']}", timeout=5)
         self.assertEqual(served.status_code, 200)
-        self.assertEqual(served.content, b"fake-png-content")
+        self.assertEqual(served.content, self.VALID_PNG)
+        self.assertEqual(served.headers.get("x-content-type-options"), "nosniff")
+        self.assertEqual(served.headers.get("content-disposition"), "inline")
+        self.assertEqual(served.headers.get("cache-control"), "no-store")
 
         uploaded_path = Path("uploads") / payload["url"].removeprefix("/uploads/")
         uploaded_path.unlink(missing_ok=True)
@@ -126,7 +141,7 @@ class UploadsContractTests(unittest.TestCase):
         response = self.session.post(
             f"{self.BASE_URL}/api/uploads",
             headers=headers,
-            files={"file": ("contract.png", b"fake-png-content", "image/png")},
+            files={"file": ("contract.png", self.VALID_PNG, "image/png")},
             timeout=5,
         )
 
@@ -151,3 +166,47 @@ class UploadsContractTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(self._error_detail(response), "File is required")
+
+    def test_upload_contract_rejects_spoofed_png_signature(self):
+        headers = self._auth_headers()
+        response = self._upload(
+            headers,
+            filename="spoofed.png",
+            content=b"not-a-real-png",
+            content_type="image/png",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self._error_detail(response), "Unsupported image type")
+
+    def test_upload_contract_rejects_spoofed_jpeg_and_webp_signatures(self):
+        headers = self._auth_headers()
+
+        for filename, content_type in (("spoofed.jpg", "image/jpeg"), ("spoofed.webp", "image/webp")):
+            response = self._upload(
+                headers,
+                filename=filename,
+                content=b"plain-text",
+                content_type=content_type,
+            )
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(self._error_detail(response), "Unsupported image type")
+
+    def test_upload_contract_accepts_valid_jpeg_and_webp_signatures(self):
+        headers = self._auth_headers()
+        uploads = [
+            ("valid.jpg", self.VALID_JPEG, "image/jpeg"),
+            ("valid.webp", self.VALID_WEBP, "image/webp"),
+        ]
+
+        for filename, content, content_type in uploads:
+            response = self._upload(
+                headers,
+                filename=filename,
+                content=content,
+                content_type=content_type,
+            )
+            self.assertEqual(response.status_code, 201)
+            payload = response.json()
+            uploaded_path = Path("uploads") / payload["url"].removeprefix("/uploads/")
+            uploaded_path.unlink(missing_ok=True)

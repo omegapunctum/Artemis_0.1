@@ -136,7 +136,7 @@ def test_replace_upload_removes_old_orphan(monkeypatch, tmp_path):
         payload={"name_ru": "Draft image replace"},
     )
 
-    upload = _build_upload(tmp_path / "new.png", b"new")
+    upload = _build_upload(tmp_path / "new.png", b"\x89PNG\r\n\x1a\nnew")
     try:
         new_url = uploads_service.save_draft_image(db, draft, user, upload)
     finally:

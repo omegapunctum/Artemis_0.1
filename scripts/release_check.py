@@ -5,6 +5,7 @@ import importlib
 import json
 import os
 import re
+import ast
 import subprocess
 import sys
 from pathlib import Path
@@ -15,6 +16,7 @@ ROOT = Path(os.environ.get("RELEASE_CHECK_ROOT", REPO_ROOT)).resolve()
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 BEHAVIORAL_PWA_TEST_PATH = REPO_ROOT / "tests" / "test_sw_fetch_behavior.py"
+DEV_LIKE_ENVS = {"development", "dev", "testing", "test", "local"}
 
 MAX_EXPECTED_FALLBACK_WARNINGS = 10
 MAX_DATA_QUALITY_WARNINGS = 0
@@ -26,6 +28,10 @@ class CheckFailed(Exception):
 
 def fail(message: str) -> None:
     raise CheckFailed(message)
+
+
+def _normalized_runtime_env() -> str:
+    return (os.environ.get("APP_ENV") or os.environ.get("ENV") or "development").strip().lower()
 
 
 def read_json(path: Path):
@@ -269,17 +275,53 @@ def check_governance() -> None:
                 continue
 
             text = path.read_text(encoding="utf-8", errors="ignore")
-            if "publish(" in text:
+            has_publish_call = False
+            if path.suffix == ".py":
+                has_publish_call = _python_has_publish_call(text)
+            elif path.suffix == ".js":
+                has_publish_call = _js_has_publish_call(text)
+            if has_publish_call:
                 fail(f'direct runtime publish found outside moderation: "{rel.as_posix()}"')
 
 
+def _python_has_publish_call(text: str) -> bool:
+    try:
+        parsed = ast.parse(text)
+    except SyntaxError:
+        return bool(re.search(r"\bpublish\s*\(", text))
+
+    for node in ast.walk(parsed):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        if isinstance(func, ast.Name) and func.id == "publish":
+            return True
+        if isinstance(func, ast.Attribute) and func.attr == "publish":
+            return True
+    return False
+
+
+def _js_has_publish_call(text: str) -> bool:
+    sanitized = _strip_js_comments_and_strings(text)
+    return bool(re.search(r"\bpublish\s*\(", sanitized))
+
+
+def _strip_js_comments_and_strings(text: str) -> str:
+    without_block_comments = re.sub(r"/\*[\s\S]*?\*/", "", text)
+    without_line_comments = re.sub(r"(^|[^:])//.*?$", r"\1", without_block_comments, flags=re.MULTILINE)
+    without_double_quotes = re.sub(r'"(?:\\.|[^"\\])*"', '""', without_line_comments)
+    without_single_quotes = re.sub(r"'(?:\\.|[^'\\])*'", "''", without_double_quotes)
+    without_template_strings = re.sub(r"`(?:\\.|[^`\\])*`", "``", without_single_quotes)
+    return without_template_strings
+
+
 def check_runtime_deployment() -> None:
-    app_env = os.environ.get("APP_ENV", "dev").strip().lower()
+    app_env = _normalized_runtime_env()
     auth_secret_key = os.environ.get("AUTH_SECRET_KEY", "").strip()
     session_backend = os.environ.get("AUTH_SESSION_BACKEND", "memory").strip().lower()
 
-    if app_env not in {"dev", "test"} and not auth_secret_key:
-        fail("AUTH_SECRET_KEY is required outside dev/test")
+    if app_env not in DEV_LIKE_ENVS and not auth_secret_key:
+        fail("AUTH_SECRET_KEY is required outside development/testing/local aliases")
 
     if session_backend not in {"memory", "redis"}:
         fail('AUTH_SESSION_BACKEND must be "memory" or "redis"')
@@ -288,6 +330,8 @@ def check_runtime_deployment() -> None:
         fail("REDIS_URL is required when AUTH_SESSION_BACKEND=redis")
 
     if session_backend == "memory":
+        if app_env not in DEV_LIKE_ENVS:
+            fail("AUTH_SESSION_BACKEND=memory is allowed only in development/testing/local aliases")
         print("[WARN] Runtime/deployment: memory session backend -> single-node baseline only")
 
 

@@ -124,13 +124,18 @@ def test_moderation_failure_failed_state_and_stable_retry_signal(monkeypatch, tm
         assert relogin.status_code == 200
         mod_headers = {"Authorization": f"Bearer {relogin.json()['access_token']}"}
 
+        review_stage_1 = mod_session.post(f"{BASE_URL}/api/moderation/{draft_id}/approve", headers=mod_headers, timeout=5)
+        assert review_stage_1.status_code == 200
+        assert review_stage_1.headers.get("X-Moderation-Result") == "review_stage_1_passed"
+
         approve_fail = mod_session.post(f"{BASE_URL}/api/moderation/{draft_id}/approve", headers=mod_headers, timeout=5)
         assert approve_fail.status_code == 502
 
         with sqlite3.connect(effective_db_path) as conn:
-            publish_status, airtable_record_id = conn.execute(
-                "SELECT publish_status, airtable_record_id FROM drafts WHERE id = ?", (draft_id,)
+            status_value, publish_status, airtable_record_id = conn.execute(
+                "SELECT status, publish_status, airtable_record_id FROM drafts WHERE id = ?", (draft_id,)
             ).fetchone()
+        assert status_value == "review"
         assert publish_status == "failed"
         assert airtable_record_id is None
 
