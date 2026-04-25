@@ -1859,6 +1859,80 @@ button:focus-visible {
 .detail-title-block {
   gap: 6px;
 }
+.detail-preview-header {
+  gap: 10px;
+  padding-bottom: 14px;
+}
+.detail-header-media {
+  width: 100%;
+  border-radius: 10px;
+  max-height: 160px;
+  object-fit: cover;
+}
+.detail-preview-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.detail-preview-meta-chip {
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(30, 41, 59, 0.36);
+  color: var(--text-secondary);
+  font: var(--font-caption);
+  padding: 3px 10px;
+}
+.detail-preview-meta-chip.is-period {
+  border-color: rgba(196, 154, 108, 0.45);
+  color: var(--accent-archive);
+}
+.detail-slice-context-block {
+  background: rgba(15, 23, 42, 0.35);
+  border-color: rgba(148, 163, 184, 0.28);
+}
+.detail-epistemic-block {
+  position: relative;
+  border-left-width: 3px;
+}
+.detail-epistemic-block .detail-section-title {
+  letter-spacing: 0.08em;
+}
+.detail-epistemic-fact {
+  border-left-color: rgba(63, 174, 122, 0.75);
+  background: rgba(6, 78, 59, 0.14);
+}
+.detail-epistemic-relation {
+  border-left-color: rgba(90, 167, 217, 0.72);
+  background: rgba(30, 64, 175, 0.1);
+}
+.detail-epistemic-interpretation {
+  border-left-color: rgba(214, 164, 73, 0.74);
+  background: rgba(120, 53, 15, 0.12);
+}
+.detail-epistemic-interpretation.is-highlighted {
+  box-shadow: 0 0 0 1px rgba(214, 164, 73, 0.52), inset 0 0 0 1px rgba(214, 164, 73, 0.35);
+}
+.detail-epistemic-ai {
+  border-left-color: rgba(124, 140, 248, 0.62);
+  border-style: dashed;
+  background: rgba(67, 56, 202, 0.08);
+}
+.detail-epistemic-ai .detail-empty {
+  color: #a5b4fc;
+}
+.detail-action-zones {
+  gap: 8px;
+  background: rgba(8, 16, 30, 0.28);
+}
+.detail-action-zone-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.detail-action-zone-group + .detail-action-zone-group {
+  padding-top: 8px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
 .detail-meta-block,
 .detail-source-block,
 .detail-technical-block {
@@ -2637,6 +2711,7 @@ button:focus-visible {
     border-color: rgba(148, 163, 184, 0.24);
   }
   .detail-panel-body { max-height: calc(72vh - 72px); }
+  .detail-action-zone-group { grid-template-columns: 1fr; }
   .ugc-panel {
     left: max(4px, var(--safe-left));
     right: max(4px, var(--safe-right));
