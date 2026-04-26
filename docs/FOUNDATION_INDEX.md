@@ -45,15 +45,20 @@ ARTEMIS нельзя развивать через отдельные функц
 
 ## 3. Текущий canonical foundation set
 
-На текущем этапе foundation-layer состоит из уже действующих canonical docs и planned foundation docs.
-
-### 3.1 Already canonical
+На текущем этапе foundation-layer состоит из действующих canonical docs.
 
 | Документ | Роль |
 |---|---|
 | `README.md` | root entrypoint проекта |
+| `docs/FOUNDATION_INDEX.md` | навигатор foundation-layer, порядок чтения и source-of-truth routing |
 | `docs/ARTEMIS_CONCEPT.md` | миссия, видение, принципы, epistemic model, стратегическая лестница развития |
 | `docs/ARTEMIS_PRODUCT_SCOPE.md` | продуктовые границы v1.0, главная единица ценности, product loop, запреты против product drift |
+| `docs/RESEARCH_SLICE_CONTRACT.md` | canonical product/data/UI/AI contract для Research Slice как главной единицы ценности |
+| `docs/RESEARCH_SLICE_SPEC.md` | runtime/API spec Research Slice baseline |
+| `docs/EPISTEMIC_CONTRACT.md` | operational contract для fact/source/relation/interpretation/hypothesis/AI-output/uncertainty/counterfactual |
+| `docs/ENTITY_MODEL.md` | единая модель knowledge/product/runtime/context entities и relation model |
+| `docs/CONTENT_GOVERNANCE.md` | правила источников, валидации, модерации, UGC promotion, trust, correction и publish governance |
+| `docs/AI_POLICY.md` | canonical границы AI behavior, AI-output, source discipline и запреты против AI drift |
 | `docs/ARTEMIS_MASTER_PROMPT.md` | operational governance для AI-агентов и docs-first discipline |
 | `docs/PROJECT_STRUCTURE.md` | структура репозитория, runtime boundaries, canonical entrypoints, documentation layers |
 | `docs/PROJECT_PHASES.md` | фазы, переходы и текущий active cycle |
@@ -62,17 +67,10 @@ ARTEMIS нельзя развивать через отдельные функц
 | `docs/CONTROLLED_RELEASE_DECISION.md` | controlled release baseline, release/readiness interpretation, production-grade limitations |
 | `docs/DOCUMENTATION_SYSTEM.md` | documentation governance, роли слоёв, правила конфликтов |
 
-### 3.2 Foundation docs to be added
-
-| Документ | Статус | Назначение |
-|---|---|---|
-| `docs/RESEARCH_SLICE_CONTRACT.md` | planned | canonical product/data/UI/AI contract для research slice как главной единицы ценности |
-| `docs/EPISTEMIC_CONTRACT.md` | planned | operational contract для fact/source/relation/interpretation/hypothesis/AI-output/uncertainty/provenance |
-| `docs/ENTITY_MODEL.md` | planned | единая модель сущностей ARTEMIS и их отношений |
-| `docs/CONTENT_GOVERNANCE.md` | planned | правила источников, валидации, модерации, UGC promotion и доверия к данным |
-| `docs/AI_POLICY.md` | planned | canonical границы AI: допустимые функции, запреты, маркировка AI-output и source discipline |
-
-Planned foundation docs не считаются действующими source of truth, пока они не созданы и не добавлены в `PROJECT_STRUCTURE.md` / `DOCUMENTATION_SYSTEM.md` как часть canonical layer.
+Правило:
+- эти документы считаются active canonical foundation/source-of-truth set;
+- archive/reference/working/audit docs не могут переопределять этот набор;
+- если новый документ начинает задавать устойчивое правило foundation-layer, он должен быть явно зарегистрирован в `PROJECT_STRUCTURE.md` и `DOCUMENTATION_SYSTEM.md`.
 
 ---
 
@@ -96,14 +94,6 @@ Planned foundation docs не считаются действующими source 
 14. `docs/DOCUMENTATION_SYSTEM.md` — как разрешать doc-conflicts и где хранить документы.
 15. `docs/ARTEMIS_MASTER_PROMPT.md` — как AI-агенты должны работать с проектом.
 
-Если planned foundation document ещё не создан, временным authority является ближайший действующий canonical doc:
-
-- research slice → `ARTEMIS_PRODUCT_SCOPE.md` + `RESEARCH_SLICE_SPEC.md`;
-- epistemic model → `ARTEMIS_CONCEPT.md`;
-- entity model → `ARTEMIS_CONCEPT.md`, `ARTEMIS_PRODUCT_SCOPE.md`, `DATA_CONTRACT.md`;
-- content governance → `DATA_CONTRACT.md`, moderation docs, release/audit notes;
-- AI policy → `ARTEMIS_CONCEPT.md`, `ARTEMIS_PRODUCT_SCOPE.md`, `docs/work/ARTEMIS_AI_STRATEGY_v1_0.md`.
-
 ---
 
 ## 5. Решения по типам вопросов
@@ -115,6 +105,7 @@ Primary authority:
 
 Secondary authority:
 - `docs/ARTEMIS_PRODUCT_SCOPE.md`
+- `docs/FOUNDATION_INDEX.md`
 
 Примеры вопросов:
 - чем является ARTEMIS;
@@ -130,6 +121,7 @@ Primary authority:
 Secondary authority:
 - `docs/PROJECT_PHASES.md`
 - `docs/PRIORITIES.md`
+- `docs/RESEARCH_SLICE_CONTRACT.md`
 
 Примеры вопросов:
 - входит ли feature в v1.0;
@@ -139,82 +131,95 @@ Secondary authority:
 
 ### 5.3 Research slice questions
 
-Current authority:
-- `docs/ARTEMIS_PRODUCT_SCOPE.md`
+Primary authority:
+- `docs/RESEARCH_SLICE_CONTRACT.md`
+
+Runtime/API authority:
 - `docs/RESEARCH_SLICE_SPEC.md`
 
-Future primary authority:
-- `docs/RESEARCH_SLICE_CONTRACT.md`
+Supporting authority:
+- `docs/ARTEMIS_PRODUCT_SCOPE.md`
+- `docs/EPISTEMIC_CONTRACT.md`
+- `docs/ENTITY_MODEL.md`
 
 Примеры вопросов:
 - чем slice отличается от saved view;
 - как slice связан со story/course/AI;
 - что входит в minimal slice;
-- как работает lifecycle slice.
+- как работает lifecycle slice;
+- как slice связан с AI context и epistemic status.
 
 ### 5.4 Knowledge / epistemic questions
 
-Current authority:
-- `docs/ARTEMIS_CONCEPT.md`
-
-Future primary authority:
+Primary authority:
 - `docs/EPISTEMIC_CONTRACT.md`
+
+Supporting authority:
+- `docs/ARTEMIS_CONCEPT.md`
+- `docs/CONTENT_GOVERNANCE.md`
+- `docs/AI_POLICY.md`
 
 Примеры вопросов:
 - что является фактом;
 - что является интерпретацией;
 - как маркировать гипотезу;
 - как показывать AI-output;
-- как работать с uncertainty.
+- как работать с uncertainty;
+- почему counterfactual не является history.
 
 ### 5.5 Entity / relation questions
 
-Current authority:
-- `docs/ARTEMIS_CONCEPT.md`
-- `docs/ARTEMIS_PRODUCT_SCOPE.md`
-- `docs/DATA_CONTRACT.md`
-
-Future primary authority:
+Primary authority:
 - `docs/ENTITY_MODEL.md`
+
+Supporting authority:
+- `docs/EPISTEMIC_CONTRACT.md`
+- `docs/DATA_CONTRACT.md`
+- `docs/RESEARCH_SLICE_CONTRACT.md`
 
 Примеры вопросов:
 - что такое entity;
 - чем object отличается от event/process/place;
 - как relation связывает сущности;
-- как source/media относятся к entity.
+- как source/media относятся к entity;
+- как entity входит в slice/story/course/AI context.
 
 ### 5.6 Content trust / governance questions
 
-Current authority:
-- `docs/DATA_CONTRACT.md`
-- moderation/runtime docs
-- relevant audit notes
-
-Future primary authority:
+Primary authority:
 - `docs/CONTENT_GOVERNANCE.md`
+
+Supporting authority:
+- `docs/EPISTEMIC_CONTRACT.md`
+- `docs/ENTITY_MODEL.md`
+- `docs/DATA_CONTRACT.md`
+- relevant moderation/runtime docs
 
 Примеры вопросов:
 - как объект становится canonical content;
 - как решать конфликт источников;
 - что делать со спорными координатами;
 - как UGC становится trusted;
-- когда запись отклоняется.
+- когда запись отклоняется;
+- почему AI-generated content не становится source-backed fact без review.
 
 ### 5.7 AI behavior questions
 
-Current authority:
-- `docs/ARTEMIS_CONCEPT.md`
-- `docs/ARTEMIS_PRODUCT_SCOPE.md`
-- `docs/work/ARTEMIS_AI_STRATEGY_v1_0.md`
-
-Future primary authority:
+Primary authority:
 - `docs/AI_POLICY.md`
+
+Supporting authority:
+- `docs/EPISTEMIC_CONTRACT.md`
+- `docs/RESEARCH_SLICE_CONTRACT.md`
+- `docs/CONTENT_GOVERNANCE.md`
+- `docs/work/ARTEMIS_AI_STRATEGY_v1_0.md` where it does not conflict with canonical docs
 
 Примеры вопросов:
 - может ли AI генерировать historical claim;
 - как маркировать AI hypothesis;
 - может ли AI менять canonical data;
-- как AI должен использовать slice context.
+- как AI должен использовать slice context;
+- почему AI не является source.
 
 ### 5.8 Data / release / runtime questions
 
@@ -245,7 +250,12 @@ Executable authority:
 3. `CONTROLLED_RELEASE_DECISION.md` for release/readiness interpretation;
 4. `ARTEMIS_CONCEPT.md` for mission/principles/epistemic constraints;
 5. `ARTEMIS_PRODUCT_SCOPE.md` for v1.0 scope/product boundaries;
-6. planned foundation docs after creation and canonical registration;
+6. foundation contracts:
+   - `RESEARCH_SLICE_CONTRACT.md`;
+   - `EPISTEMIC_CONTRACT.md`;
+   - `ENTITY_MODEL.md`;
+   - `CONTENT_GOVERNANCE.md`;
+   - `AI_POLICY.md`;
 7. `PROJECT_STRUCTURE.md` for repo/runtime/docs boundaries;
 8. `PROJECT_PHASES.md` and `PRIORITIES.md` for current work order;
 9. `DOCUMENTATION_SYSTEM.md` for doc placement/governance conflicts;
@@ -275,34 +285,42 @@ Foundation changes must not be mixed with unrelated UI/runtime refactors.
 
 Запрещено:
 
-- добавлять AI-функции без проверки against AI policy / concept principles;
-- развивать stories/courses вне research slice model;
+- добавлять AI-функции без проверки against `AI_POLICY.md` and `EPISTEMIC_CONTRACT.md`;
+- развивать stories/courses вне `RESEARCH_SLICE_CONTRACT.md`;
+- расширять entity/relation/source/media model вне `ENTITY_MODEL.md`;
 - превращать object card в главную продуктовую единицу вместо slice;
-- использовать UGC as canonical content без governance;
-- смешивать fact, interpretation, hypothesis и AI-output;
+- использовать UGC as canonical content без `CONTENT_GOVERNANCE.md`;
+- смешивать fact, interpretation, hypothesis, AI-output и counterfactual;
 - создавать новый source of truth в working docs или audits;
 - использовать archive/reference documents как current guidance;
 - расширять ARTEMIS в generic GIS/LMS/social/wiki platform без foundation decision.
 
 ---
 
-## 9. Ближайший порядок foundation work
+## 9. Текущий статус foundation work
 
-P0:
-1. создать `docs/RESEARCH_SLICE_CONTRACT.md`;
-2. создать `docs/EPISTEMIC_CONTRACT.md`;
-3. сверить оба документа с `ARTEMIS_CONCEPT.md`, `ARTEMIS_PRODUCT_SCOPE.md`, `DATA_CONTRACT.md` и `RESEARCH_SLICE_SPEC.md`.
+Status:
+- foundation-layer создан;
+- ключевые foundation docs зарегистрированы в `PROJECT_STRUCTURE.md` и `DOCUMENTATION_SYSTEM.md`;
+- `ARTEMIS_MASTER_PROMPT.md` обновлён под foundation invariants;
+- archive index создан и Batch A cleanup выполнен;
+- release/docs drift частично защищён через `scripts/release_check.py`.
 
-P1:
-4. создать `docs/ENTITY_MODEL.md`;
-5. создать `docs/CONTENT_GOVERNANCE.md`;
-6. создать `docs/AI_POLICY.md`.
+Closed foundation setup items:
 
-P2:
-7. обновить `docs/PROJECT_STRUCTURE.md`;
-8. обновить `docs/DOCUMENTATION_SYSTEM.md`;
-9. обновить `docs/ARTEMIS_MASTER_PROMPT.md`;
-10. создать или обновить `docs/archive/README.md` для управляемого archive cleanup.
+1. `docs/RESEARCH_SLICE_CONTRACT.md` создан.
+2. `docs/EPISTEMIC_CONTRACT.md` создан.
+3. `docs/ENTITY_MODEL.md` создан.
+4. `docs/CONTENT_GOVERNANCE.md` создан.
+5. `docs/AI_POLICY.md` создан.
+6. `docs/PROJECT_STRUCTURE.md` обновлён.
+7. `docs/DOCUMENTATION_SYSTEM.md` обновлён.
+8. `docs/ARTEMIS_MASTER_PROMPT.md` обновлён.
+9. `docs/archive/README.md` обновлён.
+
+Remaining non-blocking follow-up:
+- semantic review оставшихся `DO_NOT_DELETE_YET` archive files;
+- Phase 5 scaling/hardening tasks, включая production/HA ограничения memory session backend.
 
 ---
 
