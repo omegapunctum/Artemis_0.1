@@ -151,6 +151,7 @@ app/
 - env/runtime configuration закрепляется только за `app.main:app`;
 - session backend deployment policy: memory-backed refresh sessions допустимы только для development/testing/local baseline (включая short aliases `dev`/`test`); non-development/testing/local deployments обязаны использовать Redis-backed session store (`AUTH_SESSION_BACKEND=redis` + `REDIS_URL`) с fail-fast на misconfiguration;
 - Redis-backed refresh-session consume в текущем baseline трактуется как atomic one-time operation (`GETDEL` или atomic fallback path), а legacy non-atomic `get+delete` не должен считаться допустимым baseline-поведением;
+- rate limiting в текущем baseline остаётся process-local/in-memory; `X-Forwarded-For` для извлечения client IP в rate-limit key trusted только от configured trusted proxy peers (`ARTEMIS_TRUSTED_PROXIES` / `TRUSTED_PROXY_IPS`, exact IP + CIDR), иначе используется peer IP (`request.client.host`);
 - текущий persistence baseline использует shared SQLAlchemy scope: `app.auth.service` задаёт общий `engine`/`Base`, который переиспользуется в `drafts` / `research_slices` / `stories` / `courses`;
 - migration/bootstrap path текущего baseline выполняется при runtime startup через `init_db()` вызовы в `app.main.py`, а не через отдельный внешний migration orchestrator;
 - versioned migrations в backend опираются на общую `schema_version` discipline как baseline-механизм и не должны трактоваться как fully hardened production migration platform;

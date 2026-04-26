@@ -137,10 +137,24 @@ def check_data_layer() -> None:
 
 
 def check_backend() -> None:
+    env_overrides = {
+        "MIGRATION_STARTUP_ROLE": "non-owner",
+        "APP_ENV": "testing",
+        "AUTH_SECRET_KEY": "release-check-dummy-secret",
+    }
+    previous_values = {key: os.environ.get(key) for key in env_overrides}
     try:
+        for key, value in env_overrides.items():
+            os.environ[key] = value
         module = importlib.import_module("app.main")
     except Exception as exc:
         fail(f"failed to import app.main: {exc}")
+    finally:
+        for key, previous in previous_values.items():
+            if previous is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = previous
 
     app = getattr(module, "app", None)
     if app is None:
