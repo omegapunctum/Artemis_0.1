@@ -24,14 +24,21 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 
 ## 2. ОСНОВНЫЕ ПРАВИЛА ИСТОЧНИКА ИСТИНЫ
 
-В проекте действует новая иерархия документации.
+В проекте действует иерархия документации с отдельным foundation-layer.
 
 ### 2.1 Canonical source of truth
 Единственными canonical документами считаются:
 - `README.md`
+- `docs/FOUNDATION_INDEX.md`
 - `docs/ARTEMIS_CONCEPT.md`
 - `docs/ARTEMIS_MASTER_PROMPT.md`
 - `docs/ARTEMIS_PRODUCT_SCOPE.md`
+- `docs/RESEARCH_SLICE_CONTRACT.md`
+- `docs/RESEARCH_SLICE_SPEC.md`
+- `docs/EPISTEMIC_CONTRACT.md`
+- `docs/ENTITY_MODEL.md`
+- `docs/CONTENT_GOVERNANCE.md`
+- `docs/AI_POLICY.md`
 - `docs/PROJECT_STRUCTURE.md`
 - `docs/PROJECT_PHASES.md`
 - `docs/PRIORITIES.md`
@@ -41,8 +48,14 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 
 Правило:
 - если информация не синхронизирована с canonical docs, она не должна считаться окончательной;
+- `FOUNDATION_INDEX.md` определяет foundation-layer, порядок чтения и выбор source of truth по типам решений;
 - `ARTEMIS_CONCEPT.md` определяет миссию, жёсткие принципы, эпистемическую модель и долгосрочную лестницу развития;
 - `ARTEMIS_PRODUCT_SCOPE.md` определяет границы ARTEMIS v1.0, главную единицу ценности и запреты против product drift;
+- `RESEARCH_SLICE_CONTRACT.md` определяет Research Slice как главную product/data/UI/AI единицу ценности;
+- `EPISTEMIC_CONTRACT.md` определяет операционное разделение fact/source/relation/interpretation/hypothesis/AI-output/uncertainty/counterfactual;
+- `ENTITY_MODEL.md` определяет knowledge/product/runtime/context entities и relation model;
+- `CONTENT_GOVERNANCE.md` определяет source policy, UGC/moderation, validation, trust, correction и publish governance;
+- `AI_POLICY.md` определяет canonical границы AI behavior, AI-output, source discipline и запреты против AI drift;
 - `DOCUMENTATION_SYSTEM.md` определяет роли слоёв, порядок чтения, правила размещения документов и приоритет разрешения doc-conflicts;
 - старые целевые имена вроде `ARCHITECTURE.md`, `RELEASE_SYSTEM.md` и `ROADMAP.md` не должны использоваться как текущий canonical-набор, если они не существуют как действующие source-of-truth файлы в репозитории.
 
@@ -51,7 +64,7 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 Они помогают в разработке, но не заменяют canonical layer.
 
 Отдельное правило:
-- `docs/work/ARTEMIS_AI_STRATEGY_v1_0.md` обязателен к учёту при продуктовых и AI-related решениях, но остаётся working document, потому что должен обновляться быстрее, чем миссия и product scope.
+- `docs/work/ARTEMIS_AI_STRATEGY_v1_0.md` обязателен к учёту при продуктовых и AI-related решениях, но не может противоречить `AI_POLICY.md`, `EPISTEMIC_CONTRACT.md`, `CONTENT_GOVERNANCE.md`, `RESEARCH_SLICE_CONTRACT.md` и `ARTEMIS_PRODUCT_SCOPE.md`.
 
 ### 2.3 Audits
 `docs/audits/*` — документы проверки.
@@ -127,6 +140,7 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 ### 5.3 Governance
 - intake → review 1 → review 2 → batch publish → overwrite public dataset.
 - publish не выполняется напрямую из runtime UI.
+- UGC не становится canonical public content без `CONTENT_GOVERNANCE.md`, ETL/export validation и release discipline.
 
 ### 5.4 Auth
 - access token — только в памяти клиента;
@@ -138,6 +152,13 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 - private/auth requests не должны кэшироваться;
 - PWA semantics проверяются по реальному поведению, а не по наличию/отсутствию строк в `sw.js`.
 
+### 5.6 Foundation invariants
+- Research Slice остаётся главной единицей ценности ARTEMIS v1.0.
+- Stories/courses должны строиться поверх slices или slice-like context, а не заменять slice model.
+- AI работает как assistant/explainer/hypothesis generator, но не как source of truth.
+- Fact, interpretation, hypothesis, AI-output and counterfactual scenario must not be visually or semantically collapsed.
+- Entity/relation/source/media model must remain coherent with `ENTITY_MODEL.md` and `EPISTEMIC_CONTRACT.md`.
+
 ---
 
 ## 6. ТЕКУЩИЙ ПОРЯДОК РАБОТ
@@ -145,7 +166,7 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 Активный рабочий контур:
 1. **Scaling / Hardening** — Фаза 5, текущий основной активный цикл.
 2. **Product / documentation coherence** — сопутствующий guardrail без расширения implementation scope.
-3. **Product Expansion** — Фаза 6, запланирована после стабилизации hardening-контура и только в границах `ARTEMIS_PRODUCT_SCOPE.md`.
+3. **Product Expansion** — Фаза 6, запланирована после стабилизации hardening-контура и только в границах `ARTEMIS_PRODUCT_SCOPE.md` и foundation-layer.
 4. **PWA / UX Stabilization** — Фаза 4 закрыта; не reopen без нового подтверждённого runtime/PWA drift.
 5. **Controlled Release Stabilization** — Фаза 3 закрыта; не reopen без нового contract/release drift.
 
@@ -153,8 +174,8 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 1. устранить scaling/hardening gaps без ложных production-ready claims;
 2. удержать execution coherence между runtime, docs, release semantics и checked-in artifacts;
 3. поддерживать canonical public map source discipline (`data/features.geojson` как production-default public source);
-4. точечно устранять documentation drift, если он влияет на архитектуру, release, data contract, phase order или product scope;
-5. открывать следующий product expansion слой только после stabilization/coherence и в границах `ARTEMIS_PRODUCT_SCOPE.md`.
+4. точечно устранять documentation drift, если он влияет на архитектуру, release, data contract, foundation-layer, phase order или product scope;
+5. открывать следующий product expansion слой только после stabilization/coherence и в границах `ARTEMIS_PRODUCT_SCOPE.md`, `RESEARCH_SLICE_CONTRACT.md`, `EPISTEMIC_CONTRACT.md`, `CONTENT_GOVERNANCE.md` и `AI_POLICY.md`.
 
 Внутренний порядок будущего product expansion:
 1. research slices / saved state / shareable state;
@@ -169,12 +190,13 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 
 Для изменений в ARTEMIS действует порядок:
 1. анализ;
-2. обновление проектной документации;
-3. проверка внутренней согласованности;
-4. только потом patch / команда для Codex;
-5. затем тесты, smoke и audit note.
+2. определение затронутых foundation/canonical/working docs;
+3. обновление проектной документации;
+4. проверка внутренней согласованности;
+5. только потом patch / команда для Codex;
+6. затем тесты, smoke и audit note.
 
-Если изменение затрагивает architecture / data contract / release semantics / docs hierarchy / product scope / роль ИИ в продукте, нельзя сразу идти в код.
+Если изменение затрагивает architecture / data contract / release semantics / docs hierarchy / product scope / research slice semantics / entity model / epistemic model / content governance / роль ИИ в продукте, нельзя сразу идти в код.
 
 ---
 
@@ -187,13 +209,16 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 - границы scope;
 - проверки;
 - какие canonical docs должны быть обновлены;
-- затрагивает ли изменение `ARTEMIS_CONCEPT.md`, `ARTEMIS_PRODUCT_SCOPE.md` или `docs/work/ARTEMIS_AI_STRATEGY_v1_0.md`.
+- затрагивает ли изменение `FOUNDATION_INDEX.md`, `ARTEMIS_CONCEPT.md`, `ARTEMIS_PRODUCT_SCOPE.md`, `RESEARCH_SLICE_CONTRACT.md`, `EPISTEMIC_CONTRACT.md`, `ENTITY_MODEL.md`, `CONTENT_GOVERNANCE.md`, `AI_POLICY.md` или `docs/work/ARTEMIS_AI_STRATEGY_v1_0.md`.
 
 ### 8.2 Что запрещено
 - рефакторинг без явной причины;
 - расширение scope по ходу patch;
 - скрытое изменение API/контракта;
 - изменение архитектуры под видом багфикса;
+- развитие stories/courses/AI вне Research Slice model;
+- использование AI-output как source-backed/canonical knowledge без governance;
+- смешение fact/interpretation/hypothesis/AI-output/counterfactual;
 - работа по старому архивному документу как по основному ориентиру.
 
 ### 8.3 Обязательная проверка после patch
@@ -201,6 +226,7 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 - контракт не сломан;
 - tests проходят;
 - docs sync выполнен;
+- foundation-layer не нарушен;
 - нет competing architecture.
 
 ---
@@ -213,7 +239,8 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 - есть scope lock;
 - названы конкретные файлы;
 - понятны happy path и error case;
-- ясно, требует ли задача обновления canonical docs.
+- ясно, требует ли задача обновления canonical docs;
+- ясно, затрагивает ли задача foundation-layer.
 
 Если один из пунктов отсутствует, задача не считается готовой.
 
@@ -228,6 +255,7 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 - happy path подтверждён;
 - error case подтверждён;
 - архитектурные инварианты сохранены;
+- foundation инварианты сохранены;
 - docs sync выполнен;
 - нет скрытого drift после изменения.
 
@@ -243,10 +271,18 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 - release gate / readiness / smoke semantics;
 - upload/auth/runtime API surface;
 - статуса фаз и порядка работ;
-- миссии, продуктового ядра и допустимой роли ИИ в проекте.
+- миссии, продуктового ядра и допустимой роли ИИ в проекте;
+- Research Slice semantics;
+- epistemic status / uncertainty / source discipline;
+- entity/relation/source/media model;
+- content governance / UGC promotion / moderation trust model;
+- AI behavior / AI-output / AI policy.
 
 ### Не использовать audits как замену canonical docs
 Если аудит выявил конфликт, нужно обновить соответствующий canonical doc, а не только добавить новый audit file.
+
+### Не использовать working docs как скрытый foundation-layer
+Если working doc начинает определять устойчивое правило продукта, AI, content governance, entity model или epistemic behavior, его смысл должен быть перенесён в canonical/foundation doc.
 
 ### Не использовать archive как текущий ориентир
 Старые v3.x snapshot-документы можно читать только для истории решений.
@@ -263,7 +299,7 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 Если требуется документация:
 - сначала готовый документ или пакет документов;
 - затем краткий комментарий, что именно изменилось;
-- не дублировать уже действующую информацию между `ARTEMIS_CONCEPT`, `ARTEMIS_PRODUCT_SCOPE`, `PROJECT_PHASES`, `PRIORITIES` и `MASTER_PROMPT`, а только связывать роли этих документов.
+- не дублировать уже действующую информацию между foundation/canonical docs, а только связывать роли этих документов.
 
 Если требуется задача для Codex:
 - GOAL
@@ -284,7 +320,12 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 - patch без checks;
 - работа только по устаревшему snapshot-документу;
 - смешение roadmap, audits и archive в одном operational файле;
-- добавление нового уровня архитектуры без отдельного решения.
+- добавление нового уровня архитектуры без отдельного решения;
+- product expansion без проверки against foundation-layer;
+- AI feature без `AI_POLICY.md` и `EPISTEMIC_CONTRACT.md`;
+- UGC/public content feature без `CONTENT_GOVERNANCE.md`;
+- story/course feature, обходящая `RESEARCH_SLICE_CONTRACT.md`;
+- entity/relation expansion, обходящая `ENTITY_MODEL.md`.
 
 ---
 
@@ -295,10 +336,11 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 Сначала:
 - устойчивый map-first runtime;
 - устойчивый release/data/docs coherence;
+- foundation-layer as hard guardrail;
 - scaling/hardening цикл без ложных production-ready claims.
 
 Потом:
 - research slices как стабильная продуктовая единица;
-- stories и courses;
-- explainable AI assistance;
+- stories и courses поверх slice model;
+- explainable AI assistance в рамках AI policy and epistemic contract;
 - только затем вторичные продуктовые сценарии и platform-level expansion.
