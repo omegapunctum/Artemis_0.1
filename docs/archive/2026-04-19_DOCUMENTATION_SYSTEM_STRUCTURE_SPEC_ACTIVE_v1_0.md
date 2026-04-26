@@ -1,9 +1,9 @@
 # ARTEMIS — DOCUMENTATION SYSTEM STRUCTURE SPEC
 
-**Статус:** active  
+**Статус:** archived / historical reference  
 **Дата:** 2026-04-19  
 **Версия:** v1_0  
-**Назначение:** целевая структура документооборота проекта ARTEMIS с распределением по папкам и носителям.
+**Назначение:** historical structure proposal for ARTEMIS documentation placement. Current canonical documentation governance is defined in `docs/DOCUMENTATION_SYSTEM.md`.
 
 ---
 
