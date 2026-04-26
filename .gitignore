@@ -1,0 +1,12 @@
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test/runtime local artifacts
+.pytest_cache/
+.pytest_dbs/
+
+# Local SQLite databases
+*.db
+artemis_auth.db
