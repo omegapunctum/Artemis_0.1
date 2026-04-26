@@ -1,5 +1,14 @@
 # Release Discipline Audit
 
+## Статус документа
+
+- Тип: archived release audit snapshot
+- Статус: archived / historical reference
+- Роль: исторический audit-срез release discipline; не является текущим source of truth
+- Текущие canonical документы для release/data/readiness interpretation: `docs/CONTROLLED_RELEASE_DECISION.md`, `docs/DATA_CONTRACT.md`, `docs/PROJECT_STRUCTURE.md`, `docs/DOCUMENTATION_SYSTEM.md`
+
+---
+
 ## 1. Scope
 Audit intentionally focused only on release-discipline controls and evidence chain for the current controlled release baseline.
 
