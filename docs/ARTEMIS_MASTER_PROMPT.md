@@ -142,25 +142,26 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 
 ## 6. ТЕКУЩИЙ ПОРЯДОК РАБОТ
 
-Приоритет фаз:
-1. PWA / UX Stabilization
-2. Scaling / Hardening
-3. Product Expansion
-4. Controlled Release Stabilization (closed baseline reference; reopen only on new contract drift)
+Активный рабочий контур:
+1. **Scaling / Hardening** — Фаза 5, текущий основной активный цикл.
+2. **Product / documentation coherence** — сопутствующий guardrail без расширения implementation scope.
+3. **Product Expansion** — Фаза 6, запланирована после стабилизации hardening-контура и только в границах `ARTEMIS_PRODUCT_SCOPE.md`.
+4. **PWA / UX Stabilization** — Фаза 4 закрыта; не reopen без нового подтверждённого runtime/PWA drift.
+5. **Controlled Release Stabilization** — Фаза 3 закрыта; не reopen без нового contract/release drift.
 
-Приоритет задач внутри цикла:
-1. завершить PWA/UX stabilization pass как текущий верхний практический приоритет;
-2. удержать execution coherence (runtime/docs/release semantics) без reopen уже закрытого controlled-release baseline;
-3. провести следующий scaling/hardening цикл для single-instance/multi-node ограничений и production-grade persistence/ops gaps;
-4. удержать architecture boundaries;
-5. открывать следующий слой product expansion только после stabilization/coherence в границах `ARTEMIS_PRODUCT_SCOPE.md`.
+Приоритет задач внутри текущего цикла:
+1. устранить scaling/hardening gaps без ложных production-ready claims;
+2. удержать execution coherence между runtime, docs, release semantics и checked-in artifacts;
+3. поддерживать canonical public map source discipline (`data/features.geojson` как production-default public source);
+4. точечно устранять documentation drift, если он влияет на архитектуру, release, data contract, phase order или product scope;
+5. открывать следующий product expansion слой только после stabilization/coherence и в границах `ARTEMIS_PRODUCT_SCOPE.md`.
 
 Внутренний порядок будущего product expansion:
-1. research slices / saved state
-2. stories
-3. courses
-4. explainable AI assistance
-5. вторичные product extensions
+1. research slices / saved state / shareable state;
+2. stories;
+3. courses;
+4. explainable AI assistance;
+5. вторичные product extensions.
 
 ---
 
@@ -292,9 +293,9 @@ ARTEMIS — AI-native explainable spatial-temporal research platform.
 Не расширять ARTEMIS ценой потери целостности.
 
 Сначала:
-- устойчивый map-first runtime.
-- устойчивый PWA/UX runtime и execution coherence.
-- следующий scaling/hardening цикл без ложных production-ready claims.
+- устойчивый map-first runtime;
+- устойчивый release/data/docs coherence;
+- scaling/hardening цикл без ложных production-ready claims.
 
 Потом:
 - research slices как стабильная продуктовая единица;
