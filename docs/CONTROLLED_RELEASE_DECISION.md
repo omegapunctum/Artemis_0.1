@@ -7,7 +7,7 @@
 - Governance boundary is explicit and aligned across docs/code/tests/workflows (canonical `data/*`, auxiliary `/api/map/feed`, no direct runtime publish path).
 - Moderation governance baseline includes executable two-step review invariant: `pending -> review -> approved/publish-attempt`; first approve is stage advancement only, not direct publish-attempt.
 - Auxiliary map runtime boundary is accepted for the current controlled baseline: `/api/map/feed` remains explicitly non-canonical and may operate as an MVP adapter/read-model route for authenticated/runtime UX flows; it is not part of the public map release contract and must not be described as production-grade public dataset access.
-- Manual smoke discipline exists as documented baseline artifacts.
+- Manual smoke discipline exists as documented baseline practice, but any smoke evidence file must be verified by current repository path before being cited as an active artifact.
 - Auth/session baseline is accepted for the current controlled baseline with explicit constraints: `AUTH_SECRET_KEY` must be explicitly configured for real runtime, current guarantees are baseline-capable but not fully production-hardened for multi-instance deployments, and scaling/persistence/ops hardening remains a dedicated next cycle.
 
 Release unit (current baseline contract):
@@ -17,7 +17,7 @@ Release unit (current baseline contract):
 - release gate blocks if required artifacts are missing, if record counts diverge, or if warning thresholds exceed policy.
 
 ## 2. Remaining gaps and classification
-- Gap: No remaining release-blocking gaps are open for entry into the controlled baseline scope after current-cycle manual evidence closure (`docs/MANUAL_SMOKE_EVIDENCE_2026-04-11.md`); architectural/scaling hardening limitations remain open outside this gate.
+- Gap: No remaining release-blocking gaps are open for entry into the controlled baseline scope after current-cycle manual evidence closure; architectural/scaling hardening limitations remain open outside this gate. If a dedicated manual-smoke evidence artifact is reintroduced, it must live in the correct documentation layer and be linked only after the file exists in the repository.
 - Gap: `/api/map/feed` remains an auxiliary MVP adapter rather than a production-grade read model over the published dataset; this is acceptable inside the current controlled baseline envelope but remains part of later runtime/data hardening scope.
 - Classification: Remaining items are **POST-BASELINE GAP** only (continuous quality hardening, not release blockers).
 - Clarification: baseline decision is intentionally controlled-release and should not be read as a broad production-ready claim; production-grade multi-node envelope remains next-phase hardening scope.
