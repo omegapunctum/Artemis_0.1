@@ -113,10 +113,6 @@
 
 | Файл | Заменён чем |
 |---|---|
-| `artemis_master_prompt_v4_1_foundational_sync.md` | `docs/ARTEMIS_MASTER_PROMPT.md` |
-| `Priorities_14_04_26_v4_1_foundational_sync.md` | `docs/PRIORITIES.md` |
-| `Project_Phases_14_04_26_v4_1_foundational_sync.md` | `docs/PROJECT_PHASES.md` |
-| `Project_Structure_14_04_26_v4_1_foundational_sync.md` | `docs/PROJECT_STRUCTURE.md` |
 | `Artemis_Analysis_Conclusion_04_04_2026.md` | `docs/FOUNDATION_INDEX.md`, `docs/ARTEMIS_CONCEPT.md`, current canonical docs |
 
 ---
@@ -128,7 +124,6 @@
 | Файл | Условие удаления |
 |---|---|
 | `RELEASE_VERIFICATION_MVP_2026-03-30.md` | если не используется как required evidence trail и важные выводы перенесены |
-| foundation-sync snapshots | если подтверждено, что current foundation docs fully replace useful content |
 | duplicated UI smoke reports | если итоговые UI/UX findings уже перенесены в current UI/UX docs или audits |
 
 На текущем шаге дополнительные файлы физически не удаляются.
@@ -149,9 +144,17 @@
 - `Project_Phases_05_04_26_v3_6.md`
 - `Project_Structure_04_04_26_v3_5.md`
 
-Удаление Batch A не затрагивало:
+### Batch B — removed after foundation sync confirmation
+
+Удалены как superseded foundation-sync snapshots после переноса foundation-layer в active canonical docs:
+
+- `artemis_master_prompt_v4_1_foundational_sync.md`
+- `Priorities_14_04_26_v4_1_foundational_sync.md`
+- `Project_Phases_14_04_26_v4_1_foundational_sync.md`
+- `Project_Structure_14_04_26_v4_1_foundational_sync.md`
+
+Удаление Batch A/B не затрагивало:
 - release/evidence/audit files;
-- foundation-sync v4.1 snapshots;
 - UI/UX audit/smoke files;
 - courses audit files.
 
