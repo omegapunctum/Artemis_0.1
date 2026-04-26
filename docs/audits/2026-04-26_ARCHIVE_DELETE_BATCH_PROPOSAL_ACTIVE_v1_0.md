@@ -2,27 +2,25 @@
 
 ## Статус документа
 
-- Тип: archive delete-batch proposal
-- Статус: active proposal / no deletion performed
+- Тип: archive delete-batch proposal / executed batch note
+- Статус: completed for Batch A
 - Дата: 2026-04-26
 - Layer: `docs/audits/*`
-- Назначение: предложить первый небольшой batch архивных файлов-кандидатов на удаление после link-audit
+- Назначение: зафиксировать proposal и выполнение первого небольшого batch удаления superseded archive snapshots
 
 ---
 
 ## 1. Назначение
 
-Документ предлагает первый безопасный delete-batch для `docs/archive/*`.
+Документ фиксирует первый безопасный delete-batch для `docs/archive/*`.
 
-Этот документ не удаляет файлы и не является разрешением на удаление сам по себе.
-
-Удаление допустимо только после отдельного подтверждения.
+Batch A был подтверждён и выполнен после link-audit.
 
 ---
 
 ## 2. Основание
 
-Основание для proposal:
+Основание:
 
 - `docs/archive/README.md`
 - `docs/audits/2026-04-26_ARCHIVE_LINK_AUDIT_NOTE_ACTIVE_v1_0.md`
@@ -32,14 +30,14 @@ Link-audit показал:
 - canonical references: 0;
 - work references: 0;
 - audit references: 3;
-- 35 archive files не имеют active references;
-- большинство superseded snapshot-файлов упоминаются только в archive index.
+- 35 archive files не имели active references;
+- большинство superseded snapshot-файлов упоминались только в archive index.
 
 ---
 
 ## 3. Принцип первого delete-batch
 
-Первый batch должен быть маленьким.
+Первый batch был ограничен старыми superseded snapshots.
 
 Цель:
 - снизить шум архива;
@@ -56,11 +54,9 @@ Link-audit показал:
 
 ---
 
-## 4. Recommended first delete-batch
+## 4. Executed Batch A
 
-### Batch A — lowest-risk superseded snapshots
-
-Рекомендуемый первый batch:
+Удалены как superseded snapshots без active references:
 
 | Файл | Причина |
 |---|---|
@@ -72,18 +68,18 @@ Link-audit показал:
 | `docs/archive/Project_Phases_05_04_26_v3_6.md` | superseded by `docs/PROJECT_PHASES.md`, active references not found |
 | `docs/archive/Project_Structure_04_04_26_v3_5.md` | superseded by `docs/PROJECT_STRUCTURE.md`, active references not found |
 
-Why this batch is safe:
+Why this batch was safe:
 
-- files are old v3.x/v3.5/v3.6 snapshots;
+- files were old v3.x/v3.5/v3.6 snapshots;
 - current canonical docs already own these meanings;
 - no active references were found;
-- newer v4.1/foundation snapshots can remain temporarily as representative transition history.
+- newer v4.1/foundation snapshots remain temporarily as representative transition history.
 
 ---
 
-## 5. Files intentionally not included in first batch
+## 5. Files intentionally not included in Batch A
 
-### Keep for now: foundation-sync snapshots
+### Kept for now: foundation-sync snapshots
 
 Not included:
 
@@ -96,7 +92,7 @@ Reason:
 - these files may be useful as transition history from foundational sync;
 - delete later only after confirming current foundation docs fully replace their useful content.
 
-### Keep for now: analysis snapshot
+### Kept for now: analysis snapshot
 
 Not included:
 
@@ -106,7 +102,7 @@ Reason:
 - may contain early conceptual synthesis;
 - delete only after semantic review.
 
-### Keep for now: release/evidence/audit files
+### Kept for now: release/evidence/audit files
 
 Not included:
 
@@ -123,51 +119,17 @@ Reason:
 
 ---
 
-## 6. Pre-delete checks
+## 6. Index update
 
-Before deleting Batch A, run:
+After Batch A deletion, `docs/archive/README.md` was updated:
 
-```bash
-for f in \
-  docs/archive/artemis_master_prompt_v3_3.md \
-  docs/archive/artemis_master_prompt_v3_4.md \
-  docs/archive/Priorities_04_04_26_v3_5.md \
-  docs/archive/Priorities_05_04_26_v3_6.md \
-  docs/archive/Project_Phases_04_04_26_v3_5.md \
-  docs/archive/Project_Phases_05_04_26_v3_6.md \
-  docs/archive/Project_Structure_04_04_26_v3_5.md; do
-  grep -R "$(basename "$f")" -n README.md docs .github scripts tests app js css || true
-done
-```
-
-Expected result:
-- references only in `docs/archive/README.md` and this proposal note.
+- removed deleted Batch A files from active archive classification;
+- added a `Deleted archive files` section;
+- preserved traceability of what was removed and why.
 
 ---
 
-## 7. Delete command if confirmed
-
-Only after explicit confirmation:
-
-```bash
-rm \
-  docs/archive/artemis_master_prompt_v3_3.md \
-  docs/archive/artemis_master_prompt_v3_4.md \
-  docs/archive/Priorities_04_04_26_v3_5.md \
-  docs/archive/Priorities_05_04_26_v3_6.md \
-  docs/archive/Project_Phases_04_04_26_v3_5.md \
-  docs/archive/Project_Phases_05_04_26_v3_6.md \
-  docs/archive/Project_Structure_04_04_26_v3_5.md
-```
-
-Then update:
-
-- `docs/archive/README.md`
-- this proposal or a new cleanup note in `docs/audits/*`
-
----
-
-## 8. Required checks after deletion
+## 7. Required checks after deletion
 
 After deletion, run:
 
@@ -180,15 +142,14 @@ git status --short
 Expected:
 - release_check passes, except allowed existing runtime/deployment warning about memory session backend;
 - pytest passes;
-- git status shows only intended deletes and docs updates before commit.
+- git status shows no unintended changes after commit.
 
 ---
 
-## 9. Recommendation
+## 8. Recommendation
 
-Recommended decision:
+Recommended next decision:
 
-- approve Batch A only;
 - do not delete release/evidence/audit files;
 - do not delete foundation-sync v4.1 snapshots yet;
 - do not delete UI/UX and courses audits yet;
@@ -196,8 +157,8 @@ Recommended decision:
 
 ---
 
-## 10. Current status
+## 9. Current status
 
-No files have been deleted.
+Batch A completed.
 
-This is a proposal for review and confirmation only.
+No further archive deletion is authorized by this note.
