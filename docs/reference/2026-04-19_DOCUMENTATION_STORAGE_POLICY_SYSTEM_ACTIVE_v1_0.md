@@ -1,9 +1,9 @@
 # ARTEMIS — POLICY OF DOCUMENTATION STORAGE AND PLACEMENT
 
-Статус: active  
+Статус: reference / historical governance-support material  
 Дата: 2026-04-19  
 Версия: v1.0  
-Назначение: определить, какие документы ARTEMIS должны храниться в GitHub, какие — в ChatGPT, какие — в Google Drive, а также зафиксировать приоритет носителей, правила переноса материалов между ними и минимальные правила governance.
+Назначение: зафиксировать historical/supporting policy по размещению документации между GitHub, ChatGPT и Google Drive. Текущим canonical source of truth для documentation governance является `docs/DOCUMENTATION_SYSTEM.md`.
 
 ---
 
