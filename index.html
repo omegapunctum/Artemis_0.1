@@ -51,7 +51,9 @@
   </aside>
 
   <div id="app-shell">
-    <header id="top-header" class="glass-panel" aria-label="Верхняя панель управления">
+    <div id="workspace-frame">
+      <div id="workspace-top-dock">
+        <header id="top-header" aria-label="Верхняя панель управления">
       <div class="top-shell-left">
         <div class="brand" aria-label="Логотип ARTEMIS">ARTEMIS</div>
         <nav class="project-nav" aria-label="Основная навигация проекта">
@@ -91,8 +93,8 @@
         </div>
         <button id="overflow-btn" class="icon-btn" type="button" aria-label="Ещё действия">⋯</button>
       </div>
-    </header>
-    <section id="research-context-bar" class="glass-panel workspace-unified-strip" aria-label="Подпанель среза и инструменты исследования">
+        </header>
+        <section id="research-context-bar" class="workspace-unified-strip" aria-label="Подпанель среза и инструменты исследования">
       <div class="workspace-strip-context">
         <div class="research-context-main">
           <button id="research-slice-trigger" type="button" title="Срез: Новый">Срез: Новый</button>
@@ -141,11 +143,51 @@
           </div>
         </section>
       </div>
-    </section>
+        </section>
+      </div>
 
-    <main id="map-container" aria-label="Карта объектов">
-      <div id="map"></div>
-    </main>
+      <div id="workspace-main">
+        <main id="map-container" aria-label="Карта объектов">
+          <div id="map"></div>
+        </main>
+        <aside id="detail-panel" class="detail-panel is-preview-mode" data-mode="preview" hidden aria-label="Предпросмотр объекта" aria-labelledby="detail-panel-heading" aria-hidden="true" role="dialog" aria-modal="false" tabindex="-1">
+          <header class="detail-panel-head panel-header">
+            <h2 id="detail-panel-heading" class="detail-panel-heading">Быстрый просмотр</h2>
+            <div class="detail-panel-actions">
+              <button id="detail-panel-expand" class="icon-btn" type="button" aria-label="Развернуть панель" aria-expanded="false" hidden>⇧</button>
+              <button id="detail-panel-close" class="floating-card-close" type="button" aria-label="Закрыть карточку предпросмотра">×</button>
+            </div>
+          </header>
+          <div id="detail-panel-body" class="detail-panel-body" aria-live="polite"></div>
+        </aside>
+      </div>
+
+      <div id="workspace-bottom-dock">
+        <section id="bottom-panel" aria-label="Таймлайн">
+          <div id="timeline" class="timeline-row">
+            <div class="timeline-head">
+              <div class="timeline-helper-label">Временная ось</div>
+              <div id="timeline-range-label">Выбранный диапазон</div>
+              <div class="timeline-mode-toggle" role="group" aria-label="Режим времени">
+                <button id="timeline-mode-point" class="timeline-mode-btn is-active" type="button" aria-pressed="true">Точка</button>
+                <button id="timeline-mode-range" class="timeline-mode-btn" type="button" aria-pressed="false">Диапазон</button>
+              </div>
+              <div id="timeline-range-capsule" class="timeline-capsule">Выбрано: 1600–1650</div>
+            </div>
+            <div class="timeline-track-wrap">
+              <div class="timeline-track-base"></div>
+              <div id="timeline-active-range" class="timeline-active-range"></div>
+              <div id="timeline-knob-start" class="timeline-knob"></div>
+              <div id="timeline-knob-end" class="timeline-knob"></div>
+              <div id="timeline-axis" class="timeline-axis" aria-hidden="true"></div>
+              <input id="timeline-start" type="range" min="-3000" max="2026" value="1600" step="1" aria-label="Начало временного диапазона" />
+              <input id="timeline-end" type="range" min="-3000" max="2026" value="1650" step="1" aria-label="Конец временного диапазона" />
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
     <section id="onboarding-overlay" class="onboarding-overlay" aria-live="polite">
       <div class="onboarding-card glass-panel" role="note" aria-label="Подсказка первого шага">
         <p class="onboarding-title">Выберите объект на карте или измените период на таймлайне внизу.</p>
@@ -159,40 +201,6 @@
       <p id="global-data-error-text" class="global-data-error-text">Не удалось загрузить данные карты.</p>
       <button id="global-data-error-retry" type="button" class="ui-button ui-button-primary">Повторить</button>
     </section>
-
-    <section id="bottom-panel" class="glass-panel" aria-label="Таймлайн">
-      <div id="timeline" class="timeline-row">
-        <div class="timeline-head">
-          <div class="timeline-helper-label">Временная ось</div>
-          <div id="timeline-range-label">Выбранный диапазон</div>
-          <div class="timeline-mode-toggle" role="group" aria-label="Режим времени">
-            <button id="timeline-mode-point" class="timeline-mode-btn is-active" type="button" aria-pressed="true">Точка</button>
-            <button id="timeline-mode-range" class="timeline-mode-btn" type="button" aria-pressed="false">Диапазон</button>
-          </div>
-          <div id="timeline-range-capsule" class="timeline-capsule">Выбрано: 1600–1650</div>
-        </div>
-        <div class="timeline-track-wrap">
-          <div class="timeline-track-base"></div>
-          <div id="timeline-active-range" class="timeline-active-range"></div>
-          <div id="timeline-knob-start" class="timeline-knob"></div>
-          <div id="timeline-knob-end" class="timeline-knob"></div>
-          <div id="timeline-axis" class="timeline-axis" aria-hidden="true"></div>
-          <input id="timeline-start" type="range" min="-3000" max="2026" value="1600" step="1" aria-label="Начало временного диапазона" />
-          <input id="timeline-end" type="range" min="-3000" max="2026" value="1650" step="1" aria-label="Конец временного диапазона" />
-        </div>
-      </div>
-    </section>
-
-    <aside id="detail-panel" class="glass-panel detail-panel is-preview-mode" data-mode="preview" hidden aria-label="Предпросмотр объекта" aria-labelledby="detail-panel-heading" aria-hidden="true" role="dialog" aria-modal="false" tabindex="-1">
-      <header class="detail-panel-head panel-header">
-        <h2 id="detail-panel-heading" class="detail-panel-heading">Быстрый просмотр</h2>
-        <div class="detail-panel-actions">
-          <button id="detail-panel-expand" class="icon-btn" type="button" aria-label="Развернуть панель" aria-expanded="false" hidden>⇧</button>
-          <button id="detail-panel-close" class="floating-card-close" type="button" aria-label="Закрыть карточку предпросмотра">×</button>
-        </div>
-      </header>
-      <div id="detail-panel-body" class="detail-panel-body" aria-live="polite"></div>
-    </aside>
 
     <aside id="ugc-panel" class="glass-panel ugc-panel" hidden aria-label="Редактор черновика" aria-hidden="true">
       <header class="ugc-panel-head panel-header">
