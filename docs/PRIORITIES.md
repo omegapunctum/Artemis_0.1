@@ -59,8 +59,8 @@
 - offline/installability/loading-error-offline baseline закрыт;
 - остаточные UX/PWA темы не считаются blocker'ами закрытия и относятся к hardening/polish next track.
 
-### 2. Закрыть остаточный canonical docs cleanup tail
-Статус: **ACTIVE**.
+### 2. Поддерживать canonical docs coherence и точечно устранять drift
+Статус: **ACTIVE MAINTENANCE / GUARDRAIL**.
 Что нужно:
 - удержать единый canonical set между `README.md`, `docs/ARTEMIS_MASTER_PROMPT.md`, `docs/PROJECT_STRUCTURE.md`, `docs/PROJECT_PHASES.md`, `docs/PRIORITIES.md`, `docs/DATA_CONTRACT.md`, `docs/CONTROLLED_RELEASE_DECISION.md` и `docs/DOCUMENTATION_SYSTEM.md`;
 - завершить cleanup active `docs/` root против canonical allowlist;
@@ -73,11 +73,12 @@
 - продолжать удерживать `/data/features.geojson` как единственный public map source;
 - не допускать implicit fallback или competing runtime architecture через `/api/map/feed`.
 
-### 4. Изолировать или удалить mock runtime entities из `/api/map/feed`
-Статус: **ACTIVE**.
-Что нужно:
-- перестать держать временные `place`-сущности в production-like контурах;
-- явно отделить internal/tooling runtime read-model от публичного data layer.
+### 4. `/api/map/feed` mock runtime entities cleanup — закрыто
+Статус: **COMPLETED / CLOSED**.
+Зафиксировано:
+- mock/place ветка удалена из текущего baseline runtime-поведения;
+- `/api/map/feed` зафиксирован как internal/non-canonical draft-only adapter;
+- задача не является активным blocker'ом и не должна держаться в active cleanup списке.
 
 ### 5. Scaling/hardening cycle без ложных production-ready claims
 Статус: **PRIMARY ACTIVE PRIORITY (PHASE 5)**.
@@ -89,19 +90,19 @@
 - зафиксировать SQLite operational guardrails как baseline-only storage mode и использовать явные trigger-conditions (lock contention, sustained write-latency, multi-instance write pressure) для перехода в следующий storage-hardening stage без преждевременных implementation claims;
 - не выдавать имеющийся Redis/session proof за полностью production-ready multi-node модель.
 
-### 6. Завершить финальную терминологическую полировку release/readiness docs
-Статус: **ACTIVE DOCS-COHERENCE TAIL**.
+### 6. Удерживать терминологическую consistency release/readiness как guardrail
+Статус: **ONGOING MAINTENANCE GUARDRAIL**.
 Что нужно:
-- удержать единый язык release/readiness/manual smoke после уже выполненной baseline-синхронизации;
-- исключить остаточные документы или формулировки, создающие ложное ощущение полного production green при существующих ограничениях;
-- удержать coverage для upload/runtime contract, чтобы критичный drift не проходил между frontend и backend без тестового сигнала.
+- удерживать единый язык release/readiness/manual smoke после уже выполненной baseline-синхронизации;
+- не допускать формулировки, создающие ложное ощущение полного production green при существующих ограничениях;
+- сохранять coverage для upload/runtime contract, чтобы критичный drift не проходил между frontend и backend без тестового сигнала.
 
 ---
 
 ## СРЕДНИЙ ПРИОРИТЕТ
 
-### 7. Очистить `docs/PROJECT_PHASES.md` от historical/status overload
-Статус: **NEXT DOCS CLEANUP TARGET**.
+### 7. Периодически подрезать `docs/PROJECT_PHASES.md` (maintenance guardrail)
+Статус: **MAINTENANCE / PERIODIC TRIMMING**.
 Что нужно:
 - оставить только текущую фазовую модель и ближайшие переходы;
 - сократить длинные dated status updates;
@@ -114,22 +115,19 @@
 - перестать использовать их как активные ориентиры;
 - завершить разложение remaining non-canonical документов по правильным слоям.
 
-### 9. Подготовить scaling/hardening backlog отдельно от product expansion backlog
-Статус: **PHASE 5 PREP**.
+### 9. Удерживать разделение scaling/hardening backlog и product expansion backlog
+Статус: **ESTABLISHED GUARDRAIL (KEEP ENFORCED)**.
 Что нужно:
-- перестать смешивать архитектурный долг и продуктовые идеи в одном operational списке;
+- не смешивать архитектурный долг и продуктовые идеи в одном operational списке;
 - использовать `ARTEMIS_PRODUCT_SCOPE.md` как фильтр для product expansion задач;
 - удерживать актуальный путь working-документов, включая `docs/work/ARTEMIS_AI_STRATEGY_v1_0.md`.
 
-### 10. Зафиксировать порядок продуктового ядра внутри будущей Product Expansion phase
-Статус: **POST PHASE 4/5 GATE**.
+### 10. Удерживать порядок продуктового ядра как уже зафиксированный guardrail
+Статус: **MOSTLY ESTABLISHED / KEEP AS GUARDRAIL**.
 Что нужно:
-- закрепить `research slice` как главную единицу ценности ARTEMIS v1.0;
-- учесть, что baseline MVP `saved slices` уже реализован (save/list/open/delete, private/owner-only);
-- держать следующим продуктовым порядком `shareable state`;
-- затем `stories`;
-- затем `courses`;
-- затем `explainable AI assistance`;
+- сохранять `research slice` как главную единицу ценности ARTEMIS v1.0;
+- учитывать, что baseline MVP `saved slices` уже реализован (save/list/open/delete, private/owner-only);
+- удерживать продуктовый порядок `shareable state` -> `stories` -> `courses` -> `explainable AI assistance`;
 - не допускать, чтобы вторичные функции вытесняли это ядро до завершения stabilization cycle.
 
 ---

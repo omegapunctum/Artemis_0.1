@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import logging
+import os
 import threading
 from collections.abc import Callable
+from ipaddress import ip_address, ip_network
 from time import time
 
 from fastapi import HTTPException, Request, status
@@ -15,14 +17,51 @@ login_failure_store: dict[str, list[float]] = {}
 login_block_store: dict[str, float] = {}
 
 
+def _trusted_proxy_tokens() -> list[str]:
+    raw = (os.getenv("ARTEMIS_TRUSTED_PROXIES") or os.getenv("TRUSTED_PROXY_IPS") or "").strip()
+    if not raw:
+        return []
+    return [token.strip() for token in raw.split(",") if token.strip()]
+
+
+def _is_trusted_proxy(peer_host: str | None) -> bool:
+    if not peer_host:
+        return False
+    tokens = _trusted_proxy_tokens()
+    if not tokens:
+        return False
+
+    try:
+        peer_ip = ip_address(peer_host.strip())
+    except ValueError:
+        return False
+
+    for token in tokens:
+        try:
+            if "/" in token:
+                if peer_ip in ip_network(token, strict=False):
+                    return True
+                continue
+            if peer_ip == ip_address(token):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
 def get_client_ip(request: Request) -> str:
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        first_ip = forwarded_for.split(",", 1)[0].strip()
-        if first_ip:
-            return first_ip
     client = request.client
-    return client.host if client else "unknown"
+    peer_host = client.host if client else None
+    trusted_peer = _is_trusted_proxy(peer_host)
+
+    if trusted_peer:
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            first_ip = forwarded_for.split(",", 1)[0].strip()
+            if first_ip:
+                return first_ip
+
+    return peer_host if peer_host else "unknown"
 
 
 def _prune_timestamps(timestamps: list[float], window_seconds: int, now: float) -> list[float]:

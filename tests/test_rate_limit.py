@@ -31,9 +31,25 @@ class RateLimitUnitTests(unittest.TestCase):
             url=SimpleNamespace(path=path),
         )
 
-    def test_get_client_ip_prefers_forwarded_for(self):
+    def test_get_client_ip_ignores_forwarded_for_from_untrusted_peer(self):
         request = self.make_request(ip='10.0.0.1', headers={'x-forwarded-for': '198.51.100.10, 10.0.0.1'})
-        self.assertEqual(get_client_ip(request), '198.51.100.10')
+        with patch.dict('os.environ', {}, clear=False):
+            self.assertEqual(get_client_ip(request), '10.0.0.1')
+
+    def test_get_client_ip_uses_forwarded_for_from_trusted_peer(self):
+        request = self.make_request(ip='10.0.0.1', headers={'x-forwarded-for': '198.51.100.10, 10.0.0.1'})
+        with patch.dict('os.environ', {'ARTEMIS_TRUSTED_PROXIES': '10.0.0.1'}, clear=False):
+            self.assertEqual(get_client_ip(request), '198.51.100.10')
+
+    def test_get_client_ip_supports_trusted_proxy_cidr(self):
+        request = self.make_request(ip='10.1.2.3', headers={'x-forwarded-for': '203.0.113.55, 10.1.2.3'})
+        with patch.dict('os.environ', {'ARTEMIS_TRUSTED_PROXIES': '10.1.0.0/16'}, clear=False):
+            self.assertEqual(get_client_ip(request), '203.0.113.55')
+
+    def test_get_client_ip_falls_back_to_peer_ip_without_forwarded_for(self):
+        request = self.make_request(ip='127.0.0.9', headers={})
+        with patch.dict('os.environ', {'ARTEMIS_TRUSTED_PROXIES': '127.0.0.0/24'}, clear=False):
+            self.assertEqual(get_client_ip(request), '127.0.0.9')
 
     def test_register_limit_blocks_after_three_requests(self):
         request = self.make_request(path='/auth/register')

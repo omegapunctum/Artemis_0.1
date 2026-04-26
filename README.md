@@ -131,6 +131,8 @@ Vanilla JavaScript (no frameworks):
   - `AUTH_SESSION_BACKEND=memory` is allowed only for development/testing/local environments (including short aliases `dev`/`test`);
   - non-development/testing/local deployments must use Redis-backed refresh session storage (`AUTH_SESSION_BACKEND=redis` + `REDIS_URL`) and fail fast on misconfiguration.
   - Redis-backed refresh-session consume follows an atomic one-time path (`GETDEL`, then atomic fallbacks via `EVAL` or `WATCH/MULTI/EXEC`); legacy non-atomic `get+delete` is not baseline behavior.
+- Rate limiting baseline remains process-local in-memory; it is not a distributed/global limiter in current scope.
+- `X-Forwarded-For` is trusted for rate-limit client IP extraction only when request peer belongs to configured trusted proxies (`ARTEMIS_TRUSTED_PROXIES` or `TRUSTED_PROXY_IPS`); otherwise peer IP is used.
 - Current `/api/health` semantics are baseline-level and process-local: `total_errors` remains an accumulated historical diagnostic counter, while `health.ok` reflects whether there were recent server-side errors within a fixed baseline decay window; this should not be interpreted as a fully hardened readiness/SLO contract.
   - Baseline default decay window is `120s`; it can be locally tuned via `HEALTH_ERROR_DECAY_SECONDS` env (invalid/empty values safely fall back to `120`) as a narrow hardening control, not as an observability-platform redesign.
   - Operator policy (runbook-light, current baseline):

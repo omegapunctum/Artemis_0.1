@@ -419,3 +419,33 @@ def test_release_check_fails_when_behavioral_pwa_verification_fails(monkeypatch:
 
     with pytest.raises(release_check.CheckFailed, match="PWA behavioral verification failed"):
         release_check.check_pwa_behavioral()
+
+
+def test_check_backend_uses_safe_env_and_restores(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("MIGRATION_STARTUP_ROLE", raising=False)
+    monkeypatch.delenv("APP_ENV", raising=False)
+    monkeypatch.delenv("AUTH_SECRET_KEY", raising=False)
+
+    captured: dict[str, str] = {}
+
+    class _Module:
+        app = object()
+
+    def _fake_import(module_name: str):
+        captured["module_name"] = module_name
+        captured["migration_role"] = os.environ.get("MIGRATION_STARTUP_ROLE", "")
+        captured["app_env"] = os.environ.get("APP_ENV", "")
+        captured["auth_secret_key"] = os.environ.get("AUTH_SECRET_KEY", "")
+        return _Module()
+
+    monkeypatch.setattr(release_check.importlib, "import_module", _fake_import)
+
+    release_check.check_backend()
+
+    assert captured["module_name"] == "app.main"
+    assert captured["migration_role"] == "non-owner"
+    assert captured["app_env"] == "testing"
+    assert captured["auth_secret_key"] == "release-check-dummy-secret"
+    assert "MIGRATION_STARTUP_ROLE" not in os.environ
+    assert "APP_ENV" not in os.environ
+    assert "AUTH_SECRET_KEY" not in os.environ

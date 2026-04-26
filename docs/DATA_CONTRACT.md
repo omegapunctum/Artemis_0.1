@@ -10,6 +10,10 @@ Allowed values (curated Airtable enum + ETL allowlist):
 - Vatican
 - Pompidou Site
 - Wikipedia
+- Pleiades
+- GBIF
+- IUCN
+- expert estimate
 - PBS
 - Dezeen
 - Saylor
