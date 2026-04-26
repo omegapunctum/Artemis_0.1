@@ -19,9 +19,6 @@
   --map-controls-gap: 8px;
   --map-controls-safe-top: calc(var(--workspace-top-offset) + var(--map-controls-gap));
   --map-rail-width: 52px;
-  --map-rail-top-offset: calc(var(--workspace-top-offset) + 4px);
-  --map-rail-native-controls-offset: 120px;
-  --map-rail-native-controls-top: calc(var(--map-rail-top-offset) + var(--map-rail-native-controls-offset));
   --detail-panel-width: clamp(360px, 28vw, 440px);
   --detail-preview-width: clamp(300px, 23vw, 352px);
   --detail-panel-gap: 0px;
@@ -202,8 +199,9 @@ body { overflow: hidden; }
 #workspace-main {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: var(--map-rail-width) minmax(0, 1fr);
   align-items: stretch;
+  column-gap: 10px;
 }
 #workspace-bottom-dock {
   min-height: 0;
@@ -225,12 +223,24 @@ body { overflow: hidden; }
     radial-gradient(120% 70% at 50% 100%, rgba(8, 16, 28, 0.32) 0%, rgba(8, 16, 28, 0.1) 42%, rgba(8, 16, 28, 0) 76%),
     radial-gradient(140% 70% at 20% 0%, rgba(8, 16, 28, 0.28) 0%, rgba(8, 16, 28, 0.06) 46%, rgba(8, 16, 28, 0) 80%);
 }
-#app-shell.has-right-detail {
-  --bottom-panel-right-reserve: calc(var(--detail-panel-width) + (var(--detail-panel-gap) * 2));
-  --bottom-panel-center-shift: calc(var(--bottom-panel-right-reserve) / 2);
-}
 #app-shell.has-right-detail #workspace-main {
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: var(--map-rail-width) minmax(0, 1fr) auto;
+}
+#explore-toolbar-shell {
+  grid-column: 1;
+  position: relative;
+  min-width: 0;
+  z-index: var(--z-map-controls);
+  padding-top: 8px;
+}
+#map-container {
+  grid-column: 2;
+}
+#app-shell.has-right-detail #map-container {
+  grid-column: 2;
+}
+#app-shell.has-right-detail .detail-panel {
+  grid-column: 3;
 }
 .global-data-loading {
   position: absolute;
@@ -500,11 +510,9 @@ body { overflow: hidden; }
   color: #fca5a5;
 }
 #explore-toolbar-shell {
-  position: relative;
   top: auto;
   left: auto;
   right: auto;
-  z-index: 1;
   padding: 0;
   background: transparent;
   border: 0;
@@ -606,11 +614,17 @@ body { overflow: hidden; }
 }
 .map-tools-shell {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: stretch;
+  justify-content: flex-start;
+  flex-direction: column;
   gap: 8px;
-  min-width: 0;
-  justify-self: stretch;
+  width: 100%;
+  min-width: var(--map-rail-width);
+}
+.workspace-strip-tools > .top-panel {
+  left: calc(100% + 8px);
+  right: auto;
+  top: 8px;
 }
 .top-actions-cluster {
   display: flex;
@@ -749,11 +763,11 @@ body { overflow: hidden; }
 
 @media (min-width: 1081px) {
   .map-tools-shell {
-    position: fixed;
-    top: var(--map-rail-top-offset);
-    left: calc(12px + var(--safe-left));
+    position: relative;
+    top: auto;
+    left: auto;
     z-index: var(--z-map-controls);
-    width: var(--map-rail-width);
+    width: 100%;
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
@@ -862,8 +876,9 @@ body { overflow: hidden; }
 }
 #explore-toolbar-shell > #courses-panel,
 #explore-toolbar-shell > #live-panel {
-  top: calc(100% + 8px);
-  right: 0;
+  top: 8px;
+  left: calc(100% + 8px);
+  right: auto;
 }
 .courses-list {
   display: grid;
@@ -1759,12 +1774,13 @@ button:focus-visible {
 @keyframes shimmer { 100% { transform: translateX(100%); } }
 
 .detail-panel {
-  position: fixed;
-  right: var(--safe-right);
-  top: calc(var(--workspace-top-offset) + 4px);
-  bottom: calc(var(--bottom-panel-height) + 12px + var(--safe-bottom));
+  position: relative;
+  grid-column: 2;
+  align-self: stretch;
   z-index: var(--z-detail-panel);
   width: var(--detail-preview-width);
+  min-height: 0;
+  height: 100%;
   padding: 10px 10px 10px 12px;
   opacity: 0;
   visibility: hidden;
@@ -1774,8 +1790,7 @@ button:focus-visible {
   will-change: opacity, transform;
   background: rgba(17, 25, 38, 0.96);
   border: 1px solid rgba(74, 91, 112, 0.56);
-  border-right: 0;
-  border-radius: 10px 0 0 10px;
+  border-radius: 10px;
   box-shadow: 0 1px 4px rgba(2, 6, 23, 0.22);
 }
 #detail-panel {
@@ -2659,7 +2674,7 @@ button:focus-visible {
   }
   #bottom-panel { padding: 10px; }
   .ribbon-card { min-width: 184px; max-width: 200px; }
-  .detail-panel { right: var(--safe-right); top: calc(var(--workspace-top-offset) + 4px); bottom: calc(98px + var(--safe-bottom)); width: clamp(332px, 34vw, 392px); }
+  .detail-panel { width: clamp(332px, 34vw, 392px); }
   .detail-panel.is-full-mode { width: clamp(350px, 36vw, 420px); }
   .ugc-panel { right: 10px; top: 80px; bottom: 202px; width: min(430px, calc(100vw - 20px)); }
   .moderation-workspace { right: 10px; top: 80px; bottom: 202px; width: min(980px, calc(100vw - 20px)); }
@@ -2727,7 +2742,7 @@ button:focus-visible {
 .maplibregl-ctrl-top-right { right: calc(10px + var(--safe-right)); }
 .maplibregl-ctrl-top-left { left: calc(10px + var(--safe-left)); }
 #app-shell.has-right-detail .maplibregl-ctrl-top-right {
-  right: calc(var(--detail-panel-width) + (var(--detail-panel-gap) * 2) + var(--safe-right));
+  right: calc(10px + var(--safe-right));
 }
 .maplibregl-ctrl-group {
   border-radius: 8px !important;
@@ -2750,17 +2765,6 @@ button:focus-visible {
   opacity: 0.88;
   filter: brightness(1.1) saturate(0.65);
 }
-@media (min-width: 1081px) {
-  .maplibregl-ctrl-top-right,
-  .maplibregl-ctrl-top-left {
-    top: var(--map-rail-native-controls-top);
-    left: calc(12px + var(--safe-left));
-    right: auto;
-  }
-  .maplibregl-ctrl-top-left .maplibregl-ctrl {
-    margin: 0;
-  }
-}
 .maplibregl-popup.artemis-popup {
   display: none !important;
 }
@@ -2779,6 +2783,38 @@ button:focus-visible {
 }
 
 @media (max-width: 1080px) {
+  #workspace-main,
+  #app-shell.has-right-detail #workspace-main {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+  #explore-toolbar-shell {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: var(--z-map-controls);
+    padding-top: 0;
+  }
+  .map-tools-shell {
+    width: auto;
+    min-width: 0;
+    flex-direction: row;
+    align-items: center;
+  }
+  .workspace-strip-tools > .top-panel,
+  #explore-toolbar-shell > #courses-panel,
+  #explore-toolbar-shell > #live-panel {
+    top: calc(100% + 8px);
+    left: 0;
+    right: auto;
+  }
+  #map-container,
+  #app-shell.has-right-detail #map-container {
+    grid-column: 1;
+  }
+  .detail-panel {
+    grid-column: 1;
+  }
   #top-header { grid-template-columns: minmax(190px, 1fr) minmax(140px, 1fr) auto; min-height: 52px; }
   .brand { font-size: 13px; letter-spacing: 0.05em; }
   .project-nav-link:nth-last-child(-n+1) { display: none; }
@@ -2880,6 +2916,8 @@ button:focus-visible {
   .ribbon-card { min-width: 148px; max-width: 160px; }
   .ribbon-card img { height: 76px; }
   .detail-panel {
+    position: fixed;
+    z-index: var(--z-detail-panel);
     top: auto;
     left: calc(8px + var(--safe-left));
     right: calc(8px + var(--safe-right));

@@ -4327,8 +4327,7 @@ function syncDetailDockLayout(elements, state) {
   if (!shell || !panel) return;
   const isDesktopDock = !state?.viewport?.isMobile
     && !panel.hidden
-    && panel.classList.contains('is-open')
-    && (panel.dataset.mode || state?.detailViewMode) === 'full';
+    && panel.classList.contains('is-open');
   shell.classList.toggle('has-right-detail', isDesktopDock);
 }
 
