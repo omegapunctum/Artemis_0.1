@@ -298,6 +298,83 @@ def check_governance() -> None:
                 fail(f'direct runtime publish found outside moderation: "{rel.as_posix()}"')
 
 
+def check_release_docs_drift() -> None:
+    index_path = ROOT / "index.html"
+    if not index_path.exists():
+        fail("index.html is missing")
+
+    pages_workflow_path = ROOT / ".github" / "workflows" / "pages.yml"
+    if not pages_workflow_path.exists():
+        fail(".github/workflows/pages.yml is missing")
+
+    referenced_assets = _extract_local_index_assets(index_path.read_text(encoding="utf-8"))
+    required_files = _parse_pages_required_files(pages_workflow_path.read_text(encoding="utf-8"))
+
+    for asset in sorted(referenced_assets):
+        if not (ROOT / asset).exists():
+            fail(f'index.html references missing local asset: "{asset}"')
+        if asset not in required_files:
+            fail(f'pages artifact required_files missing referenced asset: "{asset}"')
+
+    _check_archive_reference_status_headers()
+    _check_canonical_smoke_evidence_references()
+
+
+def _extract_local_index_assets(index_html: str) -> set[str]:
+    refs: set[str] = set()
+    pattern = re.compile(r"""(?:href|src)\s*=\s*["']([^"']+)["']""", flags=re.IGNORECASE)
+    for raw_ref in pattern.findall(index_html):
+        ref = raw_ref.strip()
+        if not ref:
+            continue
+        if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", ref):
+            continue
+        normalized = ref[2:] if ref.startswith("./") else ref
+        if normalized.startswith("/"):
+            continue
+        if normalized.startswith("css/") or normalized.startswith("js/"):
+            refs.add(normalized)
+    return refs
+
+
+def _parse_pages_required_files(workflow_text: str) -> set[str]:
+    block = re.search(r"required_files=\(\s*([\s\S]*?)\s*\)", workflow_text)
+    if block is None:
+        fail(".github/workflows/pages.yml missing required_files=(...) block")
+    entries = re.findall(r'"([^"]+)"', block.group(1))
+    if not entries:
+        fail(".github/workflows/pages.yml required_files list is empty")
+    return set(entries)
+
+
+def _check_archive_reference_status_headers() -> None:
+    targets = [ROOT / "docs" / "archive", ROOT / "docs" / "reference"]
+    for root in targets:
+        if not root.exists():
+            continue
+        for path in root.rglob("*.md"):
+            lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()[:80]
+            for line in lines:
+                normalized = re.sub(r"[*_`]", "", line).strip().lower()
+                if normalized.startswith("- статус:") and "active" in normalized:
+                    rel = path.relative_to(ROOT).as_posix()
+                    fail(f'archive/reference document cannot be active: "{rel}"')
+
+
+def _check_canonical_smoke_evidence_references() -> None:
+    deprecated_path = "docs/MANUAL_SMOKE_EVIDENCE_2026-04-11.md"
+    docs_root = ROOT / "docs"
+    if not docs_root.exists():
+        return
+    for path in docs_root.rglob("*.md"):
+        rel = path.relative_to(ROOT)
+        if "archive" in rel.parts or "audits" in rel.parts:
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if deprecated_path in text:
+            fail(f'canonical docs reference deprecated smoke evidence path: "{rel.as_posix()}"')
+
+
 def _python_has_publish_call(text: str) -> bool:
     try:
         parsed = ast.parse(text)
@@ -366,6 +443,7 @@ def main() -> None:
     run_check("PWA", check_pwa)
     run_check("PWA behavioral", check_pwa_behavioral)
     run_check("Governance", check_governance)
+    run_check("Release/docs drift", check_release_docs_drift)
 
 
 if __name__ == "__main__":

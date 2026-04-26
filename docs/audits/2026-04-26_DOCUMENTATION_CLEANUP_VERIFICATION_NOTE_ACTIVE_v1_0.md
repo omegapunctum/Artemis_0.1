@@ -131,10 +131,19 @@ Scope:
 
 ### 5.3 Required checks outside connector
 
-Нужно выполнить локально или через CI:
-- `python scripts/release_check.py`
-- `pytest`
-- GitHub Pages artifact verification after workflow run
+Выполнено (после patch-pass с Redis test guard):
+- `python scripts/release_check.py` — pass;
+- `pytest` — pass в deterministic-режиме при недоступном Redis: `244 passed, 3 skipped`;
+- 3 skipped-теста: только real-Redis auth integration tests:
+  - `tests/test_auth_redis_integration.py::test_auth_refresh_lifecycle_with_real_redis_backend`
+  - `tests/test_auth_redis_multi_instance.py::test_refresh_token_shared_between_instances_with_real_redis`
+  - `tests/test_auth_redis_restart.py::test_refresh_survives_restart_with_real_redis`
+- skip является environment-dependent и ожидаем, когда Redis недоступен по test URL;
+- production auth behavior не изменялся (изменения ограничены test scope).
+
+Примечание:
+- в средах, где Redis доступен, Redis-backed integration tests должны выполняться в обычном режиме (без skip).
+- GitHub Pages artifact verification after workflow run остаётся отдельной operational проверкой.
 
 ---
 
@@ -146,4 +155,5 @@ Scope:
 - critical deploy/docs drift: reduced;
 - canonical release/data clarity: improved;
 - archive/reference role clarity: improved;
+- verification status: release gate passes; full pytest deterministic (`244 passed, 3 skipped`) при недоступном Redis;
 - remaining work: style-only normalization and optional rename hygiene.

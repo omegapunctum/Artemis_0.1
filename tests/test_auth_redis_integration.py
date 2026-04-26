@@ -3,13 +3,23 @@ import subprocess
 import time
 from uuid import uuid4
 
+import pytest
 import requests
+from redis import Redis
 
 from tests.db_rebind_helper import build_clean_test_env, rebind_test_db, restore_rebind_env
 
 
 SERVER_PORT = 8013
 BASE_URL = f"http://127.0.0.1:{SERVER_PORT}"
+TEST_REDIS_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
+
+
+def _skip_if_redis_unavailable() -> None:
+    try:
+        Redis.from_url(TEST_REDIS_URL).ping()
+    except Exception:
+        pytest.skip(f"Redis integration test skipped: Redis is unavailable at {TEST_REDIS_URL}")
 
 
 def _wait_for_server_ready(session: requests.Session, server: subprocess.Popen | None = None) -> None:
@@ -31,6 +41,7 @@ def _wait_for_server_ready(session: requests.Session, server: subprocess.Popen |
 
 
 def test_auth_refresh_lifecycle_with_real_redis_backend(tmp_path) -> None:
+    _skip_if_redis_unavailable()
     auth_db_path = tmp_path / "auth-redis-integration.db"
     rebound = rebind_test_db(auth_db_path, session_backend="memory")
 
@@ -38,7 +49,7 @@ def test_auth_refresh_lifecycle_with_real_redis_backend(tmp_path) -> None:
         {
             "AUTH_SECRET_KEY": "test-secret-auth-redis-integration",
             "AUTH_SESSION_BACKEND": "redis",
-            "REDIS_URL": os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0"),
+            "REDIS_URL": TEST_REDIS_URL,
             "AUTH_DATABASE_URL": f"sqlite:///{auth_db_path}",
         }
     )

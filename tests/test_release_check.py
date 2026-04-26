@@ -117,6 +117,79 @@ self.addEventListener('fetch', (event) => {
     _write(root / "app" / "__init__.py", "")
     _write(root / "app" / "main.py", "app = object()\n")
     _write(root / "scripts" / "export_airtable.py", "# fixture export script\n")
+    _write(
+        root / "index.html",
+        """
+<!doctype html>
+<html>
+  <head>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="./css/main-screen.css" />
+  </head>
+  <body>
+    <script src="js/data.js"></script>
+  </body>
+</html>
+""".strip()
+        + "\n",
+    )
+    _write(root / "css" / "style.css", "body { color: #000; }\n")
+    _write(root / "css" / "main-screen.css", ".main-screen { display: block; }\n")
+    _write(
+        root / ".github" / "workflows" / "pages.yml",
+        """
+name: pages
+jobs:
+  deploy:
+    steps:
+      - name: Prepare pages artifact
+        run: |
+          required_files=(
+            "index.html"
+            "css/style.css"
+            "css/main-screen.css"
+            "js/data.js"
+          )
+""".strip()
+        + "\n",
+    )
+    _write(
+        root / "docs" / "CONTROLLED_RELEASE_DECISION.md",
+        """
+# Controlled release decision
+
+## Статус документа
+- Статус: active
+
+Актуальные артефакты указаны в текущем release пакете.
+""".strip()
+        + "\n",
+    )
+    _write(
+        root / "docs" / "archive" / "old.md",
+        """
+# old
+- Статус: archived
+Историческая ссылка: docs/MANUAL_SMOKE_EVIDENCE_2026-04-11.md
+""".strip()
+        + "\n",
+    )
+    _write(
+        root / "docs" / "reference" / "info.md",
+        """
+# info
+- Статус: reference
+""".strip()
+        + "\n",
+    )
+    _write(
+        root / "docs" / "audits" / "note.md",
+        """
+# note
+Историческая ссылка: docs/MANUAL_SMOKE_EVIDENCE_2026-04-11.md
+""".strip()
+        + "\n",
+    )
 
 
 def _run_release_check(
@@ -149,6 +222,7 @@ def test_release_check_happy_path(tmp_path: Path) -> None:
     assert "[PASS] Frontend" in result.stdout
     assert "[PASS] PWA" in result.stdout
     assert "[PASS] Governance" in result.stdout
+    assert "[PASS] Release/docs drift" in result.stdout
 
 
 def test_release_check_fails_on_empty_geojson(tmp_path: Path) -> None:
@@ -449,3 +523,75 @@ def test_check_backend_uses_safe_env_and_restores(monkeypatch: pytest.MonkeyPatc
     assert "MIGRATION_STARTUP_ROLE" not in os.environ
     assert "APP_ENV" not in os.environ
     assert "AUTH_SECRET_KEY" not in os.environ
+
+
+def test_release_docs_drift_flags_main_screen_css_missing_from_pages_required_files(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    _write(
+        tmp_path / ".github" / "workflows" / "pages.yml",
+        """
+name: pages
+jobs:
+  deploy:
+    steps:
+      - name: Prepare pages artifact
+        run: |
+          required_files=(
+            "index.html"
+            "css/style.css"
+            "js/data.js"
+          )
+""".strip()
+        + "\n",
+    )
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 1
+    assert '[FAIL] Release/docs drift: pages artifact required_files missing referenced asset: "css/main-screen.css"' in result.stdout
+
+
+def test_release_docs_drift_flags_referenced_js_missing_from_pages_required_files(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    _write(
+        tmp_path / "index.html",
+        """
+<!doctype html>
+<html>
+  <head><link rel="stylesheet" href="css/style.css" /></head>
+  <body>
+    <script src="js/data.js"></script>
+    <script src="./js/map.js"></script>
+  </body>
+</html>
+""".strip()
+        + "\n",
+    )
+    _write(tmp_path / "js" / "map.js", "console.log('map');\n")
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 1
+    assert '[FAIL] Release/docs drift: pages artifact required_files missing referenced asset: "js/map.js"' in result.stdout
+
+
+def test_release_docs_drift_fails_when_archive_or_reference_marked_active(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    _write(
+        tmp_path / "docs" / "archive" / "old.md",
+        """
+# old
+- Статус: active
+""".strip()
+        + "\n",
+    )
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 1
+    assert '[FAIL] Release/docs drift: archive/reference document cannot be active: "docs/archive/old.md"' in result.stdout
+
+
+def test_release_docs_drift_allows_historical_mentions_inside_archive_and_audits(tmp_path: Path) -> None:
+    _build_fixture(tmp_path)
+    result = _run_release_check(tmp_path)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "[PASS] Release/docs drift" in result.stdout
