@@ -166,7 +166,7 @@ async function verifyUrlStateRestoration(cdp, deadline) {
       const anchor = runtime.placeMarkers.get(place);
       if (episodes.some(p => runtime.lifePathMarkers.get(p.presence_id) !== anchor)) throw new Error('Presence aliases must share the Place anchor');
       const coordinate = anchor.getLngLat();
-      if (coordinate.lng !== episodes[0].coordinates[0] || coordinate.lat !== episodes[0].coordinates[1]) throw new Error('Place anchor moved');
+      if (Math.abs(coordinate.lng - episodes[0].coordinates[0]) > 1e-9 || Math.abs(coordinate.lat - episodes[0].coordinates[1]) > 1e-9) throw new Error('Place anchor moved: ' + JSON.stringify({place, actual: coordinate, expected: episodes[0].coordinates}));
       if (episodes.length > 1) {
         for (const episode of episodes) {
           runtime.selectPresence(episode.presence_id);
