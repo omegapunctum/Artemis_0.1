@@ -104,7 +104,7 @@ async function evaluate(cdp, expression, awaitPromise = false) {
     returnByValue: true
   });
   if (response.exceptionDetails) {
-    throw new Error(response.exceptionDetails.text || 'Runtime.evaluate failed');
+    throw new Error(response.exceptionDetails.exception?.description || response.exceptionDetails.text || 'Runtime.evaluate failed');
   }
   return response.result?.value;
 }
@@ -159,7 +159,6 @@ async function verifyUrlStateRestoration(cdp, deadline) {
         || runtime.data.lifePath.transitions.some((link) => link.route_geometry !== null || link.route_status !== 'unknown_route')) {
       throw new Error('Chronological presentation must not promote unknown historical routes');
     }
-    const presences = runtime.data.lifePath.presences;
     const uniquePlaces = new Set(presences.map(p => p.place_ref));
     if (document.querySelectorAll('.life-path-marker').length !== uniquePlaces.size) throw new Error('Map must have one anchor per Place');
     for (const place of uniquePlaces) {
