@@ -142,6 +142,7 @@ async function waitForVisualReadiness(cdp, deadline) {
 }
 
 async function verifyPlaceLabels(cdp) {
+  await cdp.send('Emulation.setFocusEmulationEnabled', {enabled: true});
   return evaluate(cdp, `(() => {
     const r = window.__ARTEMIS_GLOBE_SPIKE;
     const nodes = [...document.querySelectorAll('.life-path-marker')];
@@ -160,7 +161,7 @@ async function verifyPlaceLabels(cdp) {
       const node = label.closest('.life-path-marker');
       if (node.hidden || node.getBoundingClientRect().width < 24 || !node.title || !node.getAttribute('aria-label')) throw new Error('Suppression hid anchor or accessible meaning');
       node.focus({preventScroll: true});
-      if (getComputedStyle(label).visibility === 'hidden') throw new Error('Suppressed label unavailable on keyboard focus');
+      if (getComputedStyle(label).visibility === 'hidden') throw new Error('Suppressed label unavailable on keyboard focus: ' + JSON.stringify({place:node.dataset.placeId, focused:document.activeElement === node, matches:node.matches(':focus'), pageFocus:document.hasFocus()}));
       node.blur();
     }
     const selected = r.data.lifePath.presences.find(p => p.presence_id === r.selectedPresenceId);
