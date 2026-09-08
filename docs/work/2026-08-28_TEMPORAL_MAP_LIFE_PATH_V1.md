@@ -1,13 +1,13 @@
-# ARTEMIS — Temporal Map / Leonardo Life Path v1.2
+# ARTEMIS — Temporal Map / Leonardo Life Path v1.3
 
 ## Status
 
-- Type: active Gate D product interaction contract.
-- Updated: 2026-09-08 (bounded interaction correction after #417).
+- Type: active product interaction contract.
+- Updated: 2026-09-08; v1.3 bounded Place correction preserves the earlier #416 v1.2 future-navigation decision.
 - Owner: issue `#355`.
-- Implemented sequence: PR `#395` established the calendar life-path loop; first published manual check recorded `ITERATE`; PR `#396` implemented and published the bounded feedback correction.
-- Current lifecycle: Gate C remains `FREEZE`; Gate D remains `OPEN / IN PROGRESS`; the fresh #396 user check recorded `ITERATE` and preserves this interaction as the baseline.
-- Lifecycle effect: this contract does not promote any historical Claim, close Gate D or open Gate E. The separate decision record authorizes exactly one source-package branch, not an interaction redesign.
+- Implemented sequence: PR `#395` established the calendar life-path loop; first published manual check recorded `ITERATE`; PR `#396` implemented and published the bounded feedback correction; PR `#406` extended the same loop to the bounded whole-life proof; PRs `#411–#412` completed the accepted UX correction.
+- Current lifecycle: Gate C remains `FREEZE`; Gate D is `COMPLETED / ADVANCE_TO_GATE_E`; PR `#415` prepared the bounded Gate E protocol and E1 observations remain not collected.
+- Current implementation remains one bottom timeline. Section 11 records an accepted future multi-scale temporal-navigation direction only; it does not authorize implementation or change Gate E evidence.
 
 ## 1. Product loop
 
@@ -26,11 +26,11 @@ The timeline is a calendar scale, not an ordinal list of stops. The current boun
 
 ## 2. Current interaction specification
 
-The #396 interaction is preserved with the following owner-directed correction after #417:
+The published PR `#396` interaction remains the semantic interaction baseline; later PRs preserve these rules while extending content and correcting presentation.
 
 ### Range
 
-- one full-width bottom calendar track;
+- one full-width bottom calendar track in the current runtime;
 - two handles: start and end;
 - temporal overlap determines visible Presences;
 - URL state uses stable calendar values and Presence identity;
@@ -38,7 +38,7 @@ The #396 interaction is preserved with the following owner-directed correction a
 
 ### Scrub
 
-- one full-width bottom calendar track;
+- one full-width bottom calendar track in the current runtime;
 - one current-time cursor;
 - no visible `Build from` label/select; default origin is the earliest available axis extent (1452 in the current proof);
 - saved `?mode=scrub&from=...&at=...` links preserve a valid origin internally; missing/invalid `from` defaults to the first axis value, missing/invalid `at` defaults to the first axis value, and an end before origin clamps to origin; mode toggles preserve the restored Scrub origin;
@@ -53,6 +53,7 @@ The #396 interaction is preserved with the following owner-directed correction a
 - timeline and popup episode buttons preserve individual Presence IDs; selecting any repeated visit highlights the same Place anchor;
 - one marker click retains the selected visible episode at that Place, otherwise chooses its first visible episode in Range or last in Scrub, and opens a compact popup;
 - nearby text may use a small label-only offset; no spatial marker displacement or tethers;
+- labels are placed in selected, Scrub-current, first/last, repeated, ordinary Place priority; labels without collision-free placement are suppressed while dots retain full accessible names/titles; hover and keyboard focus reveal suppressed text temporarily;
 - a single click must not move the camera;
 - explicit `Open details` / further action may open the right detail drawer;
 - double-click may explicitly focus/zoom the selected place;
@@ -60,7 +61,7 @@ The #396 interaction is preserved with the following owner-directed correction a
 
 ### Visual hierarchy
 
-- the timeline is the primary time-navigation instrument and remains full-width at the bottom;
+- the timeline is the primary time-navigation instrument and remains full-width at the bottom in the current runtime;
 - concise object/place meaning comes before diagnostic/source detail;
 - sources and uncertainty use progressive disclosure rather than occupying the main canvas by default;
 - advanced layer combinations and renderer diagnostics may remain underlying evidence, not default primary controls.
@@ -71,7 +72,11 @@ The #396 interaction is preserved with the following owner-directed correction a
 
 `Range` and `Scrub` are interaction modes over the same temporal/Trajectory semantics. They are not separate domain entities and do not define separate historical truth.
 
-Time precision, spatial precision, route status and uncertainty are data. A category is a graph/query grouping over objects and relations; it is not automatically a GIS Layer or checkbox.
+**Temporal navigation has one canonical temporal selection/query state.** A future UI may expose more than one synchronized temporal view, scale or viewport, but it must not introduce separate `global_time` and `focus_time` truths.
+
+Time precision, spatial precision, route status and uncertainty are data. Temporal display scale and temporal viewport are presentation/query-view concerns; they may coarsen display but cannot strengthen source-supported precision.
+
+A category is a graph/query grouping over objects and relations; it is not automatically a GIS Layer or checkbox.
 
 ## 4. Line and route semantics
 
@@ -89,7 +94,7 @@ Future refinement may add intermediate Presences or authorized movement geometry
 
 ## 5. Current bounded corpus
 
-The repository currently closes four source-bound Romagna Presences to canonical Event, Trajectory, Claim, Evidence, Source and Uncertainty records:
+The current public M5 scaffold contains 11 coarse Presence anchors across 1452–1519: seven reviewed major-life anchors plus four source-bound Romagna Presences:
 
 - Rimini — 1502-08-08;
 - Cesena — 1502-08-10;
@@ -100,7 +105,7 @@ They are an **interaction scaffold**, not Leonardo's complete life path.
 
 Their point coordinates are present-day named-settlement reference anchors. Exact historical positions, duration at each place and inter-place travel routes remain unknown where unsupported.
 
-The current calendar contour covers the bounded 1502 material. A month-precision Presence overlaps the relevant source-supported interval; runtime/UI must not invent a more exact day.
+A month/year/range-precision Presence must not gain a more exact date merely because a future Focus Timeline can render a finer temporal scale.
 
 No change to this interaction contract authorizes additional Leonardo data by itself.
 
@@ -141,9 +146,13 @@ Implemented and published:
 - preserved shared Explorer State and URL restoration;
 - preserved frozen Gate C bytes, draft/rejected historical Claims and unknown-route semantics.
 
+### Later preservation
+
+PR #406 reused the same interaction for the 11-Presence whole-life proof. PRs #411/#412 corrected composition and restored explicitly labelled renderer-only chronological links while keeping historical routes unknown/null. These later changes do not introduce a second temporal state.
+
 ## 7. Acceptance for the current published interaction
 
-The #396 interaction remains acceptable only if:
+The current interaction remains acceptable only if:
 
 - Range and Scrub visibly produce their distinct temporal behaviors over the same canonical Presence set;
 - an interval with no overlapping Presence produces an honest empty state;
@@ -155,6 +164,7 @@ The #396 interaction remains acceptable only if:
 - `Trajectory.subject_ref` resolves to Leonardo and presentation bindings close to its canonical segments;
 - all unknown gaps retain null route geometry while dashed connectors remain chronology-only;
 - source/locator/uncertainty are available without becoming the primary visual surface;
+- temporal UI never implies finer precision than evidence supports;
 - frozen Gate C historical evidence remains unchanged/non-promoted;
 - current Core and repository-boundary checks remain green.
 
@@ -180,17 +190,13 @@ The allowed result vocabulary was:
 
 The recorded result is `ITERATE`. It preserves this interaction contract and opens no further UI work by itself. Implementation completion, successful CI and public R&D availability are not formal user-value validation.
 
-## 9. Opened next branch
+## 9. Completed next branch
 
-The supported `ITERATE` opens exactly one evidence-backed next branch:
+The supported post-#396 `ITERATE` opened the now-completed `Leonardo Major-Life Presence Scope v1`. That work ultimately fed the bounded whole-life M5 proof and later UX correction. Current execution has moved to Gate E evidence under PR #415.
 
-- `Leonardo Major-Life Presence Scope v1`: a separate source-aware package with roughly 6–10 coarse anchors across 1452–1519.
+Local/global context, thematic layers, curation/editorial storage, persistence/sharing and renderer/provider work remain unopened unless a separate evidence-backed decision opens them.
 
-Its first stage is source discovery, candidate selection and review design. It does not authorize runtime integration.
-
-Local/global context, thematic layers, curation/editorial storage, persistence/sharing and renderer/provider work remain unopened.
-
-The broader Leonardo package uses a coarse honest time scale first and refines toward months, days, roads or paths only when stronger evidence changes material understanding. The Roman Empire or other temporal polygon/state examples remain later universality tests and do not precede this branch.
+The broader Leonardo package uses a coarse honest time scale first and refines toward months, days, roads or paths only when stronger evidence changes material understanding. The Roman Empire or other temporal polygon/state examples remain conditional later universality tests.
 
 ## 10. Final rule
 
@@ -198,4 +204,62 @@ The Temporal Map interface must remain a projection/control surface over the sha
 
 `World Model → Explorer State → Temporal/Spatial Render Projection → Globe + Timeline`
 
-UI convenience must not create a second path model, invent route/time precision, collapse selection into camera movement or turn future product hypotheses into current implementation scope.
+UI convenience must not create a second path model, a second historical time, invent route/time precision, collapse selection into camera movement or turn future product hypotheses into current implementation scope.
+
+## 11. Accepted future multi-scale temporal navigation
+
+ARTEMIS accepts this future design direction to avoid a single-timeline dead end when many objects and mixed temporal precisions enter the same view.
+
+### 11.1 Global Timeline and Focus Timeline
+
+- **Global Timeline** is the persistent broad-scale temporal context of the explored world.
+- **Focus Timeline** is a smaller contextual temporal lens that may appear when one knowledge object is explicitly focused.
+- Both remain at the bottom in the current desktop design direction, with Focus above Global. Exact dimensions and mobile behavior are future UI specification.
+- The canonical name is `Focus Timeline`, not `Life Timeline`, because the same pattern must work for Person/Trajectory, Region, Event, State, Process and other temporal objects.
+
+### 11.2 One time, two scales
+
+Both timelines control/view the **same canonical temporal state**:
+
+```text
+                    canonical temporal state
+                              │
+                 ┌────────────┴────────────┐
+                 │                         │
+          Focus Timeline             Global Timeline
+       object-bounded detail          world context
+                 │                         │
+                 └────────────┬────────────┘
+                              ↓
+                    shared Explorer State
+```
+
+Rules:
+
+- do not create independent `global_time` and `focus_time`;
+- `Range` or `Scrub` is one shared mode, not separate per-timeline mode machines;
+- moving either timeline updates the same temporal selection and the other reflects it at its own scale;
+- a canonical value such as `1502-08-10` may appear only as `1502` on a year-scale Global Timeline while Focus shows day/month detail;
+- data precision remains evidence-bound and independent from display scale;
+- Global and Focus may have different visible temporal windows/zoom levels, but those are temporal viewports, not historical/query truth;
+- selecting/focusing an object outside current world time must not silently move canonical time; a future explicit navigation action may do so.
+
+### 11.3 Focus and selection
+
+Multiple objects may be selected or compared, but ordinary navigation has at most one focused object driving the Focus Timeline. A stack of one timeline per selected object is rejected as the default model. Multi-object temporal comparison is a separate future interaction.
+
+### 11.4 Explorer State implication
+
+Current Explorer State v1 keeps one `temporal_selection`, which remains conceptually correct. A future implementation may add renderer-neutral temporal view intent/viewport state, analogous to spatial `view_intent`, while retaining one semantic/query time.
+
+No Explorer State v1 schema/fixture change is authorized by this decision. Any such change requires a separate specification, compatibility statement, fixture update and executable validation.
+
+### 11.5 Current boundary
+
+This is a **Decision / future specification constraint**, not Implementation:
+
+- current #412 runtime remains single-timeline;
+- current Gate E T1–T5/E2 protocol remains unchanged;
+- no World Model change is required;
+- no implementation PR is authorized;
+- implementation can start only after a later evidence-backed scope decision.

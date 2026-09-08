@@ -1182,6 +1182,7 @@
     const projectionItem = currentProjectionItem(presence.event_item_id);
     if (projectionItem) updateCanonicalSelection(projectionItem);
     syncLifePathSelectionControls();
+    layoutPlaceLabels();
     updateLifePathConnectors();
     [...(byId('presence-sequence')?.querySelectorAll('button') || [])]
       .find((button) => button.dataset.presenceId === presence.presence_id)
@@ -1312,7 +1313,7 @@
         const node = document.createElement('span');
         node.className = 'chronology-cue';
         node.setAttribute('aria-hidden', 'true');
-        appendText(node, 'span', '›');
+        appendText(node, 'span', '▸');
         // Midpoint of the renderer-only segment, not a new historical geometry.
         const midpoint = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
         cue = {coordinates, marker: new maplibregl.Marker({element: node, anchor: 'center'})
@@ -1647,7 +1648,15 @@
     if (!runtime.map) return;
     const occupied = [];
     const canvas = runtime.map.getCanvas();
-    for (const marker of runtime.placeMarkers.values()) {
+    const visible = [...visibleLifePathPresences()].sort((a, b) => a.index - b.index);
+    const selected = visible.find(p => p.presence_id === runtime.selectedPresenceId)?.place_ref;
+    const current = runtime.lifePathMode === 'scrub' ? visible.at(-1)?.place_ref : null;
+    const ends = new Set([visible[0]?.place_ref, visible.at(-1)?.place_ref]);
+    const groups = visiblePlaceGroups();
+    const priority = place => place === selected ? 0 : place === current ? 1
+      : ends.has(place) ? 2 : (groups.get(place)?.length || 0) > 1 ? 3 : 4;
+    const markers = [...runtime.placeMarkers.entries()].sort((a, b) => priority(a[0]) - priority(b[0]));
+    for (const [, marker] of markers) {
       const node = marker.getElement();
       if (node.hidden) continue;
       const label = node.querySelector('.place-label');
@@ -1659,10 +1668,13 @@
         return rect.left >= 0 && rect.right <= canvas.clientWidth && rect.top >= 0 && rect.bottom <= canvas.clientHeight
           && !occupied.some(r => rect.left < r.right + 3 && rect.right > r.left - 3 && rect.top < r.bottom + 3 && rect.bottom > r.top - 3);
       };
-      const [dx, dy] = candidates.find(fits) || candidates[0];
+      const placement = candidates.find(fits);
+      // Suppression changes text visibility only; the Place anchor stays interactive.
+      label.classList.toggle('is-suppressed', !placement);
+      const [dx, dy] = placement || candidates[0];
       label.style.left = `${16 + dx}px`;
       label.style.top = `${16 + dy}px`;
-      occupied.push({left: point.x + dx, right: point.x + dx + width, top: point.y + dy, bottom: point.y + dy + height});
+      if (placement) occupied.push({left: point.x + dx, right: point.x + dx + width, top: point.y + dy, bottom: point.y + dy + height});
     }
   }
 

@@ -1498,7 +1498,7 @@ def build_spike(
         "Nine CC0 Wikidata points are present-day place references only; exact historical positions remain unknown.\n"
         "M5 composes seven reviewed major-life Presence candidates with the frozen four-Presence Romagna segment.\n"
         "Leonardo Life Path offers year-scaled Range and Scrub views across 1452–1519.\n"
-        "No transition connector is rendered; every inter-presence route remains unknown with null geometry.\n"
+        "Dashed chronology links and directional cues are renderer-only time-order presentation; historical travel routes remain unknown and route geometry remains null.\n"
         "The six macro periods are presentation-only progressive-refinement controls, not continuous residence claims.\n",
         encoding="utf-8",
     )

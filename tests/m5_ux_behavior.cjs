@@ -120,7 +120,6 @@ window.ARTEMIS_I18N.setLanguage('ru');
 assert.equal(text.nodeValue, '2 · Милан');
 assert.equal(label.attrs.title, '1502 · Милан I');
 assert.equal(sourceText.nodeValue, 'Milan');
-assert.equal(window.ARTEMIS_I18N.t('Numbers show chronology; routes unknown.'), 'Номера показывают хронологию; маршруты неизвестны.');
 assert.equal(window.ARTEMIS_I18N.t('Dashed links show order, not travel routes.'), 'Пунктир — порядок событий, не маршруты движения.');
 assert.equal(window.ARTEMIS_I18N.t('1502 · Romagna source anchors'), '1502 · Опоры по источникам Романьи');
 assert.ok(window.ARTEMIS_I18N.t('Vinci · click for summary; double-click to focus map').startsWith('Винчи ·'));
@@ -211,3 +210,27 @@ assert.equal(context.lifePathConnectorGeoJson().features[0].properties.route_geo
 window.ARTEMIS_I18N.setLanguage('ru');
 assert.equal(window.ARTEMIS_I18N.t('Dashed links and chevrons show time order, not travel routes.'), 'Пунктир и указатели показывают порядок во времени, не маршруты движения.');
 console.log('Place anchors, repeated episode selection/counts, saved Scrub URLs and chronology emphasis: passed');
+
+// Dense labels: priority wins, text suppression never modifies anchor identity.
+{
+  const visits = Array.from({length: 12}, (_, index) => ({index, presence_id: `p${index}`, place_ref: `place${index}`}));
+  const nodes = visits.map(() => {
+    const label = {offsetWidth: 65, offsetHeight: 16, style: {}, classList: {toggle(_, value) {label.suppressed = value;}}};
+    return {hidden: false, label, querySelector: () => label};
+  });
+  const anchors = visits.map((p, i) => [p.place_ref, {getElement: () => nodes[i], getLngLat: () => [150,150]}]);
+  const r = {placeMarkers: new Map(anchors), lifePathMode: 'range', selectedPresenceId: 'p8',
+    map: {getCanvas: () => ({clientWidth: 300, clientHeight: 300}), project: () => ({x:150,y:150})}};
+  const ctx = vm.createContext({runtime:r, visibleLifePathPresences: () => visits,
+    visiblePlaceGroups: () => new Map(visits.map(p => [p.place_ref,[p]]))});
+  vm.runInContext(fn('layoutPlaceLabels'), ctx);
+  ctx.layoutPlaceLabels();
+  assert.equal(nodes[8].label.suppressed, false);
+  assert.ok(nodes.some(n => n.label.suppressed));
+  assert.ok(nodes.every(n => !n.hidden));
+  r.selectedPresenceId = 'p7'; ctx.layoutPlaceLabels();
+  assert.equal(nodes[7].label.suppressed, false);
+  r.selectedPresenceId = null; r.lifePathMode = 'scrub'; ctx.layoutPlaceLabels();
+  assert.equal(nodes[11].label.suppressed, false);
+  assert.ok(anchors.every(([,a]) => JSON.stringify(a.getLngLat()) === '[150,150]'));
+}

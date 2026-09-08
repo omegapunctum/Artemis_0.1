@@ -28,6 +28,23 @@ RUNTIME_JS = ROOT / "scripts" / "globe_spike" / "runtime.js"
 HTML_TEMPLATE = ROOT / "scripts" / "globe_spike" / "index.html.template"
 
 
+@pytest.mark.parametrize("public_preview", [False, True])
+def test_generated_presentation_and_evidence_truth(tmp_path, public_preview):
+    output = tmp_path / "globe"
+    metadata = build_spike(output, public_preview=public_preview)
+    html = (output / "index.html").read_text()
+    readme = (output / "README.txt").read_text()
+    profiles = (output / "acceptance-profiles.json").read_text()
+    assert "numbered place" not in html.lower()
+    assert 'id="scrub-start"' not in html
+    assert "No transition connector is rendered" not in readme
+    assert "renderer-only time-order presentation" in readme
+    assert "route geometry remains null" in readme
+    assert "Public promotion still requires explicit Gate D exit" not in profiles
+    assert "not Gate E T1–T5 participant evidence" in profiles
+    assert metadata == json.loads((output / "build-meta.json").read_text())
+
+
 def test_m5_chronology_and_localization_behavior() -> None:
     subprocess.run(["node", "tests/m5_ux_behavior.cjs"], cwd=ROOT, check=True)
 

@@ -49,6 +49,6 @@
     "Hosted Chrome 150 clamps headless browser-window width to 500 CSS px; narrower 390 CSS px phone coverage remains a real-device review requirement.",
     "DOM-level accessible-name, target-size, overflow, landmark and reduced-motion checks are not a complete WCAG audit.",
     "Startup and frame metrics are diagnostic only and are not pass/fail thresholds under hosted-runner wall-clock scheduling.",
-    "Public promotion still requires explicit Gate D exit review; this profile contract does not open Gate E."
+    "Gate D is completed with ADVANCE_TO_GATE_E. This hosted profile is implementation/browser evidence, not Gate E T1–T5 participant evidence or user-value validation."
   ]
 }

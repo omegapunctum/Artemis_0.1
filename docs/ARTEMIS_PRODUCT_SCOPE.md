@@ -1,16 +1,16 @@
 # ARTEMIS — PRODUCT SCOPE
 
-Owner-directed bounded correction after #417: one fixed spatial anchor per canonical Place, compact name and visible-episode count; Presence episodes remain distinct in timeline/selection/URL and popup/details. Remove persistent date cards, tethers and spatial displacement. Mid-segment chevrons on low-opacity dashed links express chronology only, with selected/current transition emphasis. Scrub has one current-time handle and no visible Build from control; default origin is the earliest axis extent (1452). Valid saved `from` values remain internal origins; invalid/missing values use the first axis value, and `at` before origin clamps to origin. No coordinates, historical routes, data, Gate E tasks or future Global+Focus Timeline scope change. Pin the corrected published revision before E1; this is not an E1 result.
+Owner-directed bounded correction after #417: one fixed spatial anchor per canonical Place, compact name and visible-episode count; Presence episodes remain distinct in timeline/selection/URL and popup/details. Remove persistent date cards, tethers and spatial displacement. Suppress colliding text by Place priority while retaining interactive dots and hover/focus access. This v4.5 correction preserves the earlier #416 v4.4 future-navigation decision. Mid-segment chevrons on low-opacity dashed links express chronology only, with selected/current transition emphasis. Scrub has one current-time handle and no visible Build from control; default origin is the earliest axis extent (1452). Valid saved `from` values remain internal origins; invalid/missing values use the first axis value, and `at` before origin clamps to origin. No coordinates, historical routes, data, Gate E tasks or future Global+Focus Timeline scope change. Pin the corrected published revision before E1; this is not an E1 result.
 
-Current decision: [Gate D exit — ADVANCE_TO_GATE_E](work/2026-09-06_GATE_D_EXIT_DECISION_v1.md). #413 is merged; Gate D is completed. Next is one bounded Gate E task/evidence protocol; collection has not started. No new implementation is opened.
+Current decision: [Gate D exit — ADVANCE_TO_GATE_E](work/2026-09-06_GATE_D_EXIT_DECISION_v1.md). Gate D is completed. PR #415 merged the bounded Gate E protocol; E1 observations remain not collected. No new implementation is opened.
 
 ## Статус
 
 - Тип: canonical current product scope.
-- Версия: 4.3.
-- Дата: 2026-09-06.
+- Версия: 4.5.
+- Дата: 2026-09-08.
 - Active vertical: `Life in Context / Leonardo Temporal Map` / issue `#355`.
-- Current increment: `Gate E evidence preparation`; M5 bounded UX correction completed with `PROCEED_TO_GATE_D_REVIEW`; #409/#411/#412 are completed evidence.
+- Current increment: `Gate E evidence preparation`; PR #415 prepared the current bounded protocol; E1 is next and no runtime implementation branch is open.
 - Gate C: completed / `FREEZE`.
 - Gate D: `COMPLETED / ADVANCE_TO_GATE_E`.
 - Thematic compatibility surface retained: `Architecture Atlas` at `/atlas/`.
@@ -41,7 +41,7 @@ Local/global context, тематические layers, richer Events/States/Proc
 
 ## 2. Scope lock текущего цикла
 
-Foundation и Core Reset уже завершены как prerequisites. Текущий Gate D cycle не должен повторно открывать их.
+Foundation и Core Reset уже завершены как prerequisites. Текущий Gate E evidence cycle не должен повторно открывать их.
 
 Completed prerequisites:
 
@@ -64,7 +64,8 @@ Current authorized work:
 - preserve PR #406 as the bounded M5 proof without widening it;
 - preserve the direct M5 product result as exactly `ITERATE`;
 - preserve completed #409/#411/#412 evidence and the 2026-09-06 owner acceptance;
-- accept the decision-only closeout and use its bounded Gate D review; no runtime implementation is open.
+- preserve completed Gate D / `ADVANCE_TO_GATE_E` and use the bounded Gate E protocol merged in PR #415;
+- no runtime implementation is open without a later evidence-backed bounded decision.
 
 ## 3. Обязательный current content scope
 
@@ -141,6 +142,38 @@ Layer combinations, Region alternatives and renderer diagnostics may remain avai
 
 `Trajectory` remains the semantic authority. A presentation-only chronological connector must remain distinguishable from unknown route geometry.
 
+### 4.1 Accepted future temporal-navigation direction — one time, two synchronized scales
+
+The current single-timeline runtime is preserved for Gate E. For future scale growth, ARTEMIS accepts the following design direction:
+
+- **one canonical temporal state** remains the only semantic/query time; there must not be independent `global_time` and `focus_time` truths;
+- **Global Timeline** is the persistent broad-scale world-time control;
+- **Focus Timeline** may appear when one temporal knowledge object is explicitly focused, using that object's relevant temporal extent as a smaller detail lens;
+- both timelines are synchronized controls/views of the same `Range` or `Scrub` state, not separate mode machines;
+- Global and Focus timelines may use different display scales and temporal viewports while sharing the same canonical selected time/range;
+- display scale is independent from source/data precision: a global year-scale view may coexist with month/day detail in Focus when evidence supports it, but the UI may never invent finer precision;
+- Focus Timeline is generalized beyond persons to `Trajectory`, `Region`, `Event`, `State`, `Process` and other temporal objects; it is a UI/query projection, not a new World Model object;
+- multiple objects may be selected, but ordinary navigation has only one focused object driving the Focus Timeline; a multi-object comparison timeline is a separate future interaction;
+- selecting/focusing an object outside current world time must not silently move canonical time; a future explicit `Go to object time/lifetime` action may do so;
+- desktop direction keeps both controls at the bottom, with Focus as a smaller strip above Global; mobile may collapse/expand Focus. Exact layout is future UI specification.
+
+Conceptually:
+
+```text
+                    one canonical temporal state
+                              │
+                 ┌────────────┴────────────┐
+                 │                         │
+          Focus Timeline             Global Timeline
+       object-bounded detail          world context
+                 │                         │
+                 └────────────┬────────────┘
+                              ↓
+                    shared Explorer State
+```
+
+A future Explorer State revision may add renderer-neutral temporal-view/viewport intent, analogous to spatial view intent, while preserving the existing shared `temporal_selection`. **This accepted direction does not change Explorer State v1/schema, World Model, the #412 runtime, or the current Gate E protocol, and it does not authorize an implementation branch.**
+
 ## 5. Knowledge and epistemic scope
 
 The canonical World Model remains broader than the current visible loop:
@@ -186,6 +219,7 @@ Outside the currently authorized M5 preservation boundary:
 
 - any source, Presence or broad reconciliation expansion beyond the reviewed M5 package;
 - default local/global context layers;
+- implementation of Global Timeline + Focus Timeline before a separate evidence-backed scope decision;
 - generative AI and AI analysis runtime;
 - causal/predictive engine;
 - counterfactual simulation;
@@ -252,6 +286,8 @@ The earlier post-#396 result vocabulary was:
 - `STOP/RETHINK` — stop this approach and revisit the hypothesis.
 
 The recorded M1 result is `ITERATE`; M2 completed through PR #401 with `PROCEED_TO_M3`; M3 completed through PR #403 with `PROCEED_TO_M4`; M4 completed with `ADOPT`; M5 completed with `ITERATE`. PR #409 scoped the correction implemented and published through #411/#412, now completed with `PROCEED_TO_GATE_D_REVIEW`. The accepted Gate D review and explicit exit record `ADVANCE_TO_GATE_E`; Gate D is completed and Gate E evidence preparation is next. Context/layers, curation/editorial storage, persistence/sharing, new source/data integration and broad renderer/provider improvement remain unopened.
+
+The Global Timeline + Focus Timeline direction in section 4.1 is an accepted future constraint, not an opened implementation branch. It requires a separate evidence-backed scope decision before code/schema work.
 
 Public deployment, richer historical terrain, guided learning, source-bound AI, broader World Slices, institutional workflow and VR/AR remain separate decisions.
 

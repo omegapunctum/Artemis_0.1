@@ -141,6 +141,35 @@ async function waitForVisualReadiness(cdp, deadline) {
   throw new Error(`Timed out waiting for visual readiness: ${JSON.stringify(lastState)}`);
 }
 
+async function verifyPlaceLabels(cdp) {
+  return evaluate(cdp, `(() => {
+    const r = window.__ARTEMIS_GLOBE_SPIKE;
+    const nodes = [...document.querySelectorAll('.life-path-marker')];
+    if (nodes.length !== 9 || r.data.lifePath.presences.length !== 11) throw new Error('Expected 9 Places / 11 Presences');
+    const labels = nodes.filter(n => !n.hidden).map(n => n.querySelector('.place-label'));
+    const shown = labels.filter(n => getComputedStyle(n).visibility !== 'hidden');
+    for (let i = 0; i < shown.length; i++) for (let j = i + 1; j < shown.length; j++) {
+      const a = shown[i].getBoundingClientRect(), b = shown[j].getBoundingClientRect();
+      const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+      const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      if (w > 1 && h > 1) throw new Error('Visible Place-label overlap: ' + shown[i].textContent + ' / ' + shown[j].textContent);
+    }
+    let suppressed = 0;
+    for (const label of labels) if (label.classList.contains('is-suppressed')) {
+      suppressed++;
+      const node = label.closest('.life-path-marker');
+      if (node.hidden || node.getBoundingClientRect().width < 24 || !node.title || !node.getAttribute('aria-label')) throw new Error('Suppression hid anchor or accessible meaning');
+      node.focus({preventScroll: true});
+      if (getComputedStyle(label).visibility === 'hidden') throw new Error('Suppressed label unavailable on keyboard focus');
+      node.blur();
+    }
+    const selected = r.data.lifePath.presences.find(p => p.presence_id === r.selectedPresenceId);
+    if (selected && getComputedStyle(r.placeMarkers.get(selected.place_ref).getElement().querySelector('.place-label')).visibility === 'hidden') throw new Error('Selected Place label suppressed');
+    if (/numbered place|Numbers show chronology|Build from/i.test(document.body.innerText)) throw new Error('Obsolete visible copy');
+    return {anchors: nodes.length, visibleLabels: shown.length, suppressedLabels: suppressed, materialLabelOverlaps: 0};
+  })()`);
+}
+
 async function verifyUrlStateRestoration(cdp, deadline) {
   const interaction = await evaluate(cdp, `(async () => {
     const runtime = window.__ARTEMIS_GLOBE_SPIKE;
@@ -175,6 +204,8 @@ async function verifyUrlStateRestoration(cdp, deadline) {
         }
       }
     }
+    const nonzero = runtime.data.lifePath.transitions.filter(t => { const a = presences.find(p => p.presence_id === t.from_presence_ref), b = presences.find(p => p.presence_id === t.to_presence_ref); return a.coordinates.some((v, i) => v !== b.coordinates[i]); });
+    if (runtime.chronologyCues.size !== nonzero.length) throw new Error('Expected one cue per nonzero connector');
     for (const cue of runtime.chronologyCues.values()) {
       const [a, b] = cue.coordinates, point = cue.marker.getLngLat();
       if (Math.abs(point.lng - (a[0]+b[0])/2) > 1e-9 || Math.abs(point.lat - (a[1]+b[1])/2) > 1e-9) throw new Error('Direction cue must stay at segment midpoint');
@@ -419,6 +450,7 @@ async function main() {
     await cdp.send('Runtime.enable');
     await cdp.send('Page.navigate', { url: options.url });
     const readiness = await waitForVisualReadiness(cdp, deadline);
+    const placeLabels = await verifyPlaceLabels(cdp);
     const dom = await evaluate(cdp, 'document.documentElement.outerHTML');
     const capture = await cdp.send('Page.captureScreenshot', {
       format: 'png',
@@ -430,7 +462,7 @@ async function main() {
     const urlStateRestoration = options.verifyUrlState
       ? await verifyUrlStateRestoration(cdp, deadline)
       : null;
-    process.stdout.write(`${JSON.stringify({ ...readiness, urlStateRestoration })}\n`);
+    process.stdout.write(`${JSON.stringify({ ...readiness, placeLabels, urlStateRestoration })}\n`);
   } catch (error) {
     if (browserLog) process.stderr.write(browserLog);
     throw error;
