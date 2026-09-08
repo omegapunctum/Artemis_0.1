@@ -1319,7 +1319,8 @@
           .setLngLat(midpoint).addTo(runtime.map)};
         runtime.chronologyCues.set(id, cue);
       }
-      cue.marker.getElement().style.opacity = [0.25, 0.7, 0.95][feature.properties.emphasis];
+      // MapLibre owns outer marker opacity; emphasis belongs to the cue glyph.
+      cue.marker.getElement().firstChild.style.opacity = [0.25, 0.7, 0.95][feature.properties.emphasis];
     }
     for (const [id, cue] of runtime.chronologyCues) {
       if (!visible.has(id)) {cue.marker.remove(); runtime.chronologyCues.delete(id);}

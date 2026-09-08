@@ -178,6 +178,7 @@ async function verifyUrlStateRestoration(cdp, deadline) {
     for (const cue of runtime.chronologyCues.values()) {
       const [a, b] = cue.coordinates, point = cue.marker.getLngLat();
       if (Math.abs(point.lng - (a[0]+b[0])/2) > 1e-9 || Math.abs(point.lat - (a[1]+b[1])/2) > 1e-9) throw new Error('Direction cue must stay at segment midpoint');
+      if (![0.25, 0.7, 0.95].includes(Number(cue.marker.getElement().firstChild.style.opacity))) throw new Error('Cue emphasis missing from glyph');
       if (cue.marker.getElement().getAttribute('aria-hidden') !== 'true') throw new Error('Direction cue is presentation only');
     }
     document.getElementById('close-details')?.click();

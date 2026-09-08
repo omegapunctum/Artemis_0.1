@@ -249,7 +249,7 @@ jobs:
           grep -F 'data-artemis-visible-presence-count="11"' "$DESKTOP_DOM"
           grep -F "Leonardo documented in the Cesena survey context" "$DESKTOP_DOM"
           grep -F "Open details" "$DESKTOP_DOM"
-          grep -F "Dashed links show order, not travel routes." "$DESKTOP_DOM"
+          grep -F "Dashed links and chevrons show time order, not travel routes." "$DESKTOP_DOM"
           grep -F "Terrain: adapter ready" "$DESKTOP_DOM"
           grep -F 'id="startup-ms"' "$DESKTOP_DOM"
           grep -F 'id="frame-sample"' "$DESKTOP_DOM"
