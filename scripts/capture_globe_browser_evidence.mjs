@@ -143,7 +143,7 @@ async function waitForVisualReadiness(cdp, deadline) {
 
 async function verifyPlaceLabels(cdp) {
   await cdp.send('Emulation.setFocusEmulationEnabled', {enabled: true});
-  return evaluate(cdp, `(() => {
+  return evaluate(cdp, `(async () => {
     const r = window.__ARTEMIS_GLOBE_SPIKE;
     const nodes = [...document.querySelectorAll('.life-path-marker')];
     if (nodes.length !== 9 || r.data.lifePath.presences.length !== 11) throw new Error('Expected 9 Places / 11 Presences');
@@ -161,14 +161,15 @@ async function verifyPlaceLabels(cdp) {
       const node = label.closest('.life-path-marker');
       if (node.hidden || node.getBoundingClientRect().width < 24 || !node.title || !node.getAttribute('aria-label')) throw new Error('Suppression hid anchor or accessible meaning');
       node.focus({preventScroll: true});
-      if (getComputedStyle(label).visibility === 'hidden') throw new Error('Suppressed label unavailable on keyboard focus: ' + JSON.stringify({place:node.dataset.placeId, focused:document.activeElement === node, matches:node.matches(':focus'), pageFocus:document.hasFocus()}));
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      if (getComputedStyle(label).visibility === 'hidden') throw new Error('Suppressed label unavailable on keyboard focus: ' + JSON.stringify({place:node.dataset.placeId, focused:document.activeElement === node, matches:node.matches(':focus'), pageFocus:document.hasFocus(), nodeVisibility:getComputedStyle(node).visibility, html:node.outerHTML, rules:[...document.styleSheets].flatMap(s => {try {return [...s.cssRules].filter(r => r.selectorText?.includes('place-label')).map(r => r.cssText);} catch {return [];}})}));
       node.blur();
     }
     const selected = r.data.lifePath.presences.find(p => p.presence_id === r.selectedPresenceId);
     if (selected && getComputedStyle(r.placeMarkers.get(selected.place_ref).getElement().querySelector('.place-label')).visibility === 'hidden') throw new Error('Selected Place label suppressed');
     if (/numbered place|Numbers show chronology|Build from/i.test(document.body.innerText)) throw new Error('Obsolete visible copy');
     return {anchors: nodes.length, visibleLabels: shown.length, suppressedLabels: suppressed, materialLabelOverlaps: 0};
-  })()`);
+  })()`, true);
 }
 
 async function verifyUrlStateRestoration(cdp, deadline) {
