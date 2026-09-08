@@ -1,5 +1,7 @@
 # ARTEMIS — PRODUCT SCOPE
 
+Owner-directed presentation update (2026-09-08): replace numbered map markers with place-name labels and existing Presence periods; repeated visits remain distinct records of the same place. Screen-space label displacement must not modify coordinates and must retain a visual anchor. Keep popup-first selection, details, Range/Scrub and chronology semantics. This bounded update precedes E1; pin its published revision before collecting E1 evidence. It is not an E1 result or a reopening of the accepted Gate D decision.
+
 Current decision: [Gate D exit — ADVANCE_TO_GATE_E](work/2026-09-06_GATE_D_EXIT_DECISION_v1.md). #413 is merged; Gate D is completed. Next is one bounded Gate E task/evidence protocol; collection has not started. No new implementation is opened.
 
 ## Статус
