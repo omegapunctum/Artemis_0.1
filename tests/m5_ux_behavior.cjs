@@ -19,11 +19,13 @@ class Element {
   }
   append(child) { this.children.push(child); child.parentElement = this; }
   replaceChildren() { this.children = []; }
+  querySelector() { return null; }
   querySelectorAll() { return this.children; }
   setAttribute(key, value) { this.attrs[key] = value; }
   getAttribute(key) { return this.attrs[key]; }
   hasAttribute(key) { return key in this.attrs; }
   addEventListener(key, callback) { this.events[key] = callback; }
+  scrollIntoView() {}
   focus() { this.focused = true; }
   closest() { return this.skip ? this : null; }
   contains(element) { return this.children.includes(element); }
@@ -34,23 +36,25 @@ const inspector = new Element();
 const range = new Element();
 const periodButton = new Element(); periodButton.dataset.periodId = 'period-a'; periods.append(periodButton);
 const presences = [
-  {presence_id: 'b', index: 1, place_label: 'Milan', axis_start_index: 10},
-  {presence_id: 'a', index: 0, place_label: 'Vinci', axis_start_index: 0}
+  {presence_id: 'b', index: 1, place_label: 'Milan', place_ref: 'milan', axis_start_index: 10},
+  {presence_id: 'a', index: 0, place_label: 'Vinci', place_ref: 'vinci', axis_start_index: 0}
 ];
 const markerA = new Element(), markerB = new Element();
 let visible = [...presences];
 let selected = null;
 const runtime = {data: {lifePath: {presences, macro_periods: [{period_id: 'period-a', label: 'Milan I', presence_refs: ['b']}]}},
   lifePathMarkers: new Map([['a', {getElement: () => markerA}], ['b', {getElement: () => markerB}]]),
+  placeMarkers: new Map([['vinci', {getElement: () => markerA}], ['milan', {getElement: () => markerB}]]),
   selectedPresenceId: 'b', lifePathMode: 'range'};
 const document = {documentElement: {dataset: {}}, createElement: () => new Element(), activeElement: null};
 const context = vm.createContext({runtime, document,
   byId: id => ({'presence-sequence': sequence, 'macro-periods': periods, inspector, 'mode-range': range}[id]),
   formatPresenceTime: () => '1502', visibleLifePathPresences: () => visible,
+  layoutPlaceLabels: () => {},
   selectLifePathPresence: (id, options) => { selected = {id, options}; }
 });
 vm.runInContext(['presencePeriod', 'bindPresenceEmphasis', 'renderPresenceSequence',
-  'syncLifePathSelectionControls', 'layoutLifePathMarkers', 'updateLifePathMarkers', 'closeDetailsDrawer', 'lifePathConnectorGeoJson'].map(fn).join('\n'), context);
+  'syncLifePathSelectionControls', 'visiblePlaceGroups', 'placeClickPresence', 'chronologyEmphasis', 'updateLifePathMarkers', 'closeDetailsDrawer', 'lifePathConnectorGeoJson'].map(fn).join('\n'), context);
 context.renderPresenceSequence();
 assert.deepEqual(sequence.children.map(b => b.textContent), ['1 · Vinci', '2 · Milan']);
 assert.equal(sequence.children[1].title, '1502 · Milan I');
@@ -127,24 +131,83 @@ assert.equal(window.location, location); assert.equal(JSON.stringify(runtime.dat
 assert.equal(runtime.selectedPresenceId, 'b');
 console.log('M5 chronology, filtering, emphasis, focus, presentation-only connectors, EN/RU round-trip: passed');
 
-// Coincident visits remain individually reachable; filtering releases label space.
+
+// Execute Place construction and selection against the actual shipped functions.
 {
-  const visits = Array.from({length: 3}, (_, i) => ({presence_id: `visit-${i}`, coordinates: [12, 44]}));
-  const markers = new Map(visits.map(p => {
-    const node = {hidden: false, style: {setProperty() {}}};
-    return [p.presence_id, {getElement: () => node, setOffset(value) {this.offset = value;}}];
-  }));
-  const r = {data: {lifePath: {presences: visits}}, lifePathMarkers: markers,
-    map: {getCanvas: () => ({clientWidth: 390, clientHeight: 600}), project: () => ({x: 195, y: 300})}};
-  const ctx = vm.createContext({runtime: r});
-  vm.runInContext(fn('layoutLifePathMarkers'), ctx);
-  ctx.layoutLifePathMarkers();
-  const offsets = [...markers.values()].map(m => m.offset);
-  for (let i = 0; i < offsets.length; i++) for (let j = i + 1; j < offsets.length; j++) {
-    assert.ok(Math.abs(offsets[i][0] - offsets[j][0]) >= 149 || Math.abs(offsets[i][1] - offsets[j][1]) >= 49);
+  class Node extends Element {
+    constructor() { super(); this.style = {}; }
+    querySelector(selector) {
+      const name = selector.slice(1);
+      for (const c of this.children) { if (c.className === name) return c; const found = c.querySelector?.(selector); if (found) return found; }
+      return null;
+    }
   }
-  assert.deepEqual(visits.map(p => p.coordinates), [[12, 44], [12, 44], [12, 44]]);
-  markers.get('visit-0').getElement().hidden = true;
-  ctx.layoutLifePathMarkers();
-  assert.equal(markers.get('visit-1').offset[1], 0);
+  let spatialCount = 0;
+  class Marker {
+    constructor({element}) {this.node = element; spatialCount++;}
+    setLngLat(coordinates) {this.coordinates = coordinates; return this;}
+    addTo() {return this;}
+    getElement() {return this.node;}
+  }
+  const visits = [
+    {presence_id: 'm1', place_ref: 'milan', place_label: 'Milan', index: 0, coordinates: [9,45], axis_start_index: 0, axis_end_index: 0, event_item_id: 'e1'},
+    {presence_id: 'f', place_ref: 'florence', place_label: 'Florence', index: 1, coordinates: [11,44], axis_start_index: 1, axis_end_index: 1, event_item_id: 'ef'},
+    {presence_id: 'm2', place_ref: 'milan', place_label: 'Milan', index: 2, coordinates: [9,45], axis_start_index: 2, axis_end_index: 2, event_item_id: 'e2'}
+  ];
+  const controls = new Node();
+  const r = {data: {lifePath: {presences: visits, route_policy: {chronological_connector_permitted: false}}},
+    map: {addSource() {}, on() {}}, placeMarkers: new Map(), lifePathMarkers: new Map(), lifePathMode: 'range', lifePathStartIndex: 0, lifePathEndIndex: 2};
+  let urlPresence, selection;
+  const ctx = vm.createContext({runtime: r, document: {createElement: () => new Node(), documentElement: {dataset: {}}},
+    maplibregl: {Marker}, byId: id => id === 'presence-sequence' ? controls : null,
+    formatPresenceTime: p => `period-${p.index}`, presencePeriod: () => null,
+    updateLifePathConnectors() {}, layoutPlaceLabels() {}, positionChronologyCues() {},
+    currentProjectionItem: id => ({item_id: id}), updateCanonicalSelection: item => {selection = item.item_id;},
+    syncUrlState: () => {urlPresence = r.selectedPresenceId;}, showPresencePopup() {}});
+  vm.runInContext(['appendText','visibleLifePathPresences','visiblePlaceGroups','placeClickPresence','syncLifePathSelectionControls','updateLifePathMarkers','lifePathConnectorGeoJson','addLifePathMarkers','bindPresenceEmphasis','renderPresenceSequence','selectLifePathPresence'].map(fn).join('\n'), ctx);
+  ctx.addLifePathMarkers(r.map); ctx.renderPresenceSequence();
+  assert.equal(spatialCount, 2);
+  assert.equal(r.lifePathMarkers.get('m1'), r.lifePathMarkers.get('m2'));
+  assert.deepEqual(r.placeMarkers.get('milan').coordinates, [9,45]);
+  assert.equal(r.placeMarkers.get('milan').node.querySelector('.place-count').textContent, ' ×2');
+  for (const id of ['m1','m2']) {
+    controls.children.find(b => b.dataset.presenceId === id).events.click();
+    assert.equal(r.selectedPresenceId, id); assert.equal(urlPresence, id);
+    assert.equal(selection, id === 'm1' ? 'e1' : 'e2');
+    assert.equal(r.placeMarkers.get('milan').node.attrs['aria-pressed'], 'true');
+  }
+  r.lifePathMode = 'scrub'; r.lifePathEndIndex = 1; ctx.updateLifePathMarkers();
+  assert.equal(r.placeMarkers.get('milan').node.querySelector('.place-count').textContent, '');
+  assert.equal(controls.children[2].hidden, true);
+  r.lifePathMode = 'range'; r.lifePathStartIndex = 2; r.lifePathEndIndex = 2; ctx.updateLifePathMarkers();
+  assert.equal(ctx.placeClickPresence('milan').presence_id, 'm2');
+  assert.equal(r.placeMarkers.get('florence').node.hidden, true);
 }
+
+// Saved Scrub origins restore deterministically, including invalid/reversed input.
+{
+  const r = {};
+  const window = {location: {search: ''}};
+  let saved;
+  const ctx = vm.createContext({runtime: r, window, URLSearchParams,
+    lifePathAxisValues: () => ['1452','1502','1519'], syncLifePathControls() {}, applyLifePathView() {},
+    selectLifePathPresence() {}, syncUrlState: () => {saved = [r.lifePathStartIndex,r.lifePathEndIndex];}});
+  vm.runInContext(fn('restoreLifePathStateFromUrl'), ctx);
+  for (const [query, expected] of [
+    ['?mode=scrub&at=1519', [0,2]], ['?mode=scrub&from=1502&at=1519',[1,2]],
+    ['?mode=scrub&from=bad&at=1519',[0,2]], ['?mode=scrub&from=1519&at=1452',[2,2]],
+    ['?mode=range&start=1502&end=1519',[1,2]]]) {
+    window.location.search = query; ctx.restoreLifePathStateFromUrl(); assert.deepEqual(saved, expected);
+  }
+}
+
+// Emphasis is display metadata; endpoint geometry and unknown-route data stay intact.
+visible = [...presences]; runtime.lifePathMode = 'range'; runtime.selectedPresenceId = 'a';
+assert.equal(context.lifePathConnectorGeoJson().features[0].properties.emphasis, 1);
+runtime.lifePathMode = 'scrub';
+assert.equal(context.lifePathConnectorGeoJson().features[0].properties.emphasis, 2);
+assert.equal(runtime.data.lifePath.transitions[0].route_geometry, null);
+assert.equal(context.lifePathConnectorGeoJson().features[0].properties.route_geometry, null);
+window.ARTEMIS_I18N.setLanguage('ru');
+assert.equal(window.ARTEMIS_I18N.t('Dashed links and chevrons show time order, not travel routes.'), 'Пунктир и указатели показывают порядок во времени, не маршруты движения.');
+console.log('Place anchors, repeated episode selection/counts, saved Scrub URLs and chronology emphasis: passed');

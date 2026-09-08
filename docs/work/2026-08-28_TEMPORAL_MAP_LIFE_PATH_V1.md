@@ -1,9 +1,9 @@
-# ARTEMIS — Temporal Map / Leonardo Life Path v1.1
+# ARTEMIS — Temporal Map / Leonardo Life Path v1.2
 
 ## Status
 
 - Type: active Gate D product interaction contract.
-- Updated: 2026-08-29.
+- Updated: 2026-09-08 (bounded interaction correction after #417).
 - Owner: issue `#355`.
 - Implemented sequence: PR `#395` established the calendar life-path loop; first published manual check recorded `ITERATE`; PR `#396` implemented and published the bounded feedback correction.
 - Current lifecycle: Gate C remains `FREEZE`; Gate D remains `OPEN / IN PROGRESS`; the fresh #396 user check recorded `ITERATE` and preserves this interaction as the baseline.
@@ -18,7 +18,7 @@ The default experience answers one sequence of questions:
 Leonardo is the selected object. Map and timeline are synchronized controls over one Explorer State:
 
 - `Range` selects a calendar interval and shows every documented Presence whose temporal extent overlaps that interval;
-- `Scrub` keeps a selected build origin and one current-time cursor, accumulating documented Presences as the cursor moves forward;
+- `Scrub` uses one current-time cursor, accumulating from the first allowed axis value by default; a saved legacy origin is restored internally;
 - selecting a visible Presence opens concise place/date/activity information;
 - source, locator and uncertainty remain available under progressive disclosure.
 
@@ -26,7 +26,7 @@ The timeline is a calendar scale, not an ordinal list of stops. The current boun
 
 ## 2. Current interaction specification
 
-The published PR `#396` interaction is the current specification:
+The #396 interaction is preserved with the following owner-directed correction after #417:
 
 ### Range
 
@@ -40,14 +40,19 @@ The published PR `#396` interaction is the current specification:
 
 - one full-width bottom calendar track;
 - one current-time cursor;
-- a separate `Build from` / origin value establishes where accumulation begins;
+- no visible `Build from` label/select; default origin is the earliest available axis extent (1452 in the current proof);
+- saved `?mode=scrub&from=...&at=...` links preserve a valid origin internally; missing/invalid `from` defaults to the first axis value, missing/invalid `at` defaults to the first axis value, and an end before origin clamps to origin; mode toggles preserve the restored Scrub origin;
 - visible Presences accumulate from that origin through the current cursor;
 - Scrub does not become a disguised two-ended range.
 
 ### Selection and detail
 
 - timeline, map, selected Presence and URL share one Explorer State;
-- one marker click selects the Presence and opens a compact map popup;
+- one marker per canonical `place_ref`, fixed at its existing reference coordinates;
+- persistent label is place name plus `×N` for multiple visible episodes; dates/activity/evidence belong in timeline and popup/details;
+- timeline and popup episode buttons preserve individual Presence IDs; selecting any repeated visit highlights the same Place anchor;
+- one marker click retains the selected visible episode at that Place, otherwise chooses its first visible episode in Range or last in Scrub, and opens a compact popup;
+- nearby text may use a small label-only offset; no spatial marker displacement or tethers;
 - a single click must not move the camera;
 - explicit `Open details` / further action may open the right detail drawer;
 - double-click may explicitly focus/zoom the selected place;
@@ -75,6 +80,8 @@ The life path is a primary visual object, but a connector is not automatically a
 - documented `movement` geometry may be rendered only when evidence authorizes it;
 - `inferred_gap` keeps `route_geometry=null` and `route_status=unknown_route`;
 - the UI may derive a thin dashed connector between two visible Presence anchors solely to express chronology;
+- a small midpoint chevron indicates time direction; no destination arrowheads, animated flow, inferred roads or route curves; inactive links stay faint, selected-adjacent links are emphasized, and the current Scrub incoming transition is strongest;
+- coincident Place endpoints are not spatially separated; a zero-length connector receives no fabricated directional cue;
 - that connector is presentation-only, has no World Model identity and must be distinguishable from historical route geometry;
 - smooth interpolation, shortest-path drawing or visually plausible roads must not silently become historical assertions.
 

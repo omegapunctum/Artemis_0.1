@@ -214,7 +214,6 @@ input[type="range"] { min-height: 30px; accent-color: #5fb8ff; }
 .timeline-mode { display: grid; gap: 8px; }
 .timeline-values { display: flex; justify-content: space-between; gap: 18px; }
 .timeline-values label,
-.scrub-origin,
 .scrub-cursor { color: #aebfd1; font-size: 12px; font-weight: 700; }
 .timeline-values output,
 .scrub-cursor output { margin-left: 5px; color: #8fcdfb; }
@@ -255,15 +254,6 @@ input[type="range"] { min-height: 30px; accent-color: #5fb8ff; }
   align-items: end;
   gap: 6px 16px;
 }
-.scrub-origin { display: grid; gap: 4px; }
-.scrub-origin select {
-  min-height: 32px;
-  border: 1px solid #314861;
-  border-radius: 7px;
-  background: #0e1b29;
-  padding: 4px 8px;
-  color: #dcecff;
-}
 .scrub-cursor { display: flex; justify-content: space-between; gap: 12px; }
 .scrub-mode > input { grid-column: 2; width: 100%; }
 .route-note { margin: 0 !important; color: #91a4b8; font-size: 12px; line-height: 1.45; }
@@ -285,22 +275,6 @@ input[type="range"] { min-height: 30px; accent-color: #5fb8ff; }
   line-height: 1.4;
 }
 .timeline-summary { display: grid; gap: 10px; align-content: center; }
-
-.life-path-marker {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border: 2px solid #e5f5ff;
-  border-radius: 50%;
-  background: #1479bb;
-  box-shadow: 0 0 0 5px rgba(55, 166, 231, 0.22), 0 5px 16px rgba(0, 0, 0, 0.4);
-  color: #fff;
-  font-weight: 900;
-}
-.life-path-marker:hover,
-.life-path-marker[aria-pressed="true"] { background: #f0a33a; transform: scale(1.08); }
-.life-path-marker.is-current { box-shadow: 0 0 0 7px rgba(240, 163, 58, 0.28), 0 5px 16px rgba(0, 0, 0, 0.4); }
 
 .maplibregl-popup.life-path-popup { z-index: 14; }
 .life-path-popup .maplibregl-popup-content {
@@ -446,13 +420,19 @@ summary:focus-visible {
 .presence-sequence-item.is-current { box-shadow: inset 0 -2px #7fd1ff; }
 #temporal-map-status { font-size: 11px; margin: 2px 0 0; }
 .sequence-note { margin: 2px 0 0; font-size: 10px; color: #abc0d4; }
-.life-path-marker { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; box-sizing: border-box; border: 1px solid #66bfd2; border-radius: 7px; background: #071b28f2; box-shadow: 0 2px 6px #0009; padding: 4px 9px; width: 144px; height: 44px; text-align: left; }
-.life-path-marker .marker-place-name { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 700; }
-.life-path-marker .marker-place-time { font-size: 10px; font-weight: 400; color: #b6cad7; white-space: nowrap; }
-.life-path-marker:hover, .life-path-marker[aria-pressed="true"], .life-path-marker.is-emphasized { background: #183746; border-color: #ffd590; transform: none; z-index: 5; }
-.life-path-marker.is-current { box-shadow: 0 0 0 2px #ffd590; }
-.marker-tether { position: absolute; left: 50%; top: 50%; width: var(--tether-length, 0px); height: 1px; background: #8aa6b8; transform-origin: left center; transform: rotate(var(--tether-angle, 0rad)); pointer-events: none; z-index: -1; }
-.marker-tether::after { content: ""; position: absolute; right: 0; top: -2px; width: 5px; height: 5px; border-radius: 50%; background: #8aa6b8; }
+.life-path-marker { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; }
+.place-dot { width: 9px; height: 9px; border: 1px solid #c6edff; border-radius: 50%; background: #268dad; box-shadow: 0 0 0 3px #102936; }
+.place-label { position: absolute; left: 25px; top: 6px; white-space: nowrap; font-size: 11px; font-weight: 600; color: #e1f2fa; text-shadow: 0 1px 3px #000, 0 0 3px #000; }
+.place-count { color: #a7c4d3; }
+.life-path-marker:hover, .life-path-marker[aria-pressed="true"], .life-path-marker.is-emphasized { background: transparent; transform: none; z-index: 5; }
+.life-path-marker[aria-pressed="true"] .place-dot, .life-path-marker.is-current .place-dot { background: #ffd590; box-shadow: 0 0 0 3px #9c733466; }
+.life-path-marker.is-current { box-shadow: none; }
+.chronology-cue { pointer-events: none; color: #b8cfdf; }
+.chronology-cue > span { display: block; font-size: 20px; line-height: 20px; }
+.place-episodes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.place-episodes > span { width: 100%; font-size: 11px; }
+.place-episodes button { min-height: 24px; padding: 3px 6px; font-size: 11px; }
+
 
 #attribution-status { left: 12px; right: auto; bottom: calc(var(--dock-height) + 6px); max-width: calc(100% - 24px); text-align: left; font-size: 10px; padding: 3px 6px; }
 #inspector { top: calc(var(--banner-bottom) + 8px); bottom: calc(var(--dock-height) + var(--attribution-height) + 18px); padding: 14px; }
@@ -499,7 +479,6 @@ button:focus-visible { outline: 2px solid #79cfff; outline-offset: 2px; }
 .timeline-values label:last-child { grid-column: 3; grid-row: 1; }
 .dual-range { grid-column: 2; grid-row: 1; height: 32px; }
 #scrub-controls { grid-template-columns: max-content minmax(0, 1fr) max-content; align-items: center; gap: 10px; }
-.scrub-origin { display: flex; align-items: center; gap: 6px; grid-column: 1; grid-row: 1; }
 .scrub-cursor { grid-column: 3; grid-row: 1; gap: 4px; }
 .scrub-mode > input { grid-column: 2; grid-row: 1; margin: 0; }
 #presence-sequence { grid-column: 1; grid-row: 3; min-width: 0; padding: 2px; }
@@ -512,7 +491,7 @@ button:focus-visible { outline: 2px solid #79cfff; outline-offset: 2px; }
   #presence-sequence { grid-column: 1 / -1; }
   #temporal-map-status { grid-column: 1 / -1; grid-row: 4; max-width: none; }
   #range-controls, #scrub-controls { gap: 6px; }
-  .scrub-origin, .scrub-cursor { font-size: 10px; gap: 3px; }
+  .scrub-cursor { font-size: 10px; gap: 3px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -522,3 +501,8 @@ button:focus-visible { outline: 2px solid #79cfff; outline-offset: 2px; }
     animation-duration: 0.01ms !important;
   }
 }
+
+/* Scrub has one cursor; legacy origin is URL state only. */
+#scrub-controls { grid-template-columns: minmax(0, 1fr) auto; }
+#scrub-controls > input { grid-column: 1; grid-row: 1; min-width: 0; }
+#scrub-controls .scrub-cursor { grid-column: 2; grid-row: 1; }

@@ -1,6 +1,6 @@
 # ARTEMIS — PRODUCT SCOPE
 
-Owner-directed presentation update (2026-09-08): replace numbered map markers with place-name labels and existing Presence periods; repeated visits remain distinct records of the same place. Screen-space label displacement must not modify coordinates and must retain a visual anchor. Keep popup-first selection, details, Range/Scrub and chronology semantics. This bounded update precedes E1; pin its published revision before collecting E1 evidence. It is not an E1 result or a reopening of the accepted Gate D decision.
+Owner-directed bounded correction after #417: one fixed spatial anchor per canonical Place, compact name and visible-episode count; Presence episodes remain distinct in timeline/selection/URL and popup/details. Remove persistent date cards, tethers and spatial displacement. Mid-segment chevrons on low-opacity dashed links express chronology only, with selected/current transition emphasis. Scrub has one current-time handle and no visible Build from control; default origin is the earliest axis extent (1452). Valid saved `from` values remain internal origins; invalid/missing values use the first axis value, and `at` before origin clamps to origin. No coordinates, historical routes, data, Gate E tasks or future Global+Focus Timeline scope change. Pin the corrected published revision before E1; this is not an E1 result.
 
 Current decision: [Gate D exit — ADVANCE_TO_GATE_E](work/2026-09-06_GATE_D_EXIT_DECISION_v1.md). #413 is merged; Gate D is completed. Next is one bounded Gate E task/evidence protocol; collection has not started. No new implementation is opened.
 
@@ -123,10 +123,10 @@ Current required interface behavior:
 - Architecture Atlas at `/atlas/` as a frozen compatibility surface;
 - full-width bottom calendar timeline as the primary time instrument;
 - `Range` as a two-handle calendar interval using temporal overlap;
-- `Scrub` as a chosen build origin plus one current-time cursor that accumulates the path forward;
-- selectable start/end or start/current calendar values at an honest display granularity;
+- `Scrub` as one current-time cursor accumulating from the derived earliest extent (or an internally restored legacy URL origin);
+- selectable Range start/end and Scrub current calendar values at an honest display granularity;
 - map, timeline, selection and URL controlling one shared Explorer State;
-- interactive Presence markers with a compact first-click popup;
+- interactive Place anchors with a compact first-click popup and individually selectable Presence episodes;
 - no map-camera movement on single click;
 - optional right detail drawer for deeper information;
 - explicit double-click may focus/zoom the selected place;

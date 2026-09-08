@@ -691,7 +691,7 @@ def test_life_path_timeline_uses_calendar_range_and_scrub() -> None:
     assert 'id="range-start" type="range"' in html_source
     assert 'id="range-end" type="range"' in html_source
     assert 'id="timeline-dock"' in html_source
-    assert 'id="scrub-start" aria-label="Path build start"' in html_source
+    assert 'id="scrub-start"' not in html_source
     assert 'id="scrub-current" type="range"' in html_source
     assert 'id="mode-range"' in html_source
     assert 'id="mode-scrub"' in html_source
@@ -733,8 +733,7 @@ def test_runtime_removes_noop_controls_and_distinguishes_chronology_from_routes(
     html_source = HTML_TEMPLATE.read_text(encoding="utf-8")
 
     assert 'id="temporal-map-status"' in html_source
-    assert "Dashed links show order, not travel routes." in html_source
-    assert "exact routes between Presence anchors remain unknown" in html_source
+    assert "Dashed links and chevrons show time order, not travel routes." in html_source
     assert 'id="toggle-alternatives"' not in html_source
     assert 'id="view-global"' not in html_source
     assert 'id="view-slice"' not in html_source

@@ -159,12 +159,34 @@ async function verifyUrlStateRestoration(cdp, deadline) {
         || runtime.data.lifePath.transitions.some((link) => link.route_geometry !== null || link.route_status !== 'unknown_route')) {
       throw new Error('Chronological presentation must not promote unknown historical routes');
     }
+    const presences = runtime.data.lifePath.presences;
+    const uniquePlaces = new Set(presences.map(p => p.place_ref));
+    if (document.querySelectorAll('.life-path-marker').length !== uniquePlaces.size) throw new Error('Map must have one anchor per Place');
+    for (const place of uniquePlaces) {
+      const episodes = presences.filter(p => p.place_ref === place);
+      const anchor = runtime.placeMarkers.get(place);
+      if (episodes.some(p => runtime.lifePathMarkers.get(p.presence_id) !== anchor)) throw new Error('Presence aliases must share the Place anchor');
+      const coordinate = anchor.getLngLat();
+      if (coordinate.lng !== episodes[0].coordinates[0] || coordinate.lat !== episodes[0].coordinates[1]) throw new Error('Place anchor moved');
+      if (episodes.length > 1) {
+        for (const episode of episodes) {
+          runtime.selectPresence(episode.presence_id);
+          if (runtime.selectedPresenceId !== episode.presence_id || anchor.getElement().getAttribute('aria-pressed') !== 'true') throw new Error('Repeated Presence selection collapsed');
+          if (new URLSearchParams(location.search).get('presence') !== episode.presence_id) throw new Error('Repeated Presence URL identity lost');
+        }
+      }
+    }
+    for (const cue of runtime.chronologyCues.values()) {
+      const [a, b] = cue.coordinates, point = cue.marker.getLngLat();
+      if (Math.abs(point.lng - (a[0]+b[0])/2) > 1e-9 || Math.abs(point.lat - (a[1]+b[1])/2) > 1e-9) throw new Error('Direction cue must stay at segment midpoint');
+      if (cue.marker.getElement().getAttribute('aria-hidden') !== 'true') throw new Error('Direction cue is presentation only');
+    }
+    document.getElementById('close-details')?.click();
     document.getElementById('mode-scrub')?.click();
     const scrubStart = document.getElementById('scrub-start');
     const scrubCurrent = document.getElementById('scrub-current');
-    if (!scrubStart || !scrubCurrent) throw new Error('Scrub controls are unavailable');
-    scrubStart.value = '0';
-    scrubStart.dispatchEvent(new Event('change', { bubbles: true }));
+    if (scrubStart || !scrubCurrent) throw new Error('Scrub must have one current-time control and no Build from');
+    if (runtime.lifePathStartIndex !== 0) throw new Error('Default Scrub origin is not the earliest axis extent');
     scrubCurrent.value = String(axisValues.indexOf('1502'));
     scrubCurrent.dispatchEvent(new Event('input', { bubbles: true }));
     const marker = [...document.querySelectorAll('.life-path-marker')].find(
