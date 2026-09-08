@@ -1207,6 +1207,7 @@
       button.classList.toggle('is-current', button.dataset.presenceId === currentPresence?.presence_id);
     }
     syncLifePathSelectionControls();
+    layoutLifePathMarkers();
   }
 
   function presencePeriod(presence) {
@@ -1523,6 +1524,40 @@
     });
   }
 
+  // Screen-space label offsets never modify historical/reference coordinates.
+  function layoutLifePathMarkers() {
+    const map = runtime.map;
+    if (!map) return;
+    const canvas = map.getCanvas();
+    const occupied = [];
+    const width = 144, height = 44, gap = 5;
+    for (const presence of runtime.data?.lifePath?.presences || []) {
+      const marker = runtime.lifePathMarkers.get(presence.presence_id);
+      if (!marker || marker.getElement().hidden) continue;
+      const point = map.project(presence.coordinates);
+      const candidates = [[0, 0]];
+      for (let ring = 1; ring <= 8; ring += 1) {
+        for (const [x, y] of [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+          candidates.push([x * (width + gap) * ring, y * (height + gap) * ring]);
+        }
+      }
+      const fits = ([dx, dy]) => {
+        const x = point.x + dx, y = point.y + dy;
+        return x >= width / 2 && x <= canvas.clientWidth - width / 2
+          && y >= height / 2 && y <= canvas.clientHeight - height / 2
+          && !occupied.some(([ox, oy]) => Math.abs(x - ox) < width + gap && Math.abs(y - oy) < height + gap);
+      };
+      // Offscreen points stay offscreen rather than being dragged onto the map.
+      const onscreen = point.x >= 0 && point.x <= canvas.clientWidth && point.y >= 0 && point.y <= canvas.clientHeight;
+      const offset = onscreen ? (candidates.find(fits) || [0, 0]) : [0, 0];
+      marker.setOffset(offset);
+      occupied.push([point.x + offset[0], point.y + offset[1]]);
+      const node = marker.getElement();
+      node.style.setProperty('--tether-length', `${Math.hypot(...offset)}px`);
+      node.style.setProperty('--tether-angle', `${Math.atan2(-offset[1], -offset[0])}rad`);
+    }
+  }
+
   function addLifePathMarkers(map) {
     map.addSource('life-path-chronology', { type: 'geojson', data: lifePathConnectorGeoJson() });
     if (runtime.data?.lifePath?.route_policy?.chronological_connector_permitted === true) {
@@ -1538,33 +1573,26 @@
         }
       });
     }
-    const placeCounts = new Map();
-    for (const presence of runtime.data?.lifePath?.presences || []) {
-      placeCounts.set(presence.place_ref, (placeCounts.get(presence.place_ref) || 0) + 1);
-    }
-    const placeOffsets = new Map();
     for (const presence of runtime.data?.lifePath?.presences || []) {
       const markerButton = document.createElement('button');
       markerButton.type = 'button';
       markerButton.className = 'life-path-marker';
-      appendText(markerButton, 'span', String(presence.index + 1), 'marker-dot');
+      appendText(markerButton, 'span', '', 'marker-tether').setAttribute('aria-hidden', 'true');
+      appendText(markerButton, 'span', presence.place_label, 'marker-place-name');
+      appendText(markerButton, 'span', formatPresenceTime(presence), 'marker-place-time');
       markerButton.title = `${presence.place_label} · click for summary; double-click to focus map`;
       markerButton.setAttribute('aria-label', `Show ${presence.place_label} summary, ${formatPresenceTime(presence)}; double-click to focus map`);
       markerButton.setAttribute('aria-pressed', 'false');
       bindPresenceEmphasis(markerButton, presence.presence_id);
       markerButton.addEventListener('click', () => handlePresenceMarkerClick(presence));
       markerButton.addEventListener('dblclick', (event) => handlePresenceMarkerDoubleClick(event, presence));
-      const repeatIndex = placeOffsets.get(presence.place_ref) || 0;
-      placeOffsets.set(presence.place_ref, repeatIndex + 1);
-      const repeatCount = placeCounts.get(presence.place_ref) || 1;
-      const offset = repeatCount > 1
-        ? [(repeatIndex - (repeatCount - 1) / 2) * 36, 0]
-        : [0, 0];
-      const marker = new maplibregl.Marker({ element: markerButton, anchor: 'center', offset })
+      const marker = new maplibregl.Marker({ element: markerButton, anchor: 'center' })
         .setLngLat(presence.coordinates)
         .addTo(map);
       runtime.lifePathMarkers.set(presence.presence_id, marker);
     }
+    map.on('move', layoutLifePathMarkers);
+    map.on('resize', layoutLifePathMarkers);
     updateLifePathMarkers();
     updateLifePathConnectors();
     const requestedPresence = (runtime.data?.lifePath?.presences || []).find(

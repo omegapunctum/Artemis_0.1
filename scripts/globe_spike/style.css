@@ -446,12 +446,14 @@ summary:focus-visible {
 .presence-sequence-item.is-current { box-shadow: inset 0 -2px #7fd1ff; }
 #temporal-map-status { font-size: 11px; margin: 2px 0 0; }
 .sequence-note { margin: 2px 0 0; font-size: 10px; color: #abc0d4; }
-.life-path-marker { border: 0; background: transparent; box-shadow: none; padding: 4px; width: 36px; height: 36px; }
-.life-path-marker .marker-dot { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid #e5f5ff; border-radius: 50%; background: #1479bb; box-shadow: 0 2px 5px #0008; font-size: 12px; }
-.life-path-marker:hover, .life-path-marker[aria-pressed="true"] { background: transparent; transform: none; }
-.life-path-marker[aria-pressed="true"] .marker-dot, .life-path-marker.is-emphasized .marker-dot { background: #995c08; outline: 2px solid #ffd590; }
-.life-path-marker.is-current { box-shadow: none; }
-.life-path-marker.is-current .marker-dot { border: 2px solid #ffd590; }
+.life-path-marker { display: flex; flex-direction: column; justify-content: center; align-items: flex-start; box-sizing: border-box; border: 1px solid #66bfd2; border-radius: 7px; background: #071b28f2; box-shadow: 0 2px 6px #0009; padding: 4px 9px; width: 144px; height: 44px; text-align: left; }
+.life-path-marker .marker-place-name { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 700; }
+.life-path-marker .marker-place-time { font-size: 10px; font-weight: 400; color: #b6cad7; white-space: nowrap; }
+.life-path-marker:hover, .life-path-marker[aria-pressed="true"], .life-path-marker.is-emphasized { background: #183746; border-color: #ffd590; transform: none; z-index: 5; }
+.life-path-marker.is-current { box-shadow: 0 0 0 2px #ffd590; }
+.marker-tether { position: absolute; left: 50%; top: 50%; width: var(--tether-length, 0px); height: 1px; background: #8aa6b8; transform-origin: left center; transform: rotate(var(--tether-angle, 0rad)); pointer-events: none; z-index: -1; }
+.marker-tether::after { content: ""; position: absolute; right: 0; top: -2px; width: 5px; height: 5px; border-radius: 50%; background: #8aa6b8; }
+
 #attribution-status { left: 12px; right: auto; bottom: calc(var(--dock-height) + 6px); max-width: calc(100% - 24px); text-align: left; font-size: 10px; padding: 3px 6px; }
 #inspector { top: calc(var(--banner-bottom) + 8px); bottom: calc(var(--dock-height) + var(--attribution-height) + 18px); padding: 14px; }
 button:focus-visible { outline: 2px solid #79cfff; outline-offset: 2px; }
