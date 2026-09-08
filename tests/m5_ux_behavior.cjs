@@ -50,7 +50,7 @@ const context = vm.createContext({runtime, document,
   selectLifePathPresence: (id, options) => { selected = {id, options}; }
 });
 vm.runInContext(['presencePeriod', 'bindPresenceEmphasis', 'renderPresenceSequence',
-  'syncLifePathSelectionControls', 'updateLifePathMarkers', 'closeDetailsDrawer', 'lifePathConnectorGeoJson'].map(fn).join('\n'), context);
+  'syncLifePathSelectionControls', 'layoutLifePathMarkers', 'updateLifePathMarkers', 'closeDetailsDrawer', 'lifePathConnectorGeoJson'].map(fn).join('\n'), context);
 context.renderPresenceSequence();
 assert.deepEqual(sequence.children.map(b => b.textContent), ['1 · Vinci', '2 · Milan']);
 assert.equal(sequence.children[1].title, '1502 · Milan I');
@@ -126,3 +126,25 @@ assert.equal(text.nodeValue, '1 · Vinci'); assert.equal(label.attrs.title, '150
 assert.equal(window.location, location); assert.equal(JSON.stringify(runtime.data), state);
 assert.equal(runtime.selectedPresenceId, 'b');
 console.log('M5 chronology, filtering, emphasis, focus, presentation-only connectors, EN/RU round-trip: passed');
+
+// Coincident visits remain individually reachable; filtering releases label space.
+{
+  const visits = Array.from({length: 3}, (_, i) => ({presence_id: `visit-${i}`, coordinates: [12, 44]}));
+  const markers = new Map(visits.map(p => {
+    const node = {hidden: false, style: {setProperty() {}}};
+    return [p.presence_id, {getElement: () => node, setOffset(value) {this.offset = value;}}];
+  }));
+  const r = {data: {lifePath: {presences: visits}}, lifePathMarkers: markers,
+    map: {getCanvas: () => ({clientWidth: 390, clientHeight: 600}), project: () => ({x: 195, y: 300})}};
+  const ctx = vm.createContext({runtime: r});
+  vm.runInContext(fn('layoutLifePathMarkers'), ctx);
+  ctx.layoutLifePathMarkers();
+  const offsets = [...markers.values()].map(m => m.offset);
+  for (let i = 0; i < offsets.length; i++) for (let j = i + 1; j < offsets.length; j++) {
+    assert.ok(Math.abs(offsets[i][0] - offsets[j][0]) >= 149 || Math.abs(offsets[i][1] - offsets[j][1]) >= 49);
+  }
+  assert.deepEqual(visits.map(p => p.coordinates), [[12, 44], [12, 44], [12, 44]]);
+  markers.get('visit-0').getElement().hidden = true;
+  ctx.layoutLifePathMarkers();
+  assert.equal(markers.get('visit-1').offset[1], 0);
+}
