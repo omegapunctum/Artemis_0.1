@@ -46,7 +46,9 @@
     lifePathRangeEndIndex: 0,
     lifePathScrubStartIndex: 0,
     lifePathScrubCurrentIndex: 0,
-    lifePathMarkers: new Map(),
+    lifePathMarkers: new Map(), // Presence ID -> shared Place marker (selection aliases only)
+    placeMarkers: new Map(), // Place ID -> one fixed spatial anchor
+    chronologyCues: new Map(),
     lifePathPopup: null,
     popupPresenceId: null,
     markerClickTimer: null,
@@ -1073,14 +1075,16 @@
         uncertaintySection.append(card);
       }
     }
+    appendPlaceEpisodes(body, presence);
     addCoverage(body);
     details.append(summary, body);
     card.append(details);
   }
 
   function syncLifePathSelectionControls() {
-    for (const [presenceId, marker] of runtime.lifePathMarkers) {
-      marker.getElement().setAttribute('aria-pressed', String(presenceId === runtime.selectedPresenceId));
+    const selectedPlace = (runtime.data?.lifePath?.presences || []).find(p => p.presence_id === runtime.selectedPresenceId)?.place_ref;
+    for (const [placeId, marker] of runtime.placeMarkers) {
+      marker.getElement().setAttribute('aria-pressed', String(placeId === selectedPlace));
     }
     for (const button of byId('presence-sequence')?.querySelectorAll('button') || []) {
       button.setAttribute('aria-pressed', String(button.dataset.presenceId === runtime.selectedPresenceId));
@@ -1147,6 +1151,7 @@
     detailsButton.textContent = 'Open details';
     detailsButton.addEventListener('click', () => openDetailsDrawer(presence.presence_id));
     content.append(detailsButton);
+    appendPlaceEpisodes(content, presence);
     runtime.lifePathPopup = new maplibregl.Popup({
       closeButton: true,
       closeOnClick: false,
@@ -1177,6 +1182,8 @@
     const projectionItem = currentProjectionItem(presence.event_item_id);
     if (projectionItem) updateCanonicalSelection(projectionItem);
     syncLifePathSelectionControls();
+    layoutPlaceLabels();
+    updateLifePathConnectors();
     [...(byId('presence-sequence')?.querySelectorAll('button') || [])]
       .find((button) => button.dataset.presenceId === presence.presence_id)
       ?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
@@ -1198,16 +1205,26 @@
     const currentPresence = runtime.lifePathMode === 'scrub'
       ? [...visibleLifePathPresences()].sort((a, b) => a.axis_start_index - b.axis_start_index).at(-1)
       : null;
-    for (const [presenceId, marker] of runtime.lifePathMarkers) {
-      marker.getElement().hidden = !visibleIds.has(presenceId);
-      marker.getElement().classList.toggle('is-current', presenceId === currentPresence?.presence_id);
+    const groups = visiblePlaceGroups();
+    for (const [placeId, marker] of runtime.placeMarkers) {
+      const episodes = groups.get(placeId) || [];
+      const node = marker.getElement();
+      node.hidden = episodes.length === 0;
+      node.classList.toggle('is-current', episodes.some(p => p.presence_id === currentPresence?.presence_id));
+      const count = node.querySelector('.place-count');
+      if (count) count.textContent = episodes.length > 1 ? ` ×${episodes.length}` : '';
+      const chosen = placeClickPresence(placeId);
+      if (chosen) {
+        node.title = episodes.map(p => `${p.place_label}: ${formatPresenceTime(p)}`).join('; ');
+        node.setAttribute('aria-label', `Show ${chosen.place_label} summary, ${formatPresenceTime(chosen)}; double-click to focus map`);
+      }
     }
     for (const button of byId('presence-sequence')?.querySelectorAll('button') || []) {
       button.hidden = !visibleIds.has(button.dataset.presenceId);
       button.classList.toggle('is-current', button.dataset.presenceId === currentPresence?.presence_id);
     }
     syncLifePathSelectionControls();
-    layoutLifePathMarkers();
+    layoutPlaceLabels();
   }
 
   function presencePeriod(presence) {
@@ -1263,6 +1280,8 @@
           transition_id: transition.transition_id,
           semantic_role: 'chronological_connection',
           route_status: transition.route_status,
+          route_geometry: null,
+          emphasis: chronologyEmphasis(transition),
           is_historical_route_geometry: false
         },
         geometry: { type: 'LineString', coordinates: [from.coordinates, to.coordinates] }
@@ -1271,8 +1290,43 @@
     return { type: 'FeatureCollection', features };
   }
 
+  function chronologyEmphasis(transition) {
+    const current = runtime.lifePathMode === 'scrub'
+      ? [...visibleLifePathPresences()].sort((a, b) => a.index - b.index).at(-1)?.presence_id : null;
+    if (current && transition.to_presence_ref === current) return 2;
+    return [transition.from_presence_ref, transition.to_presence_ref].includes(runtime.selectedPresenceId) ? 1 : 0;
+  }
+
   function updateLifePathConnectors() {
-    runtime.map?.getSource?.('life-path-chronology')?.setData(lifePathConnectorGeoJson());
+    const data = lifePathConnectorGeoJson();
+    runtime.map?.getSource?.('life-path-chronology')?.setData(data);
+    if (!runtime.map || !runtime.chronologyCues) return;
+    const visible = new Set();
+    for (const feature of data.features) {
+      const coordinates = feature.geometry.coordinates;
+      const [a, b] = coordinates;
+      if (a[0] === b[0] && a[1] === b[1]) continue; // No fake separation for same-place transitions.
+      const id = feature.properties.transition_id;
+      visible.add(id);
+      let cue = runtime.chronologyCues.get(id);
+      if (!cue) {
+        const node = document.createElement('span');
+        node.className = 'chronology-cue';
+        node.setAttribute('aria-hidden', 'true');
+        appendText(node, 'span', '▸');
+        // Midpoint of the renderer-only segment, not a new historical geometry.
+        const midpoint = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+        cue = {coordinates, marker: new maplibregl.Marker({element: node, anchor: 'center'})
+          .setLngLat(midpoint).addTo(runtime.map)};
+        runtime.chronologyCues.set(id, cue);
+      }
+      // MapLibre owns outer marker opacity; emphasis belongs to the cue glyph.
+      cue.marker.getElement().firstChild.style.opacity = [0.25, 0.7, 0.95][feature.properties.emphasis];
+    }
+    for (const [id, cue] of runtime.chronologyCues) {
+      if (!visible.has(id)) {cue.marker.remove(); runtime.chronologyCues.delete(id);}
+    }
+    positionChronologyCues();
   }
 
   function focusVisibleLifePathPresences() {
@@ -1356,20 +1410,27 @@
     runtime.data.state.temporal_selection = selectedLifePathTemporalExtent();
     renderSharedState(runtime.data);
     setText('temporal-map-status', lifePathStatus());
-    updateLifePathMarkers();
-    updateLifePathConnectors();
-
     if (!visible.some((presence) => presence.presence_id === runtime.selectedPresenceId)) {
       runtime.selectedPresenceId = null;
       runtime.lifePathPopup?.remove();
       closeDetailsDrawer();
       clearCanonicalSelection(
         visible.length
-          ? 'Choose a visible numbered place on the globe.'
+          ? 'Choose a visible place on the globe.'
           : 'No documented presence overlaps this calendar window.',
         { syncUrl: false }
       );
     }
+
+    const retained = visible.find(p => p.presence_id === runtime.selectedPresenceId);
+    if (retained) {
+      const item = currentProjectionItem(retained.event_item_id);
+      if (item) updateCanonicalSelection(item);
+      if (runtime.lifePathPopup) showPresencePopup(retained);
+      else if (byId('inspector') && !byId('inspector').hidden) renderLifePathPresence(retained);
+    }
+    updateLifePathMarkers();
+    updateLifePathConnectors();
 
     document.documentElement.dataset.artemisPathMode = runtime.lifePathMode;
     document.documentElement.dataset.artemisPathStart = formatAxisValue(runtime.lifePathStartIndex);
@@ -1390,19 +1451,8 @@
       const input = byId(id);
       if (input) input.max = String(last);
     }
-    const scrubStart = byId('scrub-start');
-    if (scrubStart && scrubStart.options.length !== axisValues.length) {
-      scrubStart.innerHTML = '';
-      axisValues.forEach((value, index) => {
-        const option = document.createElement('option');
-        option.value = String(index);
-        option.textContent = value;
-        scrubStart.append(option);
-      });
-    }
     if (byId('range-start')) byId('range-start').value = String(runtime.lifePathStartIndex);
     if (byId('range-end')) byId('range-end').value = String(runtime.lifePathEndIndex);
-    if (scrubStart) scrubStart.value = String(runtime.lifePathStartIndex);
     if (byId('scrub-current')) {
       byId('scrub-current').min = String(runtime.lifePathMode === 'scrub' ? runtime.lifePathStartIndex : 0);
       byId('scrub-current').value = String(runtime.lifePathEndIndex);
@@ -1453,7 +1503,7 @@
       byId(`language-${lang}`)?.addEventListener('click', () => {
         window.ARTEMIS_I18N?.setLanguage(lang);
         for (const value of ['en', 'ru']) byId(`language-${value}`)?.setAttribute('aria-pressed', String(value === lang));
-        requestAnimationFrame(syncOverlayLayout);
+        requestAnimationFrame(() => { syncOverlayLayout(); layoutPlaceLabels(); });
       });
     }
     document.addEventListener('keydown', (event) => {
@@ -1488,10 +1538,6 @@
       const end = Number(event.currentTarget.value);
       update(Math.min(runtime.lifePathStartIndex, end), end);
     });
-    byId('scrub-start')?.addEventListener('change', (event) => {
-      const start = Number(event.currentTarget.value);
-      update(start, Math.max(start, runtime.lifePathEndIndex));
-    });
     byId('scrub-current')?.addEventListener('input', (event) => {
       const current = Number(event.currentTarget.value);
       update(runtime.lifePathStartIndex, Math.max(runtime.lifePathStartIndex, current));
@@ -1499,6 +1545,7 @@
   }
 
   function handlePresenceMarkerClick(presence) {
+    if (!presence) return;
     window.clearTimeout(runtime.markerClickTimer);
     runtime.markerClickTimer = window.setTimeout(() => {
       if (runtime.popupPresenceId === presence.presence_id) {
@@ -1516,6 +1563,7 @@
   function handlePresenceMarkerDoubleClick(event, presence) {
     event.preventDefault();
     event.stopPropagation();
+    if (!presence) return;
     window.clearTimeout(runtime.markerClickTimer);
     selectLifePathPresence(presence.presence_id, {
       fly: true,
@@ -1524,81 +1572,117 @@
     });
   }
 
-  // Screen-space label offsets never modify historical/reference coordinates.
-  function layoutLifePathMarkers() {
-    const map = runtime.map;
-    if (!map) return;
-    const canvas = map.getCanvas();
-    const occupied = [];
-    const width = 144, height = 44, gap = 5;
-    for (const presence of runtime.data?.lifePath?.presences || []) {
-      const marker = runtime.lifePathMarkers.get(presence.presence_id);
-      if (!marker || marker.getElement().hidden) continue;
-      const point = map.project(presence.coordinates);
-      const candidates = [[0, 0]];
-      for (let ring = 1; ring <= 8; ring += 1) {
-        for (const [x, y] of [[0, -1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-          candidates.push([x * (width + gap) * ring, y * (height + gap) * ring]);
-        }
-      }
-      const fits = ([dx, dy]) => {
-        const x = point.x + dx, y = point.y + dy;
-        return x >= width / 2 && x <= canvas.clientWidth - width / 2
-          && y >= height / 2 && y <= canvas.clientHeight - height / 2
-          && !occupied.some(([ox, oy]) => Math.abs(x - ox) < width + gap && Math.abs(y - oy) < height + gap);
-      };
-      // Offscreen points stay offscreen rather than being dragged onto the map.
-      const onscreen = point.x >= 0 && point.x <= canvas.clientWidth && point.y >= 0 && point.y <= canvas.clientHeight;
-      const offset = onscreen ? (candidates.find(fits) || [0, 0]) : [0, 0];
-      marker.setOffset(offset);
-      occupied.push([point.x + offset[0], point.y + offset[1]]);
-      const node = marker.getElement();
-      node.style.setProperty('--tether-length', `${Math.hypot(...offset)}px`);
-      node.style.setProperty('--tether-angle', `${Math.atan2(-offset[1], -offset[0])}rad`);
+  function visiblePlaceGroups() {
+    const groups = new Map();
+    for (const presence of visibleLifePathPresences()) {
+      if (!groups.has(presence.place_ref)) groups.set(presence.place_ref, []);
+      groups.get(presence.place_ref).push(presence);
     }
+    for (const episodes of groups.values()) episodes.sort((a, b) => a.index - b.index);
+    return groups;
+  }
+
+  function placeClickPresence(placeId) {
+    const episodes = visiblePlaceGroups().get(placeId) || [];
+    return episodes.find(p => p.presence_id === runtime.selectedPresenceId)
+      || (runtime.lifePathMode === 'scrub' ? episodes.at(-1) : episodes[0]);
+  }
+
+  function appendPlaceEpisodes(host, presence) {
+    const episodes = visiblePlaceGroups().get(presence.place_ref) || [];
+    if (episodes.length < 2) return;
+    const group = document.createElement('div');
+    group.className = 'place-episodes';
+    appendText(group, 'span', 'Visits at this place');
+    for (const episode of episodes) {
+      const button = appendText(group, 'button', formatPresenceTime(episode));
+      button.type = 'button';
+      button.setAttribute('aria-pressed', String(episode.presence_id === runtime.selectedPresenceId));
+      button.addEventListener('click', () => selectLifePathPresence(episode.presence_id, {popup: true}));
+    }
+    host.append(group);
   }
 
   function addLifePathMarkers(map) {
     map.addSource('life-path-chronology', { type: 'geojson', data: lifePathConnectorGeoJson() });
     if (runtime.data?.lifePath?.route_policy?.chronological_connector_permitted === true) {
       map.addLayer({
-        id: 'life-path-chronology-line',
-        type: 'line',
-        source: 'life-path-chronology',
+        id: 'life-path-chronology-line', type: 'line', source: 'life-path-chronology',
         paint: {
           'line-color': '#a8bed0',
-          'line-width': 2.2,
+          'line-width': ['case', ['==', ['get', 'emphasis'], 2], 2.2, 1.4],
           'line-dasharray': [1.5, 2.2],
-          'line-opacity': 0.82
+          'line-opacity': ['match', ['get', 'emphasis'], 2, 0.9, 1, 0.65, 0.22]
         }
       });
     }
     for (const presence of runtime.data?.lifePath?.presences || []) {
-      const markerButton = document.createElement('button');
-      markerButton.type = 'button';
-      markerButton.className = 'life-path-marker';
-      appendText(markerButton, 'span', '', 'marker-tether').setAttribute('aria-hidden', 'true');
-      appendText(markerButton, 'span', presence.place_label, 'marker-place-name');
-      appendText(markerButton, 'span', formatPresenceTime(presence), 'marker-place-time');
-      markerButton.title = `${presence.place_label} · click for summary; double-click to focus map`;
-      markerButton.setAttribute('aria-label', `Show ${presence.place_label} summary, ${formatPresenceTime(presence)}; double-click to focus map`);
-      markerButton.setAttribute('aria-pressed', 'false');
-      bindPresenceEmphasis(markerButton, presence.presence_id);
-      markerButton.addEventListener('click', () => handlePresenceMarkerClick(presence));
-      markerButton.addEventListener('dblclick', (event) => handlePresenceMarkerDoubleClick(event, presence));
-      const marker = new maplibregl.Marker({ element: markerButton, anchor: 'center' })
-        .setLngLat(presence.coordinates)
-        .addTo(map);
+      let marker = runtime.placeMarkers.get(presence.place_ref);
+      if (!marker) {
+        const markerButton = document.createElement('button');
+        markerButton.type = 'button';
+        markerButton.className = 'life-path-marker';
+        markerButton.dataset.placeId = presence.place_ref;
+        appendText(markerButton, 'span', '', 'place-dot').setAttribute('aria-hidden', 'true');
+        const label = appendText(markerButton, 'span', '', 'place-label');
+        appendText(label, 'span', presence.place_label, 'place-name');
+        appendText(label, 'span', '', 'place-count');
+        markerButton.setAttribute('aria-pressed', 'false');
+        markerButton.addEventListener('click', () => handlePresenceMarkerClick(placeClickPresence(presence.place_ref)));
+        markerButton.addEventListener('dblclick', event => handlePresenceMarkerDoubleClick(event, placeClickPresence(presence.place_ref)));
+        marker = new maplibregl.Marker({element: markerButton, anchor: 'center'})
+          .setLngLat(presence.coordinates).addTo(map);
+        runtime.placeMarkers.set(presence.place_ref, marker);
+      }
       runtime.lifePathMarkers.set(presence.presence_id, marker);
     }
-    map.on('move', layoutLifePathMarkers);
-    map.on('resize', layoutLifePathMarkers);
+    map.on('move', () => { positionChronologyCues(); layoutPlaceLabels(); });
+    map.on('resize', layoutPlaceLabels);
     updateLifePathMarkers();
     updateLifePathConnectors();
-    const requestedPresence = (runtime.data?.lifePath?.presences || []).find(
-      (presence) => presence.presence_id === runtime.selectedPresenceId
-    );
+    const requestedPresence = (runtime.data?.lifePath?.presences || []).find(p => p.presence_id === runtime.selectedPresenceId);
     if (requestedPresence) showPresencePopup(requestedPresence);
+  }
+
+  function layoutPlaceLabels() {
+    if (!runtime.map) return;
+    const occupied = [];
+    const canvas = runtime.map.getCanvas();
+    const visible = [...visibleLifePathPresences()].sort((a, b) => a.index - b.index);
+    const selected = visible.find(p => p.presence_id === runtime.selectedPresenceId)?.place_ref;
+    const current = runtime.lifePathMode === 'scrub' ? visible.at(-1)?.place_ref : null;
+    const ends = new Set([visible[0]?.place_ref, visible.at(-1)?.place_ref]);
+    const groups = visiblePlaceGroups();
+    const priority = place => place === selected ? 0 : place === current ? 1
+      : ends.has(place) ? 2 : (groups.get(place)?.length || 0) > 1 ? 3 : 4;
+    const markers = [...runtime.placeMarkers.entries()].sort((a, b) => priority(a[0]) - priority(b[0]));
+    for (const [, marker] of markers) {
+      const node = marker.getElement();
+      if (node.hidden) continue;
+      const label = node.querySelector('.place-label');
+      const point = runtime.map.project(marker.getLngLat());
+      const width = label.offsetWidth, height = label.offsetHeight;
+      const candidates = [[9, -10], [-width - 9, -10], [9, -height - 12], [-width - 9, 12], [9, 12]];
+      const fits = ([dx, dy]) => {
+        const rect = {left: point.x + dx, top: point.y + dy, right: point.x + dx + width, bottom: point.y + dy + height};
+        return rect.left >= 0 && rect.right <= canvas.clientWidth && rect.top >= 0 && rect.bottom <= canvas.clientHeight
+          && !occupied.some(r => rect.left < r.right + 3 && rect.right > r.left - 3 && rect.top < r.bottom + 3 && rect.bottom > r.top - 3);
+      };
+      const placement = candidates.find(fits);
+      // Suppression changes text visibility only; the Place anchor stays interactive.
+      label.classList.toggle('is-suppressed', !placement);
+      const [dx, dy] = placement || candidates[0];
+      label.style.left = `${16 + dx}px`;
+      label.style.top = `${16 + dy}px`;
+      if (placement) occupied.push({left: point.x + dx, right: point.x + dx + width, top: point.y + dy, bottom: point.y + dy + height});
+    }
+  }
+
+  function positionChronologyCues() {
+    for (const {marker, coordinates} of runtime.chronologyCues.values()) {
+      const a = runtime.map.project(coordinates[0]), b = runtime.map.project(coordinates[1]);
+      marker.getElement().firstChild.style.transform = `rotate(${Math.atan2(b.y - a.y, b.x - a.x)}rad)`;
+    }
   }
 
   function restoreLifePathStateFromUrl(options = {}) {

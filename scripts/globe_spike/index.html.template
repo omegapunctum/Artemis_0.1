@@ -16,7 +16,7 @@
         <div class="product-label">
           <strong>ARTEMIS · Leonardo Life Path</strong>
           <span>{{PUBLIC_PREVIEW_STATUS}}</span>
-          <span class="sequence-note">Dashed links show order, not travel routes.</span>
+          <span class="sequence-note">Dashed links and chevrons show time order, not travel routes.</span>
         </div>
         <div class="banner-actions"><div class="language-switch" role="group" aria-label="Language"><button id="language-en" type="button" aria-pressed="true">EN</button><button id="language-ru" type="button" aria-pressed="false">RU</button></div>{{PUBLIC_PREVIEW_NAV}}</div>
       </header>
@@ -32,7 +32,7 @@
         <button id="close-details" type="button" aria-label="Close place details">×</button>
       </header>
       <section class="selection-section" aria-labelledby="selection-title">
-        <div id="selection-card" class="selection-card empty" tabindex="-1" aria-live="polite">Choose a numbered place on the globe.</div>
+        <div id="selection-card" class="selection-card empty" tabindex="-1" aria-live="polite">Choose a visible place on the globe.</div>
       </section>
       <details id="prototype-details" class="prototype-details">
         <summary>Sources, limits and prototype status</summary>
@@ -86,9 +86,6 @@
         </div>
 
         <div id="scrub-controls" class="timeline-mode scrub-mode" hidden>
-          <label class="scrub-origin" for="scrub-start">Build from
-            <select id="scrub-start" aria-label="Path build start"></select>
-          </label>
           <label class="scrub-cursor" for="scrub-current">Current time
             <output id="scrub-current-value" for="scrub-current">—</output>
           </label>
@@ -99,7 +96,7 @@
       </div>
 
       <div class="timeline-summary">
-        <p class="route-note">Dashed links show chronological order; exact routes between Presence anchors remain unknown.</p>
+        <p class="route-note">Dashed links and chevrons show time order, not travel routes.</p>
       </div>
     </section>
   </main>

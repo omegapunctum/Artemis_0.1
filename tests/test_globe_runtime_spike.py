@@ -28,6 +28,23 @@ RUNTIME_JS = ROOT / "scripts" / "globe_spike" / "runtime.js"
 HTML_TEMPLATE = ROOT / "scripts" / "globe_spike" / "index.html.template"
 
 
+@pytest.mark.parametrize("public_preview", [False, True])
+def test_generated_presentation_and_evidence_truth(tmp_path, public_preview):
+    output = tmp_path / "globe"
+    metadata = build_spike(output, public_preview=public_preview)
+    html = (output / "index.html").read_text()
+    readme = (output / "README.txt").read_text()
+    profiles = (output / "acceptance-profiles.json").read_text()
+    assert "numbered place" not in html.lower()
+    assert 'id="scrub-start"' not in html
+    assert "No transition connector is rendered" not in readme
+    assert "renderer-only time-order presentation" in readme
+    assert "route geometry remains null" in readme
+    assert "Public promotion still requires explicit Gate D exit" not in profiles
+    assert "not Gate E T1–T5 participant evidence" in profiles
+    assert metadata == json.loads((output / "build-meta.json").read_text())
+
+
 def test_m5_chronology_and_localization_behavior() -> None:
     subprocess.run(["node", "tests/m5_ux_behavior.cjs"], cwd=ROOT, check=True)
 
@@ -691,7 +708,7 @@ def test_life_path_timeline_uses_calendar_range_and_scrub() -> None:
     assert 'id="range-start" type="range"' in html_source
     assert 'id="range-end" type="range"' in html_source
     assert 'id="timeline-dock"' in html_source
-    assert 'id="scrub-start" aria-label="Path build start"' in html_source
+    assert 'id="scrub-start"' not in html_source
     assert 'id="scrub-current" type="range"' in html_source
     assert 'id="mode-range"' in html_source
     assert 'id="mode-scrub"' in html_source
@@ -733,8 +750,7 @@ def test_runtime_removes_noop_controls_and_distinguishes_chronology_from_routes(
     html_source = HTML_TEMPLATE.read_text(encoding="utf-8")
 
     assert 'id="temporal-map-status"' in html_source
-    assert "Dashed links show order, not travel routes." in html_source
-    assert "exact routes between Presence anchors remain unknown" in html_source
+    assert "Dashed links and chevrons show time order, not travel routes." in html_source
     assert 'id="toggle-alternatives"' not in html_source
     assert 'id="view-global"' not in html_source
     assert 'id="view-slice"' not in html_source
