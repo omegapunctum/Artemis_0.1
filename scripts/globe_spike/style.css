@@ -429,8 +429,7 @@ summary:focus-visible {
 .life-path-marker.is-current { box-shadow: none; }
 .chronology-cue { pointer-events: none; color: #b8cfdf; }
 .chronology-cue > span { display: block; font-size: 16px; line-height: 20px; text-shadow: 0 0 2px #031018, 0 1px 2px #031018; }
-.place-label.is-suppressed { visibility: hidden; }
-.life-path-marker:hover .place-label, .life-path-marker:focus .place-label { visibility: visible; }
+.life-path-marker:not(:hover):not(:focus) .place-label.is-suppressed { visibility: hidden; }
 .place-episodes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .place-episodes > span { width: 100%; font-size: 11px; }
 .place-episodes button { min-height: 24px; padding: 3px 6px; font-size: 11px; }
